@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<project name="Movie Maker Tool" default="build">
+
+  <!--
+  Determine the variant name based on how the names work at our source:
+  https://github.com/eugeneware/ffmpeg-static/releases/download/b5.0.1/darwin-arm64.gz
+  i.e. darwin-x64, darwin-arm64, win32-x64, linux-x64, linux-arm, linux-arm64
+  -->
+
+  <condition property="ffmpeg.variant" value="darwin-x64">
+    <and>
+      <os family="mac" />
+      <equals arg1="${os.arch}" arg2="x86_64" />
+    </and>
+  </condition>
+
+  <condition property="ffmpeg.variant" value="darwin-arm64">
+    <and>
+      <os family="mac" />
+      <equals arg1="${os.arch}" arg2="aarch64" />
+    </and>
+  </condition>
+
+  <condition property="ffmpeg.variant" value="win32-x64">
+    <os family="windows" />
+  </condition>
+
+  <condition property="ffmpeg.variant" value="linux-x64">
+    <and>
+      <os family="unix" />
+      <equals arg1="${os.arch}" arg2="amd64" />
+    </and>
+  </condition>
+
+  <condition property="ffmpeg.variant" value="linux-arm">
+    <and>
+      <os family="unix" />
+      <equals arg1="${os.arch}" arg2="arm" />
+    </and>
+  </condition>
+
+  <condition property="ffmpeg.variant" value="linux-arm64">
+    <and>
+      <os family="unix" />
+      <equals arg1="${os.arch}" arg2="aarch64" />
+    </and>
+  </condition>
+
+
+  <!-- Windows needs .exe on the end of the local filename -->
+  <condition property="ffmpeg.binary" value="tool/ffmpeg.exe" else="tool/ffmpeg">
+    <os family="windows" />
+  </condition>
+
+  <property name="ffmpeg.version" value="5.0.1" />
+  <!-- Using download.processing.org because the static builds are
+       from several locations, and are all packaged differently.
+       This could be automated, but too much effort relative to utility. -->
+  <property name="ffmpeg.url"
+            value="https://github.com/eugeneware/ffmpeg-static/releases/download/b${ffmpeg.version}/${ffmpeg.variant}.gz" />
+
+  <property name="ffmpeg.gz" value="ffmpeg-${ffmpeg.version}.gz" />
+  <available file="${ffmpeg.gz}" property="ffmpeg.present" />
+
+  <!-- ok to ignore failed downloads if we at least have a version that's local -->
+  <condition property="ffmpeg.ignorable" value="false" else="true">
+    <isset property="ffmpeg.present" />
+  </condition>
+
+
+  <!-- target for downloading ffmpeg binary -->
+
+  <target name="download-ffmpeg" unless="ffmpeg.present">
+    <get src="${ffmpeg.url}"
+         dest="${ffmpeg.gz}"
+         ignoreerrors="${ffmpeg.ignorable}"
+         usetimestamp="true" />
+  </target>
+
+  <target name="prepare-ffmpeg" depends="download-ffmpeg">
+    <gunzip src="${ffmpeg.gz}" dest="${ffmpeg.binary}" />
+    <chmod file="${ffmpeg.binary}" perm="ugo+x" />
+  </target>
+
+  <target name="clean" description="Clean the build directories">
+    <delete dir="bin" />
+    <delete file="tool/MovieMaker.jar" />
+  </target>
+
+
+  <!-- compiling the Tool itself -->
+
+  <target name="compile" description="Compile sources">
+    <mkdir dir="bin" />
+    <javac target="17"
+           source="17"
+           srcdir="src"
+           destdir="bin"
+           encoding="UTF-8"
+           includeAntRuntime="false"
+           classpath="../../../../app/bin"
+           nowarn="true" />
+  </target>
+
+  <target name="build" depends="compile, prepare-ffmpeg" description="Build Movie Maker Tool">
+    <mkdir dir="tool" />
+    <jar basedir="bin" destfile="tool/MovieMaker.jar" />
+  </target>
+
+  <!-- java -cp tool/MovieMaker.jar:../../../../app/bin:../../../../core/bin processing.app.tools.MovieMaker  -->
+
+  <!-- classpath="tool/MovieMaker.jar;
+                  ../../../../app/bin;
+                  ../../../../core/bin" -->
+  <target name="run" depends="build" description="Run standalone for development">
+    <java classname="processing.app.tools.MovieMaker" fork="true">
+      <classpath>
+        <pathelement location="tool/MovieMaker.jar" />
+        <pathelement location="../../../../app/bin" />
+        <pathelement location="../../../../core/bin" />
+      </classpath>
+    </java>
+  </target>
+</project>

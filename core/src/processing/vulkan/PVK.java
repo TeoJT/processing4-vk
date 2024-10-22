@@ -1,0 +1,1542 @@
+package processing.vulkan;
+
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
+
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES3;
+import com.jogamp.opengl.GL2GL3;
+import com.jogamp.opengl.GL3ES3;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLCapabilitiesImmutable;
+import com.jogamp.opengl.glu.GLU;
+
+import processing.GL2VK.GL2VK;
+import processing.opengl.PGL;
+import processing.opengl.PGraphicsOpenGL;
+
+public class PVK extends PGL implements PJOGLInterface {
+  static {
+    FALSE = GL.GL_FALSE;
+    TRUE  = GL.GL_TRUE;
+
+    INT            = GL2ES2.GL_INT;
+    BYTE           = GL.GL_BYTE;
+    SHORT          = GL.GL_SHORT;
+    FLOAT          = GL.GL_FLOAT;
+    BOOL           = GL2ES2.GL_BOOL;
+    UNSIGNED_INT   = GL.GL_UNSIGNED_INT;
+    UNSIGNED_BYTE  = GL.GL_UNSIGNED_BYTE;
+    UNSIGNED_SHORT = GL.GL_UNSIGNED_SHORT;
+
+    RGB             = GL.GL_RGB;
+    RGBA            = GL.GL_RGBA;
+    ALPHA           = GL.GL_ALPHA;
+    LUMINANCE       = GL.GL_LUMINANCE;
+    LUMINANCE_ALPHA = GL.GL_LUMINANCE_ALPHA;
+
+    UNSIGNED_SHORT_5_6_5   = GL.GL_UNSIGNED_SHORT_5_6_5;
+    UNSIGNED_SHORT_4_4_4_4 = GL.GL_UNSIGNED_SHORT_4_4_4_4;
+    UNSIGNED_SHORT_5_5_5_1 = GL.GL_UNSIGNED_SHORT_5_5_5_1;
+
+    RGBA4   = GL.GL_RGBA4;
+    RGB5_A1 = GL.GL_RGB5_A1;
+    RGB565  = GL.GL_RGB565;
+    RGB8    = GL.GL_RGB8;
+    RGBA8   = GL.GL_RGBA8;
+    ALPHA8  = GL.GL_ALPHA8;
+
+    READ_ONLY  = GL2ES3.GL_READ_ONLY;
+    WRITE_ONLY = GL.GL_WRITE_ONLY;
+    READ_WRITE = GL2ES3.GL_READ_WRITE;
+
+    TESS_WINDING_NONZERO = GLU.GLU_TESS_WINDING_NONZERO;
+    TESS_WINDING_ODD     = GLU.GLU_TESS_WINDING_ODD;
+    TESS_EDGE_FLAG       = GLU.GLU_TESS_EDGE_FLAG;
+
+    GENERATE_MIPMAP_HINT = GL.GL_GENERATE_MIPMAP_HINT;
+    FASTEST              = GL.GL_FASTEST;
+    NICEST               = GL.GL_NICEST;
+    DONT_CARE            = GL.GL_DONT_CARE;
+
+    VENDOR                   = GL.GL_VENDOR;
+    RENDERER                 = GL.GL_RENDERER;
+    VERSION                  = GL.GL_VERSION;
+    EXTENSIONS               = GL.GL_EXTENSIONS;
+    SHADING_LANGUAGE_VERSION = GL2ES2.GL_SHADING_LANGUAGE_VERSION;
+
+    MAX_SAMPLES = GL.GL_MAX_SAMPLES;
+    SAMPLES     = GL.GL_SAMPLES;
+
+    ALIASED_LINE_WIDTH_RANGE = GL.GL_ALIASED_LINE_WIDTH_RANGE;
+    ALIASED_POINT_SIZE_RANGE = GL.GL_ALIASED_POINT_SIZE_RANGE;
+
+    DEPTH_BITS   = GL.GL_DEPTH_BITS;
+    STENCIL_BITS = GL.GL_STENCIL_BITS;
+
+    CCW = GL.GL_CCW;
+    CW  = GL.GL_CW;
+
+    VIEWPORT = GL.GL_VIEWPORT;
+
+    ARRAY_BUFFER         = GL.GL_ARRAY_BUFFER;
+    ELEMENT_ARRAY_BUFFER = GL.GL_ELEMENT_ARRAY_BUFFER;
+    PIXEL_PACK_BUFFER    = GL2ES3.GL_PIXEL_PACK_BUFFER;
+
+    MAX_VERTEX_ATTRIBS  = GL2ES2.GL_MAX_VERTEX_ATTRIBS;
+
+    STATIC_DRAW  = GL.GL_STATIC_DRAW;
+    DYNAMIC_DRAW = GL.GL_DYNAMIC_DRAW;
+    STREAM_DRAW  = GL2ES2.GL_STREAM_DRAW;
+    STREAM_READ  = GL2ES3.GL_STREAM_READ;
+
+    BUFFER_SIZE  = GL.GL_BUFFER_SIZE;
+    BUFFER_USAGE = GL.GL_BUFFER_USAGE;
+
+    POINTS         = GL.GL_POINTS;
+    LINE_STRIP     = GL.GL_LINE_STRIP;
+    LINE_LOOP      = GL.GL_LINE_LOOP;
+    LINES          = GL.GL_LINES;
+    TRIANGLE_FAN   = GL.GL_TRIANGLE_FAN;
+    TRIANGLE_STRIP = GL.GL_TRIANGLE_STRIP;
+    TRIANGLES      = GL.GL_TRIANGLES;
+
+    CULL_FACE      = GL.GL_CULL_FACE;
+    FRONT          = GL.GL_FRONT;
+    BACK           = GL.GL_BACK;
+    FRONT_AND_BACK = GL.GL_FRONT_AND_BACK;
+
+    POLYGON_OFFSET_FILL = GL.GL_POLYGON_OFFSET_FILL;
+
+    UNPACK_ALIGNMENT = GL.GL_UNPACK_ALIGNMENT;
+    PACK_ALIGNMENT   = GL.GL_PACK_ALIGNMENT;
+
+    TEXTURE_2D        = GL.GL_TEXTURE_2D;
+    TEXTURE_RECTANGLE = GL2GL3.GL_TEXTURE_RECTANGLE;
+
+    TEXTURE_BINDING_2D        = GL.GL_TEXTURE_BINDING_2D;
+    TEXTURE_BINDING_RECTANGLE = GL2GL3.GL_TEXTURE_BINDING_RECTANGLE;
+
+    MAX_TEXTURE_SIZE           = GL.GL_MAX_TEXTURE_SIZE;
+    TEXTURE_MAX_ANISOTROPY     = GL.GL_TEXTURE_MAX_ANISOTROPY_EXT;
+    MAX_TEXTURE_MAX_ANISOTROPY = GL.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT;
+
+    MAX_VERTEX_TEXTURE_IMAGE_UNITS   = GL2ES2.GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+    MAX_TEXTURE_IMAGE_UNITS          = GL2ES2.GL_MAX_TEXTURE_IMAGE_UNITS;
+    MAX_COMBINED_TEXTURE_IMAGE_UNITS = GL2ES2.GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS;
+
+    NUM_COMPRESSED_TEXTURE_FORMATS = GL.GL_NUM_COMPRESSED_TEXTURE_FORMATS;
+    COMPRESSED_TEXTURE_FORMATS     = GL.GL_COMPRESSED_TEXTURE_FORMATS;
+
+    NEAREST               = GL.GL_NEAREST;
+    LINEAR                = GL.GL_LINEAR;
+    LINEAR_MIPMAP_NEAREST = GL.GL_LINEAR_MIPMAP_NEAREST;
+    LINEAR_MIPMAP_LINEAR  = GL.GL_LINEAR_MIPMAP_LINEAR;
+
+    CLAMP_TO_EDGE = GL.GL_CLAMP_TO_EDGE;
+    REPEAT        = GL.GL_REPEAT;
+
+    TEXTURE0           = GL.GL_TEXTURE0;
+    TEXTURE1           = GL.GL_TEXTURE1;
+    TEXTURE2           = GL.GL_TEXTURE2;
+    TEXTURE3           = GL.GL_TEXTURE3;
+    TEXTURE_MIN_FILTER = GL.GL_TEXTURE_MIN_FILTER;
+    TEXTURE_MAG_FILTER = GL.GL_TEXTURE_MAG_FILTER;
+    TEXTURE_WRAP_S     = GL.GL_TEXTURE_WRAP_S;
+    TEXTURE_WRAP_T     = GL.GL_TEXTURE_WRAP_T;
+    TEXTURE_WRAP_R     = GL2ES2.GL_TEXTURE_WRAP_R;
+
+    TEXTURE_CUBE_MAP = GL.GL_TEXTURE_CUBE_MAP;
+    TEXTURE_CUBE_MAP_POSITIVE_X = GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+    TEXTURE_CUBE_MAP_POSITIVE_Y = GL.GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
+    TEXTURE_CUBE_MAP_POSITIVE_Z = GL.GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
+    TEXTURE_CUBE_MAP_NEGATIVE_X = GL.GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
+    TEXTURE_CUBE_MAP_NEGATIVE_Y = GL.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
+    TEXTURE_CUBE_MAP_NEGATIVE_Z = GL.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
+
+    VERTEX_SHADER        = GL2ES2.GL_VERTEX_SHADER;
+    FRAGMENT_SHADER      = GL2ES2.GL_FRAGMENT_SHADER;
+    INFO_LOG_LENGTH      = GL2ES2.GL_INFO_LOG_LENGTH;
+    SHADER_SOURCE_LENGTH = GL2ES2.GL_SHADER_SOURCE_LENGTH;
+    COMPILE_STATUS       = GL2ES2.GL_COMPILE_STATUS;
+    LINK_STATUS          = GL2ES2.GL_LINK_STATUS;
+    VALIDATE_STATUS      = GL2ES2.GL_VALIDATE_STATUS;
+    SHADER_TYPE          = GL2ES2.GL_SHADER_TYPE;
+    DELETE_STATUS        = GL2ES2.GL_DELETE_STATUS;
+
+    FLOAT_VEC2   = GL2ES2.GL_FLOAT_VEC2;
+    FLOAT_VEC3   = GL2ES2.GL_FLOAT_VEC3;
+    FLOAT_VEC4   = GL2ES2.GL_FLOAT_VEC4;
+    FLOAT_MAT2   = GL2ES2.GL_FLOAT_MAT2;
+    FLOAT_MAT3   = GL2ES2.GL_FLOAT_MAT3;
+    FLOAT_MAT4   = GL2ES2.GL_FLOAT_MAT4;
+    INT_VEC2     = GL2ES2.GL_INT_VEC2;
+    INT_VEC3     = GL2ES2.GL_INT_VEC3;
+    INT_VEC4     = GL2ES2.GL_INT_VEC4;
+    BOOL_VEC2    = GL2ES2.GL_BOOL_VEC2;
+    BOOL_VEC3    = GL2ES2.GL_BOOL_VEC3;
+    BOOL_VEC4    = GL2ES2.GL_BOOL_VEC4;
+    SAMPLER_2D   = GL2ES2.GL_SAMPLER_2D;
+    SAMPLER_CUBE = GL2ES2.GL_SAMPLER_CUBE;
+
+    LOW_FLOAT    = GL2ES2.GL_LOW_FLOAT;
+    MEDIUM_FLOAT = GL2ES2.GL_MEDIUM_FLOAT;
+    HIGH_FLOAT   = GL2ES2.GL_HIGH_FLOAT;
+    LOW_INT      = GL2ES2.GL_LOW_INT;
+    MEDIUM_INT   = GL2ES2.GL_MEDIUM_INT;
+    HIGH_INT     = GL2ES2.GL_HIGH_INT;
+
+    CURRENT_VERTEX_ATTRIB = GL2ES2.GL_CURRENT_VERTEX_ATTRIB;
+
+    VERTEX_ATTRIB_ARRAY_BUFFER_BINDING = GL2ES2.GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING;
+    VERTEX_ATTRIB_ARRAY_ENABLED        = GL2ES2.GL_VERTEX_ATTRIB_ARRAY_ENABLED;
+    VERTEX_ATTRIB_ARRAY_SIZE           = GL2ES2.GL_VERTEX_ATTRIB_ARRAY_SIZE;
+    VERTEX_ATTRIB_ARRAY_STRIDE         = GL2ES2.GL_VERTEX_ATTRIB_ARRAY_STRIDE;
+    VERTEX_ATTRIB_ARRAY_TYPE           = GL2ES2.GL_VERTEX_ATTRIB_ARRAY_TYPE;
+    VERTEX_ATTRIB_ARRAY_NORMALIZED     = GL2ES2.GL_VERTEX_ATTRIB_ARRAY_NORMALIZED;
+    VERTEX_ATTRIB_ARRAY_POINTER        = GL2ES2.GL_VERTEX_ATTRIB_ARRAY_POINTER;
+
+    BLEND               = GL.GL_BLEND;
+    ONE                 = GL.GL_ONE;
+    ZERO                = GL.GL_ZERO;
+    SRC_ALPHA           = GL.GL_SRC_ALPHA;
+    DST_ALPHA           = GL.GL_DST_ALPHA;
+    ONE_MINUS_SRC_ALPHA = GL.GL_ONE_MINUS_SRC_ALPHA;
+    ONE_MINUS_DST_COLOR = GL.GL_ONE_MINUS_DST_COLOR;
+    ONE_MINUS_SRC_COLOR = GL.GL_ONE_MINUS_SRC_COLOR;
+    DST_COLOR           = GL.GL_DST_COLOR;
+    SRC_COLOR           = GL.GL_SRC_COLOR;
+
+    SAMPLE_ALPHA_TO_COVERAGE = GL.GL_SAMPLE_ALPHA_TO_COVERAGE;
+    SAMPLE_COVERAGE          = GL.GL_SAMPLE_COVERAGE;
+
+    KEEP      = GL.GL_KEEP;
+    REPLACE   = GL.GL_REPLACE;
+    INCR      = GL.GL_INCR;
+    DECR      = GL.GL_DECR;
+    INVERT    = GL.GL_INVERT;
+    INCR_WRAP = GL.GL_INCR_WRAP;
+    DECR_WRAP = GL.GL_DECR_WRAP;
+    NEVER     = GL.GL_NEVER;
+    ALWAYS    = GL.GL_ALWAYS;
+
+    EQUAL    = GL.GL_EQUAL;
+    LESS     = GL.GL_LESS;
+    LEQUAL   = GL.GL_LEQUAL;
+    GREATER  = GL.GL_GREATER;
+    GEQUAL   = GL.GL_GEQUAL;
+    NOTEQUAL = GL.GL_NOTEQUAL;
+
+    FUNC_ADD              = GL.GL_FUNC_ADD;
+    FUNC_MIN              = GL2ES3.GL_MIN;
+    FUNC_MAX              = GL2ES3.GL_MAX;
+    FUNC_REVERSE_SUBTRACT = GL.GL_FUNC_REVERSE_SUBTRACT;
+    FUNC_SUBTRACT         = GL.GL_FUNC_SUBTRACT;
+
+    DITHER = GL.GL_DITHER;
+
+    CONSTANT_COLOR           = GL2ES2.GL_CONSTANT_COLOR;
+    CONSTANT_ALPHA           = GL2ES2.GL_CONSTANT_ALPHA;
+    ONE_MINUS_CONSTANT_COLOR = GL2ES2.GL_ONE_MINUS_CONSTANT_COLOR;
+    ONE_MINUS_CONSTANT_ALPHA = GL2ES2.GL_ONE_MINUS_CONSTANT_ALPHA;
+    SRC_ALPHA_SATURATE       = GL.GL_SRC_ALPHA_SATURATE;
+
+    SCISSOR_TEST    = GL.GL_SCISSOR_TEST;
+    STENCIL_TEST    = GL.GL_STENCIL_TEST;
+    DEPTH_TEST      = GL.GL_DEPTH_TEST;
+    DEPTH_WRITEMASK = GL.GL_DEPTH_WRITEMASK;
+
+    COLOR_BUFFER_BIT   = GL.GL_COLOR_BUFFER_BIT;
+    DEPTH_BUFFER_BIT   = GL.GL_DEPTH_BUFFER_BIT;
+    STENCIL_BUFFER_BIT = GL.GL_STENCIL_BUFFER_BIT;
+
+    FRAMEBUFFER        = GL.GL_FRAMEBUFFER;
+    COLOR_ATTACHMENT0  = GL.GL_COLOR_ATTACHMENT0;
+    COLOR_ATTACHMENT1  = GL2ES2.GL_COLOR_ATTACHMENT1;
+    COLOR_ATTACHMENT2  = GL2ES2.GL_COLOR_ATTACHMENT2;
+    COLOR_ATTACHMENT3  = GL2ES2.GL_COLOR_ATTACHMENT3;
+    RENDERBUFFER       = GL.GL_RENDERBUFFER;
+    DEPTH_ATTACHMENT   = GL.GL_DEPTH_ATTACHMENT;
+    STENCIL_ATTACHMENT = GL.GL_STENCIL_ATTACHMENT;
+    READ_FRAMEBUFFER   = GL.GL_READ_FRAMEBUFFER;
+    DRAW_FRAMEBUFFER   = GL.GL_DRAW_FRAMEBUFFER;
+
+    DEPTH24_STENCIL8 = GL.GL_DEPTH24_STENCIL8;
+
+    DEPTH_COMPONENT   = GL2ES2.GL_DEPTH_COMPONENT;
+    DEPTH_COMPONENT16 = GL.GL_DEPTH_COMPONENT16;
+    DEPTH_COMPONENT24 = GL.GL_DEPTH_COMPONENT24;
+    DEPTH_COMPONENT32 = GL.GL_DEPTH_COMPONENT32;
+
+    STENCIL_INDEX  = GL2ES2.GL_STENCIL_INDEX;
+    STENCIL_INDEX1 = GL.GL_STENCIL_INDEX1;
+    STENCIL_INDEX4 = GL.GL_STENCIL_INDEX4;
+    STENCIL_INDEX8 = GL.GL_STENCIL_INDEX8;
+
+    DEPTH_STENCIL = GL.GL_DEPTH_STENCIL;
+
+    FRAMEBUFFER_COMPLETE                      = GL.GL_FRAMEBUFFER_COMPLETE;
+    FRAMEBUFFER_UNDEFINED                     = GL2ES3.GL_FRAMEBUFFER_UNDEFINED;
+    FRAMEBUFFER_INCOMPLETE_ATTACHMENT         = GL.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
+    FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT = GL.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT;
+    FRAMEBUFFER_INCOMPLETE_DIMENSIONS         = GL.GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS;
+    FRAMEBUFFER_INCOMPLETE_FORMATS            = GL.GL_FRAMEBUFFER_INCOMPLETE_FORMATS;
+    FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER        = GL2GL3.GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER;
+    FRAMEBUFFER_INCOMPLETE_READ_BUFFER        = GL2GL3.GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER;
+    FRAMEBUFFER_UNSUPPORTED                   = GL.GL_FRAMEBUFFER_UNSUPPORTED;
+    FRAMEBUFFER_INCOMPLETE_MULTISAMPLE        = GL.GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE;
+    FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS      = GL3ES3.GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS;
+
+    FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE           = GL.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE;
+    FRAMEBUFFER_ATTACHMENT_OBJECT_NAME           = GL.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME;
+    FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL         = GL.GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL;
+    FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE = GL.GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE;
+
+    RENDERBUFFER_WIDTH           = GL.GL_RENDERBUFFER_WIDTH;
+    RENDERBUFFER_HEIGHT          = GL.GL_RENDERBUFFER_HEIGHT;
+    RENDERBUFFER_RED_SIZE        = GL.GL_RENDERBUFFER_RED_SIZE;
+    RENDERBUFFER_GREEN_SIZE      = GL.GL_RENDERBUFFER_GREEN_SIZE;
+    RENDERBUFFER_BLUE_SIZE       = GL.GL_RENDERBUFFER_BLUE_SIZE;
+    RENDERBUFFER_ALPHA_SIZE      = GL.GL_RENDERBUFFER_ALPHA_SIZE;
+    RENDERBUFFER_DEPTH_SIZE      = GL.GL_RENDERBUFFER_DEPTH_SIZE;
+    RENDERBUFFER_STENCIL_SIZE    = GL.GL_RENDERBUFFER_STENCIL_SIZE;
+    RENDERBUFFER_INTERNAL_FORMAT = GL.GL_RENDERBUFFER_INTERNAL_FORMAT;
+
+    MULTISAMPLE    = GL.GL_MULTISAMPLE;
+    LINE_SMOOTH    = GL.GL_LINE_SMOOTH;
+    POLYGON_SMOOTH = GL2GL3.GL_POLYGON_SMOOTH;
+
+    SYNC_GPU_COMMANDS_COMPLETE = GL3ES3.GL_SYNC_GPU_COMMANDS_COMPLETE;
+    ALREADY_SIGNALED           = GL3ES3.GL_ALREADY_SIGNALED;
+    CONDITION_SATISFIED        = GL3ES3.GL_CONDITION_SATISFIED;
+  }
+
+  private GL2VK gl2vk;
+
+  public PVK(PGraphicsOpenGL pg, GL2VK gl2vk) {
+    this.gl2vk = gl2vk;
+    this.graphics = pg;
+  }
+
+  public PVK(PGraphicsOpenGL pg) {
+    this.graphics = pg;
+  }
+
+  public void setGL2VK(GL2VK gl2vk) {
+    this.gl2vk = gl2vk;
+  }
+
+  public void cleanup() {
+    gl2vk.close();
+  }
+
+  public boolean shouldClose() {
+    return gl2vk.shouldClose();
+  }
+
+  public void beginRecord() {
+    function("beginRecord");
+    gl2vk.beginRecord();
+  }
+
+  public void endRecord() {
+    function("endRecord");
+    gl2vk.endRecord();
+  }
+
+  private void function(String func) {
+
+  }
+
+  @Override
+  public Object getNative() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  public void setCaps(GLCapabilities caps) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public GLCapabilitiesImmutable getCaps() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  public boolean needSharedObjectSync() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  public void setFps(float fps) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public void getGL(GLAutoDrawable glDrawable) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public void init(GLAutoDrawable glDrawable) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public void showme(String method, int value) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void flush() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void finish() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void hint(int target, int hint) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void enable(int value) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void disable(int value) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getBooleanv(int value, IntBuffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getIntegerv(int value, IntBuffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getFloatv(int value, FloatBuffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public boolean isEnabled(int value) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public String getString(int name) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public int getError() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  public String errorString(int err) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public void genBuffers(int n, IntBuffer buffers) {
+    gl2vk.glGenBuffers(n, buffers);
+  }
+
+  @Override
+  public void deleteBuffers(int n, IntBuffer buffers) {
+    // TODO: Deletebuffers
+  }
+
+  @Override
+  public void bindBuffer(int target, int buffer) {
+    function("bindBuffer");
+    gl2vk.glBindBuffer(target, buffer);
+  }
+
+
+  private ByteBuffer convertToByteBuffer(Buffer outputBuffer) {
+    if (outputBuffer == null) return null;
+
+    ByteBuffer byteBuffer = null;
+    if (outputBuffer instanceof ByteBuffer) {
+        byteBuffer = (ByteBuffer) outputBuffer;
+    } else if (outputBuffer instanceof CharBuffer) {
+        byteBuffer = ByteBuffer.allocate(outputBuffer.capacity());
+        byteBuffer.asCharBuffer().put((CharBuffer) outputBuffer);
+    } else if (outputBuffer instanceof ShortBuffer) {
+        byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 2);
+        byteBuffer.asShortBuffer().put((ShortBuffer) outputBuffer);
+    } else if (outputBuffer instanceof IntBuffer) {
+        byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 4);
+        byteBuffer.asIntBuffer().put((IntBuffer) outputBuffer);
+    } else if (outputBuffer instanceof LongBuffer) {
+        byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 8);
+        byteBuffer.asLongBuffer().put((LongBuffer) outputBuffer);
+    } else if (outputBuffer instanceof FloatBuffer) {
+        byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 4);
+        byteBuffer.asFloatBuffer().put((FloatBuffer) outputBuffer);
+    } else if (outputBuffer instanceof DoubleBuffer) {
+        byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 8);
+        byteBuffer.asDoubleBuffer().put((DoubleBuffer) outputBuffer);
+    }
+    else {
+      System.err.println("Unknown buffer "+outputBuffer.getClass().toString());
+    }
+    return byteBuffer;
+  }
+
+  @Override
+  public void bufferData(int target, int size, Buffer data, int usage) {
+    int gl2vktarget = -1;
+    if (target == ARRAY_BUFFER) {
+      gl2vktarget = GL2VK.GL_VERTEX_BUFFER;
+    }
+    else if (target == ELEMENT_ARRAY_BUFFER) {
+      gl2vktarget = GL2VK.GL_INDEX_BUFFER;
+    }
+    else {
+      System.err.println("bufferData: Dunno what to do with target "+target);
+    }
+
+    function("bufferData");
+    gl2vk.glBufferData(gl2vktarget, size, convertToByteBuffer(data), usage);
+  }
+
+  @Override
+  public void bufferSubData(int target, int offset, int size, Buffer data) {
+//    TODO
+  }
+
+  @Override
+  public void isBuffer(int buffer) {
+    // TODO
+
+  }
+
+  @Override
+  public void getBufferParameteriv(int target, int value, IntBuffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public ByteBuffer mapBuffer(int target, int access) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public ByteBuffer mapBufferRange(int target, int offset, int length,
+                                   int access) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public void unmapBuffer(int target) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public long fenceSync(int condition, int flags) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  public void deleteSync(long sync) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public int clientWaitSync(long sync, int flags, long timeout) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  public void depthRangef(float n, float f) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void viewport(int x, int y, int w, int h) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttrib1f(int index, float value) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttrib2f(int index, float value0, float value1) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttrib3f(int index, float value0, float value1,
+                             float value2) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttrib4f(int index, float value0, float value1,
+                             float value2, float value3) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttrib1fv(int index, FloatBuffer values) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttrib2fv(int index, FloatBuffer values) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttrib3fv(int index, FloatBuffer values) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttrib4fv(int index, FloatBuffer values) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void vertexAttribPointer(int index, int size, int type,
+                                  boolean normalized, int stride, int offset) {
+    function("vertexAttribPointer");
+
+    gl2vk.glVertexAttribPointer(index, size, type, normalized, stride, offset);
+  }
+
+  @Override
+  public void enableVertexAttribArray(int index) {
+    // Unneeded and unused in gl2vk
+
+  }
+
+  @Override
+  public void disableVertexAttribArray(int index) {
+    // Unneeded and unused in gl2vk
+  }
+
+  @Override
+  public void drawArraysImpl(int mode, int first, int count) {
+    function("drawArrays");
+    gl2vk.glDrawArrays(mode, first, count);
+  }
+
+  @Override
+  public void drawElementsImpl(int mode, int count, int type, int offset) {
+    int gl2vktype = 0;
+    if (type == UNSIGNED_BYTE) {
+      gl2vktype = GL2VK.GL_UNSIGNED_BYTE;
+    }
+    else if (type == UNSIGNED_INT) {
+      gl2vktype = GL2VK.GL_UNSIGNED_INT;
+    }
+    else if (type == UNSIGNED_SHORT) {
+      gl2vktype = GL2VK.GL_UNSIGNED_SHORT;
+    }
+    function("drawElements");
+    gl2vk.glDrawElements(mode, count, gl2vktype, offset);
+  }
+
+  @Override
+  public void lineWidth(float width) {
+    // TODO Auto-generated method stub
+  }
+
+  @Override
+  public void frontFace(int dir) {
+    // TODO Auto-generated method stub
+  }
+
+  @Override
+  public void cullFace(int mode) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void polygonOffset(float factor, float units) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void pixelStorei(int pname, int param) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void texImage2D(int target, int level, int internalFormat, int width,
+                         int height, int border, int format, int type,
+                         Buffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void copyTexImage2D(int target, int level, int internalFormat, int x,
+                             int y, int width, int height, int border) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void texSubImage2D(int target, int level, int xOffset, int yOffset,
+                            int width, int height, int format, int type,
+                            Buffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void copyTexSubImage2D(int target, int level, int xOffset, int yOffset,
+                                int x, int y, int width, int height) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void compressedTexImage2D(int target, int level, int internalFormat,
+                                   int width, int height, int border,
+                                   int imageSize, Buffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void compressedTexSubImage2D(int target, int level, int xOffset,
+                                      int yOffset, int width, int height,
+                                      int format, int imageSize, Buffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void texParameteri(int target, int pname, int param) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void texParameterf(int target, int pname, float param) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void texParameteriv(int target, int pname, IntBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void texParameterfv(int target, int pname, FloatBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void generateMipmap(int target) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void genTextures(int n, IntBuffer textures) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void deleteTextures(int n, IntBuffer textures) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getTexParameteriv(int target, int pname, IntBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getTexParameterfv(int target, int pname, FloatBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public boolean isTexture(int texture) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public int createShader(int type) {
+    function("createShader");
+    int gl2vktype = 0;
+    if (type == VERTEX_SHADER) {
+      gl2vktype = GL2VK.GL_VERTEX_SHADER;
+    }
+    else {
+      gl2vktype = GL2VK.GL_FRAGMENT_SHADER;
+    }
+    return gl2vk.glCreateShader(gl2vktype);
+  }
+
+  @Override
+  public void shaderSource(int shader, String source) {
+    function("shaderSource");
+    gl2vk.glShaderSource(shader, source);
+  }
+
+  @Override
+  public void compileShader(int shader) {
+    function("compileShader");
+    gl2vk.glCompileShader(shader);
+  }
+
+  @Override
+  public void releaseShaderCompiler() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void deleteShader(int shader) {
+    function("deleteShader");
+    gl2vk.glDeleteShader(shader);
+
+  }
+
+  @Override
+  public void shaderBinary(int count, IntBuffer shaders, int binaryFormat,
+                           Buffer binary, int length) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public int createProgram() {
+    function("createProgram");
+    return gl2vk.glCreateProgram();
+  }
+
+  @Override
+  public void attachShader(int program, int shader) {
+    function("attachShader");
+    gl2vk.glAttachShader(program, shader);
+  }
+
+  @Override
+  public void detachShader(int program, int shader) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void linkProgram(int program) {
+    function("linkProgram");
+    gl2vk.glLinkProgram(program);
+  }
+
+  @Override
+  public void useProgram(int program) {
+    function("useProgram");
+    gl2vk.glUseProgram(program);
+
+  }
+
+  @Override
+  public void deleteProgram(int program) {
+    // TODO Auto-generated method stub
+  }
+
+  @Override
+  public String getActiveAttrib(int program, int index, IntBuffer size,
+                                IntBuffer type) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public int getAttribLocation(int program, String name) {
+    function("getAttribLocation");
+    return gl2vk.glGetAttribLocation(program, name);
+  }
+
+  @Override
+  public void bindAttribLocation(int program, int index, String name) {
+
+  }
+
+  @Override
+  public int getUniformLocation(int program, String name) {
+    function("getUniformLocation");
+    return gl2vk.getUniformLocation(program, name);
+  }
+
+  @Override
+  public String getActiveUniform(int program, int index, IntBuffer size,
+                                 IntBuffer type) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public void uniform1i(int location, int value) {
+
+  }
+
+  @Override
+  public void uniform2i(int location, int value0, int value1) {
+
+  }
+
+  @Override
+  public void uniform3i(int location, int value0, int value1, int value2) {
+  }
+
+  @Override
+  public void uniform4i(int location, int value0, int value1, int value2,
+                        int value3) {
+
+  }
+
+  @Override
+  public void uniform1f(int location, float value) {
+    function("uniform1f");
+    gl2vk.glUniform1f(location, value);
+
+  }
+
+  @Override
+  public void uniform2f(int location, float value0, float value1) {
+    function("uniform2f");
+    gl2vk.glUniform2f(location, value0, value1);
+
+  }
+
+  @Override
+  public void uniform3f(int location, float value0, float value1,
+                        float value2) {
+    function("uniform3f");
+    gl2vk.glUniform3f(location, value0, value1, value2);
+
+  }
+
+  @Override
+  public void uniform4f(int location, float value0, float value1, float value2,
+                        float value3) {
+    function("uniform4f");
+    gl2vk.glUniform4f(location, value0, value1, value2, value3);
+
+  }
+
+  @Override
+  public void uniform1iv(int location, int count, IntBuffer v) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniform2iv(int location, int count, IntBuffer v) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniform3iv(int location, int count, IntBuffer v) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniform4iv(int location, int count, IntBuffer v) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniform1fv(int location, int count, FloatBuffer v) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniform2fv(int location, int count, FloatBuffer v) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniform3fv(int location, int count, FloatBuffer v) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniform4fv(int location, int count, FloatBuffer v) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniformMatrix2fv(int location, int count, boolean transpose,
+                               FloatBuffer mat) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniformMatrix3fv(int location, int count, boolean transpose,
+                               FloatBuffer mat) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void uniformMatrix4fv(int location, int count, boolean transpose,
+                               FloatBuffer mat) {
+    function("uniformMatrix4fv");
+    gl2vk.glUniformMatrix4fv(location, count, transpose, mat);
+  }
+
+  @Override
+  public void validateProgram(int program) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public boolean isShader(int shader) {
+    // TODO Auto-generated method stub
+    return true;
+  }
+
+  @Override
+  public void getShaderiv(int shader, int pname, IntBuffer params) {
+    function("getShaderiv");
+    int gl2vkpname = 0;
+    if (pname == COMPILE_STATUS) {
+      gl2vkpname = GL2VK.GL_COMPILE_STATUS;
+    }
+    else if (pname == INFO_LOG_LENGTH) {
+      gl2vkpname = GL2VK.GL_INFO_LOG_LENGTH;
+    }
+    gl2vk.glGetShaderiv(shader, gl2vkpname, params);
+  }
+
+  @Override
+  public void getAttachedShaders(int program, int maxCount, IntBuffer count,
+                                 IntBuffer shaders) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public String getShaderInfoLog(int shader) {
+    function("getShaderInfoLog");
+    return gl2vk.glGetShaderInfoLog(shader);
+  }
+
+  @Override
+  public String getShaderSource(int shader) {
+    function("getShaderSource");
+    return gl2vk.glGetShaderSource(shader);
+  }
+
+  @Override
+  public void getShaderPrecisionFormat(int shaderType, int precisionType,
+                                       IntBuffer range, IntBuffer precision) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getVertexAttribfv(int index, int pname, FloatBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getVertexAttribiv(int index, int pname, IntBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getVertexAttribPointerv(int index, int pname, ByteBuffer data) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getUniformfv(int program, int location, FloatBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void getUniformiv(int program, int location, IntBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public boolean isProgram(int program) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public void getProgramiv(int program, int pname, IntBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public String getProgramInfoLog(int program) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public void scissor(int x, int y, int w, int h) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void sampleCoverage(float value, boolean invert) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void stencilFunc(int func, int ref, int mask) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void stencilFuncSeparate(int face, int func, int ref, int mask) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void stencilOp(int sfail, int dpfail, int dppass) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void stencilOpSeparate(int face, int sfail, int dpfail, int dppass) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void depthFunc(int func) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void blendEquation(int mode) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void blendEquationSeparate(int modeRGB, int modeAlpha) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void blendFunc(int src, int dst) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void blendFuncSeparate(int srcRGB, int dstRGB, int srcAlpha,
+                                int dstAlpha) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void blendColor(float red, float green, float blue, float alpha) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void colorMask(boolean r, boolean g, boolean b, boolean a) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void depthMask(boolean mask) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void stencilMask(int mask) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void stencilMaskSeparate(int face, int mask) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void clearColor(float r, float g, float b, float a) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void clearDepth(float d) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void clearStencil(int s) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void clear(int buf) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void deleteFramebuffers(int n, IntBuffer framebuffers) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void genFramebuffers(int n, IntBuffer framebuffers) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void bindRenderbuffer(int target, int renderbuffer) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void deleteRenderbuffers(int n, IntBuffer renderbuffers) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void genRenderbuffers(int n, IntBuffer renderbuffers) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void renderbufferStorage(int target, int internalFormat, int width,
+                                  int height) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void framebufferRenderbuffer(int target, int attachment, int rbt,
+                                      int renderbuffer) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void framebufferTexture2D(int target, int attachment, int texTarget,
+                                   int texture, int level) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public int checkFramebufferStatus(int target) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  public boolean isFramebuffer(int framebuffer) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public void getFramebufferAttachmentParameteriv(int target, int attachment,
+                                                  int name, IntBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public boolean isRenderbuffer(int renderbuffer) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public void getRenderbufferParameteriv(int target, int name,
+                                         IntBuffer params) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void blitFramebuffer(int srcX0, int srcY0, int srcX1, int srcY1,
+                              int dstX0, int dstY0, int dstX1, int dstY1,
+                              int mask, int filter) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void renderbufferStorageMultisample(int target, int samples,
+                                             int format, int width,
+                                             int height) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void readBuffer(int buf) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void drawBuffer(int buf) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void setFrameRate(float fps) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void initSurface(int antialias) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void reinitSurface() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void registerListeners() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected int getDepthBits() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  protected int getStencilBits() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  protected float getPixelScale() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  protected void getGL(PGL pgl) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected boolean canDraw() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  protected void requestFocus() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void requestDraw() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void swapBuffers() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void initFBOLayer() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected int getGLSLVersion() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  protected String getGLSLVersionSuffix() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected int getTextWidth(Object font, char[] buffer, int start, int stop) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  protected Object getDerivedFont(Object font, float size) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected Tessellator createTessellator(TessellatorCallback callback) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected FontOutline createFontOutline(char ch, Object font) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected void viewportImpl(int x, int y, int w, int h) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void readPixelsImpl(int x, int y, int width, int height, int format,
+                                int type, Buffer buffer) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void readPixelsImpl(int x, int y, int width, int height, int format,
+                                int type, long offset) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void activeTextureImpl(int texture) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void bindTextureImpl(int target, int texture) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  protected void bindFramebufferImpl(int target, int framebuffer) {
+    // TODO Auto-generated method stub
+
+  }
+
+}

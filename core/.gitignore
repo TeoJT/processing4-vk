@@ -1,0 +1,7 @@
+bin
+bin-test
+
+/library/gluegen-rt*.jar
+/library/jogl-all*.jar
+
+core-sources.jar

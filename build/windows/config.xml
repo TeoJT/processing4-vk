@@ -1,0 +1,110 @@
+<launch4jConfig>
+  <dontWrapJar>true</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>lib</jar>
+  <outfile>work/processing.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>https://adoptium.net/</downloadUrl>
+  <supportUrl></supportUrl>
+  <customProcName>false</customProcName>
+  <stayAlive>false</stayAlive>
+  <manifest></manifest>
+  <icon>processing.ico</icon>
+  <classPath>
+    <!-- <mainClass>processing.app.Base</mainClass> -->
+    <mainClass>processing.app.ui.Splash</mainClass>
+    <cp>core/library/core.jar</cp>
+
+    <cp>lib/pde.jar</cp>
+    <cp>lib/jna.jar</cp>
+    <cp>lib/jna-platform.jar</cp>
+    <cp>lib/ant.jar</cp>
+    <cp>lib/ant-launcher.jar</cp>
+    <cp>lib/flatlaf.jar</cp>
+
+    <!-- <cp>%EXEDIR%/java/lib/tools.jar</cp> -->
+
+    <!--
+    <cp>modes/java/libraries/javafx/library/javafx.base.jar</cp>
+    <cp>modes/java/libraries/javafx/library/javafx.controls.jar</cp>
+    <cp>modes/java/libraries/javafx/library/javafx.fxml.jar</cp>
+    <cp>modes/java/libraries/javafx/library/javafx.graphics.jar</cp>
+    <cp>modes/java/libraries/javafx/library/javafx.media.jar</cp>
+    <cp>modes/java/libraries/javafx/library/javafx.swing.jar</cp>
+    -->
+  </classPath>
+  <jre>
+    <!-- launch4j does not detect Adoptium, so add %PATH% as fallback -->
+    <!-- https://sourceforge.net/p/launch4j/bugs/197/ -->
+    <!-- https://github.com/processing/processing4/issues/667 -->
+    <!-- <path>java;%PATH%</path> -->
+    <!-- For processing.exe, use the "java" folder as shipped, otherwise too many variables. -->
+    <path>java</path>
+
+    <!-- Make it possible access JavaFX and JOGL libraries for Tools,
+         Modes, etc. Not recommended, but making it possible because
+         some Tools rely on JavaFX. (OpenGL is only incidental.) -->
+    <!-- <opt>-Djava.library.path=lib;core/library</opt> -->
+    <!-- <opt>-\-module-path=core/library</opt> -->
+    <!-- Make it possible access JavaFX for Tools, Modes, etc. Not recommended,
+         but making it possible for 4.x because some Tools rely on JavaFX. -->
+    <!-- Removing in 4.0 beta 4, for more information:
+         https://github.com/processing/processing4/issues/348
+    <opt>-Djava.library.path=lib;modes/java/libraries/javafx/library/windows64</opt>
+    <opt>- -module-path=modes/java/libraries/javafx/library/windows64/modules</opt>
+    <opt>- -add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web</opt>
+    -->
+
+    <!-- Java 9+ handles high DPI internally so OS display scaling -->
+    <!-- can cause display issues with custom rendering swing elements. -->
+    <!-- <opt>-Dsun.java2d.uiScale.enabled=true</opt> -->
+    <!-- Disabling the line above for 4.0 alpha 5, which scales the
+         interface properly on startup (preventing the tiny splash) -->
+
+    <!-- Deal with jokers who install JOGL, ANTLR, etc system-wide -->
+    <!-- <opt>-Djava.ext.dirs="%EXEDIR%\\java\\lib\\ext"</opt> -->
+    <!-- https://github.com/processing/processing/issues/2239 -->
+    <opt>-Djna.nosys=true</opt>
+    <!-- Because nosys is set to true, the DLL in the current working
+         directory won't be considered. And we can't specify the user's
+         directory here because that'll get us into encoding trouble.
+         (See https://github.com/processing/processing/issues/3624)
+         Instead, set this so that Native.loadNativeLibrary() will use
+         new File(path, "jnidispatch.dll") which will be relative to the
+         directory of processing.exe (the current working directory). -->
+    <opt>-Djna.boot.library.path=lib</opt>
+    <opt>-Djna.nounpack=true</opt>
+
+    <!-- Attempt to fix UI rendering issues in Windows 10
+         https://github.com/processing/processing/issues/4700 -->
+    <opt>-Dsun.java2d.d3d=false</opt>
+    <opt>-Dsun.java2d.ddoffscreen=false</opt>
+    <opt>-Dsun.java2d.noddraw=true</opt>
+
+    <!-- https://github.com/jdf/Processing.py-Bugs/issues/322 -->
+    <opt>-Dpython.console.encoding=UTF-8</opt>
+
+    <!-- starting in 4.0 beta 3, Java 17 is required -->
+    <minVersion>17.0.1</minVersion>
+    <!-- increase available memory for PDE X -->
+    <maxHeapSize>512</maxHeapSize>
+  </jre>
+  <!--
+  <splash>
+    <file>about.bmp</file>
+    <waitForWindow>true</waitForWindow>
+    <timeout>60</timeout>
+    <timeoutErr>false</timeoutErr>
+  </splash>
+  -->
+  <messages>
+    <startupErr>An error occurred while starting the application.</startupErr>
+    <bundledJreErr>This application was configured to use a bundled Java Runtime Environment but the runtime is missing or corrupted. If running from a folder with non-ASCII characters, try moving this folder to another location.</bundledJreErr>
+    <jreVersionErr>Required files could not be found. Be sure to first extract the entire Processing folder from the .zip file download. Or if running from a folder with non-ASCII characters, try moving the Processing folder to another location.</jreVersionErr>
+    <launcherErr>The registry refers to a nonexistent Java installation or the runtime is corrupted.</launcherErr>
+    <instanceAlreadyExistsMsg>An application instance is already running.</instanceAlreadyExistsMsg>
+  </messages>
+</launch4jConfig>
