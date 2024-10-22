@@ -57,7 +57,7 @@ public abstract class PGL {
   protected PApplet sketch;
 
   /** OpenGL thread */
-  protected Thread glThread;
+  public Thread glThread;
 
   /** ID of the GL context associated to the surface **/
   protected int glContext;

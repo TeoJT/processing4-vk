@@ -28,7 +28,7 @@ attribute vec4 color;
 varying vec4 vertColor;
 
 void main() {
-  gl_Position = transformMatrix * position;
+  gl_Position = position;
     
   vertColor = color;
 }

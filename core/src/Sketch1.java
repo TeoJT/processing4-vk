@@ -20,7 +20,7 @@ public class Sketch1 extends PApplet {
     @Override
     public void settings() {
       try {
-        size(512, 512, P2D);
+        size(512, 512, PV2D);
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -49,7 +49,7 @@ public class Sketch1 extends PApplet {
         fill(255, 0, 0);
         noStroke();
 
-        rect(0f, 0f, 256f, 256f);
+        rect(-1f, -1f, 2f, 2f);
 
       }
       catch (RuntimeException e) {
