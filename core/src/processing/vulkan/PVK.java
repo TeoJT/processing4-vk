@@ -2,6 +2,7 @@ package processing.vulkan;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
@@ -365,7 +366,7 @@ public class PVK extends PGL implements PJOGLInterface {
   }
 
   private void function(String func) {
-
+//    System.out.println(func);
   }
 
   private void prepareStrings() {
@@ -510,6 +511,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void genBuffers(int n, IntBuffer buffers) {
+    function("genBuffers");
     gl2vk.glGenBuffers(n, buffers);
   }
 
@@ -533,21 +535,27 @@ public class PVK extends PGL implements PJOGLInterface {
         byteBuffer = (ByteBuffer) outputBuffer;
     } else if (outputBuffer instanceof CharBuffer) {
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity());
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asCharBuffer().put((CharBuffer) outputBuffer);
     } else if (outputBuffer instanceof ShortBuffer) {
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 2);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asShortBuffer().put((ShortBuffer) outputBuffer);
     } else if (outputBuffer instanceof IntBuffer) {
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 4);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asIntBuffer().put((IntBuffer) outputBuffer);
     } else if (outputBuffer instanceof LongBuffer) {
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 8);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asLongBuffer().put((LongBuffer) outputBuffer);
     } else if (outputBuffer instanceof FloatBuffer) {
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 4);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asFloatBuffer().put((FloatBuffer) outputBuffer);
     } else if (outputBuffer instanceof DoubleBuffer) {
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 8);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asDoubleBuffer().put((DoubleBuffer) outputBuffer);
     }
     else {

@@ -66,7 +66,7 @@ public class CoolIndicies extends PApplet {
   @Override
   public void settings() {
     try {
-      size(512, 512, P3D);
+      size(512, 512, PV3D);
     }
     catch (RuntimeException e) {
       e.printStackTrace();

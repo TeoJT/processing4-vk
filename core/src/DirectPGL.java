@@ -10,6 +10,7 @@ import java.nio.*;
 import java.util.HashMap;
 
 
+
 public class DirectPGL extends PApplet {
 
 PShader sh1;
@@ -119,6 +120,7 @@ public void draw() {
     |v1       |v2       |v3       |...
     |0   |4   |8   |12  |16  |20  |...
     |xyzw|rgba|xyzw|rgba|xyzw|rgba|...
+
 
     stride (values per vertex) is 8 floats
     vertex offset is 0 floats (starts at the beginning of each line)

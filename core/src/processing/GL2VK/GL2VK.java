@@ -301,11 +301,11 @@ public class GL2VK {
 
 	private boolean checkAndPrepareProgram() {
 		if (boundProgram <= 0) {
-			warn("glDrawArrays: No program bound.");
+			warn("checkAndPrepareProgram: No program bound.");
 			return false;
 		}
 		if (programs[boundProgram] == null || programs[boundProgram].attribInfo == null) {
-			warn("glDrawArrays: program "+boundProgram+" doesn't exist or isn't set up properly");
+			warn("checkAndPrepareProgram: program "+boundProgram+" doesn't exist or isn't set up properly");
 			return false;
 		}
 
@@ -548,7 +548,7 @@ public class GL2VK {
 		// And also add the uniform attribs to the GLPipeline
 		programs[program].addUniforms(sh.uniforms);
 
-		System.out.println("PROGRAM "+program+" to "+sh.source);
+//		System.out.println("PROGRAM "+program+" to "+sh.source);
 	}
 
 	// Mainly just used for getting shader compilation status.
