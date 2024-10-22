@@ -360,6 +360,10 @@ public class PVK extends PGL implements PJOGLInterface {
     gl2vk.endRecord();
   }
 
+  public void selectNode(int node) {
+    gl2vk.selectNode(node);
+  }
+
   private void function(String func) {
 
   }

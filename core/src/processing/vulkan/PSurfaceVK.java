@@ -69,6 +69,7 @@ public class PSurfaceVK implements PSurface {
         pvk.getGL(pvk);
 
         pvk.beginRecord();
+        pvk.selectNode(0);
         sketch.handleDraw();
         pvk.endRecord();
       }

@@ -49,7 +49,7 @@ public class Sketch1 extends PApplet {
         fill(255, 0, 0);
         noStroke();
 
-        rect(-1f, -1f, 2f, 2f);
+        triangle(120, 300, 232, 80, 344, 300);
 
       }
       catch (RuntimeException e) {

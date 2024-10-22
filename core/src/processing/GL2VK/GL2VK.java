@@ -229,6 +229,7 @@ public class GL2VK {
 
 	public void glBindBuffer(int type, int vbo) {
 		boundBuffer = vbo;
+//		System.out.println("glBindBuffer"+vbo);
 	}
 
 	public void glBufferData(int target, int size, ByteBuffer data, int usage) {
@@ -252,22 +253,6 @@ public class GL2VK {
 			return;
 		}
 
-    // TODO: Obviously testing code
-//    ByteBuffer newData = null;
-//		if (data != null) {
-//		  newData = ByteBuffer.allocateDirect(data.capacity());
-//	    newData.order(ByteOrder.LITTLE_ENDIAN);
-//  		data.rewind();
-//  		for (int i = 0; i < data.capacity(); i+=4) {
-//  		  float f = data.getFloat();
-////  		  if (f > 1.0f) f /= 512f;
-//  	    System.out.print(f+" ");
-//  	    newData.putFloat(f);
-//  		}
-//      data.rewind();
-//      newData.rewind();
-//  		System.out.println();
-//		}
 
 		// Note: target is for specifying vertex_array, indicies_array
 		// which we'll likely need. Usage, I have no idea what it does.
@@ -278,6 +263,36 @@ public class GL2VK {
 		if (data != null) {
 		  buffers[boundBuffer].bufferData(data, size, dangerMode);
 		}
+
+//  ByteBuffer newData = null;
+//    System.out.println(boundBuffer+"VK BUFFER "+buffers[boundBuffer].bufferID);
+//    if (data != null) {
+//  //    newData = ByteBuffer.allocateDirect(data.capacity());
+//  //    newData.order(ByteOrder.LITTLE_ENDIAN);
+//      data.rewind();
+//
+//      int max = data.capacity();
+//      if (32 < max) max = 64;
+//
+//      for (int i = 0; i < max; i+=4) {
+//        float f = data.getFloat();
+//  //      if (f > 1.0f) f /= 512f;
+//        System.out.print(f+" ");
+//  //      newData.putFloat(f);
+//      }
+//      data.rewind();
+//      System.out.println();
+//
+//      for (int i = 0; i < max; i+=4) {
+//        short x = data.getShort();
+//  //      if (f > 1.0f) f /= 512f;
+//        System.out.print(x+" ");
+//  //      newData.putFloat(f);
+//      }
+//      data.rewind();
+//  //    newData.rewind();
+//      System.out.println();
+//    }
 	}
 
 	private boolean pipelineInitiated() {
@@ -334,9 +349,11 @@ public class GL2VK {
 	// in jogl it's the bound buffer??
 	// Either way, it's java and Processing we're writing this for, so it is what it is.
 	public void glDrawElements(int mode, int count, int type, int offset) {
+//	  System.out.println("DRAWINDEXED");
 		// Mode not used
 		if (checkAndPrepareProgram() == false) return;
 
+//		System.out.println("glDrawElements "+boundBuffer+" count "+count+" type "+type+" offset "+offset+"  buffer "+buffers[boundBuffer].bufferID);
 		system.nodeDrawIndexed(count, buffers[boundBuffer].bufferID, programs[boundProgram].getVKBuffers(), offset, type);
 	}
 
@@ -345,6 +362,10 @@ public class GL2VK {
 	// because chances are, when we use glVertexAttribPointer, we're being pretty clear that we do,
 	// indeed, want to use the vertexAttrib. And it's not like glDisableVertexAttribArray is going to
 	// have any effect, you can't disable vertex attribs in a pipeline that's already been created.
+
+	// BUG FOUND TODO:
+	// Size should be the number of components in the vector, not the total size!
+	// e.g. for a vec4, it should be 4, not 4*4
 	public void glVertexAttribPointer(int glindex, int size, int type, boolean normalized, int stride, int offset) {
 		if (boundBuffer <= 0) {
 			warn("glVertexAttribPointer: don't forget to bind a buffer!");
@@ -361,6 +382,7 @@ public class GL2VK {
 		int vkLocation = program.getVKAttribLocation(glindex);
 
 
+//		System.out.println("ATTRIB BUFFER "+glindex+" "+buffers[boundBuffer].bufferID);
 		program.bind(boundBuffer, buffers[boundBuffer]);
 		program.vertexAttribPointer(vkLocation, size, offset, stride);
 	}
@@ -382,7 +404,7 @@ public class GL2VK {
 			warn("glGetAttribLocation: program "+program+" doesn't exist.");
 			return 0;
 		}
-
+//		System.out.println(name+" "+programs[program].getGLAttribLocation(name));
 		return programs[program].getGLAttribLocation(name);
 	}
 
@@ -525,6 +547,8 @@ public class GL2VK {
 
 		// And also add the uniform attribs to the GLPipeline
 		programs[program].addUniforms(sh.uniforms);
+
+		System.out.println("PROGRAM "+program+" to "+sh.source);
 	}
 
 	// Mainly just used for getting shader compilation status.
@@ -560,10 +584,14 @@ public class GL2VK {
 	}
 
 	public void glUseProgram(int program) {
+	  if (program == 0) {
+	    return;
+	  }
 		if (program != boundProgram) {
 			changeProgram = true;
 		}
 		boundProgram = program;
+//		System.out.println("USEPROGRAM "+program);
 	}
 
 	public int getUniformLocation(int program, String name) {
@@ -571,6 +599,7 @@ public class GL2VK {
 			warn("getUniformLocation: program "+program+" doesn't exist.");
 			return -1;
 		}
+//		System.out.println(name+" "+programs[program].getUniformLocation(name));
 		return programs[program].getUniformLocation(name);
 	}
 

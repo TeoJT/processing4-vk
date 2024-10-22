@@ -383,7 +383,7 @@ public class VulkanSystem {
 	        renderPassInfo.renderArea(renderArea);
 
 	        VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-	        clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+	        clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.2f, 1.0f));
 	        renderPassInfo.pClearValues(clearValues);
 
             if(vkBeginCommandBuffer(currentCommandBuffer, beginInfo) != VK_SUCCESS) {

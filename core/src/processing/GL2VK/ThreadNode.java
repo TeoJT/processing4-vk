@@ -412,6 +412,9 @@ public class ThreadNode {
 	        				  break;
 	        			  }
 
+//                  System.out.println("expected type: "+VK_INDEX_TYPE_UINT16+"  type: "+vkType+"  offset: "+offset+"  indicesSize: "+indiciesSize+"  numBuffers: "+numBuffers+"  indicesBuffer: "+indicesBuffer);
+
+
 
 	        			  try(MemoryStack stack = stackPush()) {
 	        			      LongBuffer vertexBuffers = stack.callocLong(numBuffers);
