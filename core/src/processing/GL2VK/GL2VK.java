@@ -3,6 +3,9 @@ package processing.GL2VK;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GL2ES2;
+
 import processing.GL2VK.ShaderSPIRVUtils.SPIRV;
 import processing.GL2VK.ShaderSPIRVUtils.ShaderKind;
 
@@ -29,6 +32,12 @@ public class GL2VK {
 	public static final int GL_UNSIGNED_BYTE = 1;
 	public static final int GL_UNSIGNED_SHORT = 2;
 	public static final int GL_UNSIGNED_INT = 3;
+
+  public static final int GL_INT            = 4;
+  public static final int GL_BYTE           = 5;
+  public static final int GL_SHORT          = 6;
+  public static final int GL_FLOAT          = 7;
+  public static final int GL_BOOL           = 8;
 
 	public static final int GL_TRUE = 1;
 	public static final int GL_FALSE = 0;
@@ -122,7 +131,7 @@ public class GL2VK {
     }
     // Anything else
     public TempUniformState(int loc, int cmdID, FloatBuffer buff) {
-      cmdID = 99;
+      this.cmdID = cmdID;
       this.location = loc;
       mat = buff;
     }
@@ -375,6 +384,9 @@ public class GL2VK {
 			return;
 		}
 
+
+
+
 		// Convert from gl index to vk location
 		// We also need the program to see what we're doing
 		GL2VKPipeline program = glAttribs[glindex].program;
@@ -384,7 +396,7 @@ public class GL2VK {
 
 //		System.out.println("ATTRIB BUFFER "+glindex+" "+buffers[boundBuffer].bufferID);
 		program.bind(boundBuffer, buffers[boundBuffer]);
-		program.vertexAttribPointer(vkLocation, size, offset, stride);
+		program.vertexAttribPointer(vkLocation, size, type, normalized, stride, offset);
 	}
 
 	public int glCreateProgram() {

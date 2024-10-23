@@ -479,14 +479,14 @@ public class GL2VKPipeline {
     	return bufferArray;
     }
 
-    public void vertexAttribPointer(int vklocation, int size, int offset, int stride) {
+    public void vertexAttribPointer(int vklocation, int count, int type, boolean normalized, int stride, int offset) {
     	// Remember, a gl buffer binding of 0 means no bound buffer,
     	// and by default in this class, means bind() hasn't been called.
     	if (boundBinding == 0) {
     		System.err.println("BUG WARNING  vertexAttribPointer called with no bound buffer.");
     		return;
     	}
-    	gl2vkBinding.get(boundBinding).vertexAttribPointer(vklocation, size, offset, stride);
+    	gl2vkBinding.get(boundBinding).vertexAttribPointer(vklocation, count, type, normalized, stride, offset);
     }
 
     // Not actually used but cool to have

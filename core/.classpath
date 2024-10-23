@@ -40,10 +40,6 @@
 	<classpathentry kind="lib" path="library/lwjgl-vulkan/lwjgl-vma-sources.jar"/>
 	<classpathentry kind="lib" path="library/lwjgl-vulkan/lwjgl-vulkan.jar"/>
 	<classpathentry kind="lib" path="library/lwjgl-vulkan/lwjgl-vulkan-sources.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

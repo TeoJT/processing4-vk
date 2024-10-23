@@ -224,10 +224,10 @@ public class GLExample {
 
     	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, glVertBuff);
     	gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, vertexBuffer.capacity(), vertexBuffer, 0);
-		gl.glVertexAttribPointer(position, 4*4, 0, false, 4*4, 0);
+		gl.glVertexAttribPointer(position, 4, GL2VK.GL_FLOAT, false, 4*4, 0);
     	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, glColBuff);
     	gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, colorBuffer.capacity(), colorBuffer, 0);
-		gl.glVertexAttribPointer(color, 4*4, 0, false, 4*4, 0);
+		gl.glVertexAttribPointer(color, 4, GL2VK.GL_FLOAT, false, 4*4, 0);
 
     	gl.glBindBuffer(GL2VK.GL_INDEX_BUFFER, glIndexBuff);
     	gl.glBufferData(GL2VK.GL_INDEX_BUFFER, indexBuffer.capacity(), indexBuffer, 0);
@@ -249,7 +249,7 @@ public class GLExample {
 
     	while (!gl.shouldClose()) {
     		transform.identity();
-    		transform.rotateZ((float) (qtime * Math.toRadians(90)));
+    		transform.rotateZ((qtime * Math.toRadians(90)));
 //    		transform.lookAt(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
 //    		transform.perspective((float) Math.toRadians(45),
 //                    (float)1200 / (float)00, 0.1f, 10.0f);
@@ -260,7 +260,7 @@ public class GLExample {
     		gl.beginRecord();
 
 
-    		if (multithreaded) gl.selectNode((int)(threadIndex++)%gl.getNodesCount());
+    		if (multithreaded) gl.selectNode((threadIndex++)%gl.getNodesCount());
     		else gl.selectNode(0);
 
 //        ByteBuffer buff = ByteBuffer.allocateDirect(64);
@@ -339,10 +339,10 @@ public class GLExample {
 
     	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, glVertBuff);
     	gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, vertexBuffer.capacity(), vertexBuffer, 0);
-		gl.glVertexAttribPointer(position, 2*4, 0, false, 2*4, 0);
+		gl.glVertexAttribPointer(position, 2, GL2VK.GL_FLOAT, false, 2*4, 0);
     	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, glColBuff);
     	gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, colorBuffer.capacity(), colorBuffer, 0);
-		gl.glVertexAttribPointer(color, 3*4, 0, false, 3*4, 0);
+		gl.glVertexAttribPointer(color, 3, GL2VK.GL_FLOAT, false, 3*4, 0);
 
     	gl.glBindBuffer(GL2VK.GL_INDEX_BUFFER, glIndexBuff);
     	gl.glBufferData(GL2VK.GL_INDEX_BUFFER, indexBuffer.capacity(), indexBuffer, 0);
@@ -374,7 +374,7 @@ public class GLExample {
     	while (!gl.shouldClose()) {
     		gl.beginRecord();
 
-    		if (multithreaded) gl.selectNode((int)(threadIndex++)%gl.getNodesCount());
+    		if (multithreaded) gl.selectNode((threadIndex++)%gl.getNodesCount());
     		else gl.selectNode(0);
 
     		qtime += 0.1d;
@@ -447,10 +447,10 @@ public class GLExample {
 
     	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, glVertBuff);
     	gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, vertexBuffer.capacity(), vertexBuffer, 0);
-		gl.glVertexAttribPointer(position, 2*4, 0, false, 2*4, 0);
+		gl.glVertexAttribPointer(position, 2, GL2VK.GL_FLOAT, false, 2*4, 0);
     	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, glColBuff);
     	gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, colorBuffer.capacity(), colorBuffer, 0);
-		gl.glVertexAttribPointer(color, 3*4, 0, false, 3*4, 0);
+		gl.glVertexAttribPointer(color, 3, GL2VK.GL_FLOAT, false, 3*4, 0);
 
     	gl.glBindBuffer(GL2VK.GL_INDEX_BUFFER, glIndexBuff);
     	gl.glBufferData(GL2VK.GL_INDEX_BUFFER, indexBuffer.capacity(), indexBuffer, 0);
@@ -466,7 +466,7 @@ public class GLExample {
     	while (!gl.shouldClose()) {
     		gl.beginRecord();
 
-    		if (multithreaded) gl.selectNode((int)(threadIndex++)%gl.getNodesCount());
+    		if (multithreaded) gl.selectNode((threadIndex++)%gl.getNodesCount());
     		else gl.selectNode(0);
 
         	gl.glBindBuffer(GL2VK.GL_INDEX_BUFFER, glIndexBuff);
@@ -574,8 +574,8 @@ public class GLExample {
 		// Setup up attribs
 		int position = gl.glGetAttribLocation(program, "inPosition");
 		int color = gl.glGetAttribLocation(program, "inColor");
-		gl.glVertexAttribPointer(position, 2*4, 0, false, 5*4, 0);
-		gl.glVertexAttribPointer(color, 3*4, 0, false, 5*4, 2*4);
+		gl.glVertexAttribPointer(position, 2, GL2VK.GL_FLOAT, false, 5*4, 0);
+		gl.glVertexAttribPointer(color, 3, GL2VK.GL_FLOAT, false, 5*4, 2*4);
 
 		gl.glUseProgram(program);
 
@@ -593,7 +593,7 @@ public class GLExample {
 
     		gl.beginRecord();
 
-    		if (multithreaded) gl.selectNode((int)(threadIndex++)%gl.getNodesCount());
+    		if (multithreaded) gl.selectNode((threadIndex++)%gl.getNodesCount());
     		else gl.selectNode(0);
 
     		gl.glDrawArrays(0, 0, vertices.length);
@@ -647,9 +647,9 @@ public class GLExample {
 		int color = gl.glGetAttribLocation(program, "inColor");
 
     	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, vertexBuffer);
-		gl.glVertexAttribPointer(position, 2*4, 0, false, 2*4, 0);
+		gl.glVertexAttribPointer(position, 2, GL2VK.GL_FLOAT, false, 2*4, 0);
     	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, colorBuffer);
-		gl.glVertexAttribPointer(color, 3*4, 0, false, 3*4, 0);
+		gl.glVertexAttribPointer(color, 3, GL2VK.GL_FLOAT, false, 3*4, 0);
 
 		gl.glUseProgram(program);
 
@@ -678,7 +678,7 @@ public class GLExample {
 
     		gl.beginRecord();
 
-    		if (multithreaded) gl.selectNode((int)(threadIndex++)%gl.getNodesCount());
+    		if (multithreaded) gl.selectNode((threadIndex++)%gl.getNodesCount());
     		else gl.selectNode(0);
 
     		gl.glDrawArrays(0, 0, vertices.length);
@@ -733,7 +733,7 @@ public class GLExample {
 
     		// Throttle
         	for (int i = 0; i < 10000; i++) {
-        		if (multithreaded) gl.selectNode((int)(i/10)%gl.getNodesCount());
+        		if (multithreaded) gl.selectNode((i/10)%gl.getNodesCount());
         		else gl.selectNode(0);
 
         		gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, vertexBuffer[buffindex]);

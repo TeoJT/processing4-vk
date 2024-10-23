@@ -714,7 +714,27 @@ public class PVK extends PGL implements PJOGLInterface {
                                   boolean normalized, int stride, int offset) {
     function("vertexAttribPointer");
 
-    gl2vk.glVertexAttribPointer(index, size, type, normalized, stride, offset);
+    int gl2vktype = 0;
+    if (type == UNSIGNED_BYTE)
+      gl2vktype = GL2VK.GL_UNSIGNED_BYTE;
+    else if (type == FLOAT)
+      gl2vktype = GL2VK.GL_FLOAT;
+    else if (type ==  UNSIGNED_SHORT)
+      gl2vktype = GL2VK.GL_UNSIGNED_SHORT;
+    else if (type == UNSIGNED_INT)
+      gl2vktype = GL2VK.GL_UNSIGNED_INT;
+    else if (type == INT)
+      gl2vktype = GL2VK.GL_INT;
+    else if (type == BYTE)
+      gl2vktype = GL2VK.GL_BYTE;
+    else if (type == SHORT)
+      gl2vktype = GL2VK.GL_SHORT;
+    else if (type == BOOL)
+      gl2vktype = GL2VK.GL_BOOL;
+    else System.out.println("WARNING  Unknown type "+type);
+
+    gl2vk.glVertexAttribPointer(index, size, gl2vktype, normalized, stride, offset);
+
   }
 
   @Override

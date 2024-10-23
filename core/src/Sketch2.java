@@ -167,8 +167,8 @@ void main() {
       pgl.bindBuffer(PGL.ARRAY_BUFFER, vbo);
 
       // Remember to change 4*4 to 4.
-      pgl.vertexAttribPointer(posAttrib, 4*4, PGL.FLOAT, false, 4*4*2, 0);
-      pgl.vertexAttribPointer(colAttrib, 4*4, PGL.FLOAT, false, 4*4*2, 4*4);
+      pgl.vertexAttribPointer(posAttrib, 4, PGL.FLOAT, false, 4*4*2, 0);
+      pgl.vertexAttribPointer(colAttrib, 4, PGL.FLOAT, false, 4*4*2, 4*4);
 
       pgl.enableVertexAttribArray(posAttrib);
       pgl.enableVertexAttribArray(colAttrib);

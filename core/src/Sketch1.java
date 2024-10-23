@@ -46,10 +46,10 @@ public class Sketch1 extends PApplet {
     public void draw() {
       try {
         background(200);
-        fill(255, 0, 0);
+        fill(0, 0, 255);
         noStroke();
 
-        rect(0f, 0f, 1f, 1f);
+        rect(0f, 0f, 256f, 256f);
 
       }
       catch (RuntimeException e) {
