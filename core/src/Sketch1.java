@@ -46,10 +46,16 @@ public class Sketch1 extends PApplet {
     public void draw() {
       try {
         background(200);
-        fill(0, 0, 255);
         noStroke();
 
+        int MAX = 256;
+        colorMode(HSB, MAX, 255, 255);
+        fill(frameCount%MAX, 255, 255);
+
         rect(0f, 0f, 256f, 256f);
+
+        colorMode(RGB, 256);
+//        println();
 
       }
       catch (RuntimeException e) {

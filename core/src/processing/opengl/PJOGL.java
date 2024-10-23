@@ -60,6 +60,7 @@ import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PMatrix3D;
 import processing.core.PSurface;
+import processing.vulkan.PVK;
 
 
 public class PJOGL extends PGL {
@@ -1158,6 +1159,36 @@ public class PJOGL extends PGL {
   @Override
   public void bufferData(int target, int size, Buffer data, int usage) {
     gl.glBufferData(target, size, data, usage);
+//
+//    ByteBuffer databyte = PVK.convertToByteBuffer(data);
+//    System.out.println();
+//  if (databyte != null) {
+////    newData = ByteBuffer.allocateDirect(data.capacity());
+////    newData.order(ByteOrder.LITTLE_ENDIAN);
+//    databyte.rewind();
+//
+//    int max = databyte.capacity();
+//    if (32 < max) max = 64;
+//
+//    for (int i = 0; i < max; i+=4) {
+//      float f = databyte.getFloat();
+////      if (f > 1.0f) f /= 512f;
+//      System.out.print(f+" ");
+////      newData.putFloat(f);
+//    }
+//    databyte.rewind();
+//    System.out.println();
+//
+//    for (int i = 0; i < max; i+=4) {
+//      short x = databyte.getShort();
+////      if (f > 1.0f) f /= 512f;
+//      System.out.print(x+" ");
+////      newData.putFloat(f);
+//    }
+//    databyte.rewind();
+////    newData.rewind();
+//    System.out.println();
+//  }
   }
 
   @Override
@@ -1469,6 +1500,7 @@ public class PJOGL extends PGL {
   @Override
   public void shaderSource(int shader, String source) {
     gl2.glShaderSource(shader, 1, new String[] { source }, null, 0);
+    System.out.println(source);
   }
 
   @Override

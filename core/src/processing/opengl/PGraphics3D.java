@@ -75,6 +75,11 @@ public class PGraphics3D extends PGraphicsOpenGL {
   }
 
 
+  private void dumpStack() {
+//    Thread.dumpStack();
+  }
+
+
   //////////////////////////////////////////////////////////////
 
   // MATRIX MORE!
@@ -89,8 +94,11 @@ public class PGraphics3D extends PGraphicsOpenGL {
     // Set camera for 2D rendering, it simply centers at (width/2, height/2)
     float centerX = width/2f;
     float centerY = height/2f;
+
+
     modelview.reset();
     modelview.translate(-centerX, -centerY);
+    dumpStack();
 
     modelviewInv.set(modelview);
     modelviewInv.invert();

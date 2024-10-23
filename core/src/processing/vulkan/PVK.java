@@ -527,7 +527,7 @@ public class PVK extends PGL implements PJOGLInterface {
   }
 
 
-  private ByteBuffer convertToByteBuffer(Buffer outputBuffer) {
+  public static ByteBuffer convertToByteBuffer(Buffer outputBuffer) {
     if (outputBuffer == null) return null;
 
     ByteBuffer byteBuffer = null;
@@ -578,7 +578,40 @@ public class PVK extends PGL implements PJOGLInterface {
     }
 
     function("bufferData");
-    gl2vk.glBufferData(gl2vktarget, size, convertToByteBuffer(data), usage);
+
+    ByteBuffer databyte = convertToByteBuffer(data);
+
+
+//    System.out.println();
+//  if (databyte != null) {
+////    newData = ByteBuffer.allocateDirect(data.capacity());
+////    newData.order(ByteOrder.LITTLE_ENDIAN);
+//    databyte.rewind();
+//
+//    int max = databyte.capacity();
+//    if (32 < max) max = 64;
+//
+//    for (int i = 0; i < max; i+=4) {
+//      float f = databyte.getFloat();
+////      if (f > 1.0f) f /= 512f;
+//      System.out.print(f+" ");
+////      newData.putFloat(f);
+//    }
+//    databyte.rewind();
+//    System.out.println();
+//
+//    for (int i = 0; i < max; i+=4) {
+//      short x = databyte.getShort();
+////      if (f > 1.0f) f /= 512f;
+//      System.out.print(x+" ");
+////      newData.putFloat(f);
+//    }
+//    databyte.rewind();
+////    newData.rewind();
+//    System.out.println();
+//  }
+
+    gl2vk.glBufferData(gl2vktarget, size, databyte, usage);
   }
 
   @Override
@@ -921,6 +954,7 @@ public class PVK extends PGL implements PJOGLInterface {
   public void shaderSource(int shader, String source) {
     function("shaderSource");
     gl2vk.glShaderSource(shader, source);
+    System.out.println(source);
   }
 
   @Override

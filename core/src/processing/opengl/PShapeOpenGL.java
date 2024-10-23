@@ -1,4 +1,3 @@
-/* -*- mode: java; c-basic-offset: 2; indent-tabs-mode: nil -*- */
 
 /*
   Part of the Processing project - http://processing.org
@@ -314,6 +313,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public PShapeOpenGL(PGraphicsOpenGL pg, int family) {
+        printFunction("PShapeOpenGL");
     this.pg = pg;
     this.family = family;
 
@@ -408,9 +408,14 @@ public class PShapeOpenGL extends PShape {
   }
 
 
+  public static void printFunction(String name) {
+//    System.out.println(name);
+  }
+
   /** Create a shape from the PRIMITIVE family, using this kind and these params */
   public PShapeOpenGL(PGraphicsOpenGL pg, int kind, float... p) {
     this(pg, PRIMITIVE);
+        printFunction("PShapeOpenGL");
     setKind(kind);
     setParams(p);
   }
@@ -418,6 +423,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void addChild(PShape who) {
+        printFunction("void addChild");
     if (who instanceof PShapeOpenGL) {
       if (family == GROUP) {
         PShapeOpenGL c3d = (PShapeOpenGL)who;
@@ -459,6 +465,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void addChild(PShape who, int idx) {
+        printFunction("void addChild");
     if (who instanceof PShapeOpenGL) {
       if (family == GROUP) {
         PShapeOpenGL c3d = (PShapeOpenGL)who;
@@ -500,6 +507,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void removeChild(int idx) {
+        printFunction("void removeChild");
     super.removeChild(idx);
     strokedTexture(false);
     untexChild(false);
@@ -508,6 +516,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void updateRoot(PShape root) {
+        printFunction("void updateRoot");
     this.root = (PShapeOpenGL) root;
     if (family == GROUP) {
       for (int i = 0; i < childCount; i++) {
@@ -525,6 +534,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public static PShapeOpenGL createShape(PGraphicsOpenGL pg, PShape src) {
+        printFunction("static PShapeOpenGL createShape");
     PShapeOpenGL dest = null;
     if (src.getFamily() == GROUP) {
       //dest = PGraphics3D.createShapeImpl(pg, GROUP);
@@ -612,6 +622,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getWidth() {
+        printFunction("float getWidth");
     PVector min = new PVector(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                               Float.POSITIVE_INFINITY);
     PVector max = new PVector(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY,
@@ -627,6 +638,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getHeight() {
+        printFunction("float getHeight");
     PVector min = new PVector(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                               Float.POSITIVE_INFINITY);
     PVector max = new PVector(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY,
@@ -642,6 +654,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getDepth() {
+        printFunction("float getDepth");
     PVector min = new PVector(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                               Float.POSITIVE_INFINITY);
     PVector max = new PVector(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY,
@@ -656,6 +669,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void getVertexMin(PVector min) {
+        printFunction("void getVertexMin");
     updateTessellation();
 
     if (family == GROUP) {
@@ -680,6 +694,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void getVertexMax(PVector max) {
+        printFunction("void getVertexMax");
     updateTessellation();
 
     if (family == GROUP) {
@@ -704,6 +719,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected int getVertexSum(PVector sum, int count) {
+        printFunction("int getVertexSum");
     updateTessellation();
 
     if (family == GROUP) {
@@ -739,6 +755,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setTextureMode(int mode) {
+        printFunction("void setTextureMode");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setTextureMode()");
       return;
@@ -756,6 +773,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setTextureModeImpl(int mode) {
+        printFunction("void setTextureModeImpl");
     if (textureMode == mode) return;
     textureMode = mode;
     if (image != null) {
@@ -772,6 +790,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setTexture(PImage tex) {
+        printFunction("void setTexture");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setTexture()");
       return;
@@ -789,6 +808,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setTextureImpl(PImage tex) {
+        printFunction("void setTextureImpl");
     PImage image0 = image;
     image = tex;
 
@@ -820,6 +840,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void scaleTextureUV(float uFactor, float vFactor) {
+        printFunction("void scaleTextureUV");
     if (PGraphicsOpenGL.same(uFactor, 1) &&
         PGraphicsOpenGL.same(vFactor, 1)) return;
 
@@ -851,6 +872,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void addTexture(PImage tex) {
+        printFunction("void addTexture");
     if (textures == null) {
       textures = new HashSet<>();
     }
@@ -862,6 +884,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void removeTexture(PImage tex, PShapeOpenGL caller) {
+        printFunction("void removeTexture");
     if (textures == null || !textures.contains(tex)) return; // Nothing to remove.
 
     // First check that none of the child shapes have texture tex...
@@ -892,11 +915,13 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void strokedTexture(boolean newValue) {
+        printFunction("void strokedTexture");
     strokedTexture(newValue, null);
   }
 
 
   protected void strokedTexture(boolean newValue, PShapeOpenGL caller) {
+        printFunction("void strokedTexture");
     if (strokedTexture == newValue) return; // Nothing to change.
 
     if (newValue) {
@@ -922,11 +947,13 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void untexChild(boolean newValue) {
+        printFunction("void untexChild");
     untexChild(newValue, null);
   }
 
 
   protected void untexChild(boolean newValue, PShapeOpenGL caller) {
+        printFunction("void untexChild");
     if (untexChild == newValue) return; // Nothing to change.
 
     if (newValue) {
@@ -952,6 +979,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected boolean hasTexture() {
+        printFunction("boolean hasTexture");
     if (family == GROUP) {
       return textures != null && 0 < textures.size();
     } else {
@@ -961,6 +989,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected boolean hasTexture(PImage tex) {
+        printFunction("boolean hasTexture");
     if (family == GROUP) {
       return textures != null && textures.contains(tex);
     } else {
@@ -970,6 +999,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected boolean hasStrokedTexture() {
+        printFunction("boolean hasStrokedTexture");
     if (family == GROUP) {
       return strokedTexture;
     } else {
@@ -980,6 +1010,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void solid(boolean solid) {
+        printFunction("void solid");
     if (family == GROUP) {
       for (int i = 0; i < childCount; i++) {
         PShapeOpenGL child = (PShapeOpenGL) children[i];
@@ -993,6 +1024,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   protected void beginContourImpl() {
+        printFunction("void beginContourImpl");
     if (family == PShape.PATH) {
       super.beginContourImpl();
       return;
@@ -1003,6 +1035,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   protected void endContourImpl() {
+        printFunction("void endContourImpl");
     if (family == PShape.PATH) {
       super.endContourImpl();
     }
@@ -1011,6 +1044,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void vertex(float x, float y) {
+        printFunction("void vertex");
     if (family == PShape.PATH) {
       super.vertex(x, y);
       return;
@@ -1024,12 +1058,14 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void vertex(float x, float y, float u, float v) {
+        printFunction("void vertex");
     vertexImpl(x, y, 0, u, v);
   }
 
 
   @Override
   public void vertex(float x, float y, float z) {
+        printFunction("void vertex");
     if (family == PShape.PATH) {
       super.vertex(x, y);
       return;
@@ -1043,11 +1079,13 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void vertex(float x, float y, float z, float u, float v) {
+        printFunction("void vertex");
     vertexImpl(x, y, z, u, v);
   }
 
 
   protected void vertexImpl(float x, float y, float z, float u, float v) {
+        printFunction("void vertexImpl");
     if (!openShape) {
       PGraphics.showWarning(OUTSIDE_BEGIN_END_ERROR, "vertex()");
       return;
@@ -1097,6 +1135,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected boolean vertexBreak() {
+        printFunction("boolean vertexBreak");
     if (breakShape) {
       breakShape = false;
       return true;
@@ -1107,6 +1146,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void normal(float nx, float ny, float nz) {
+        printFunction("void normal");
     if (!openShape) {
       PGraphics.showWarning(OUTSIDE_BEGIN_END_ERROR, "normal()");
       return;
@@ -1135,6 +1175,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void attribPosition(String name, float x, float y, float z) {
+        printFunction("void attribPosition");
     VertexAttribute attrib = attribImpl(name, VertexAttribute.POSITION, PGL.FLOAT, 3);
     if (attrib != null) attrib.set(x, y, z);
   }
@@ -1142,6 +1183,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void attribNormal(String name, float nx, float ny, float nz) {
+        printFunction("void attribNormal");
     VertexAttribute attrib = attribImpl(name, VertexAttribute.NORMAL, PGL.FLOAT, 3);
     if (attrib != null) attrib.set(nx, ny, nz);
   }
@@ -1149,6 +1191,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void attribColor(String name, int color) {
+        printFunction("void attribColor");
     VertexAttribute attrib = attribImpl(name, VertexAttribute.COLOR, PGL.INT, 1);
     if (attrib != null) attrib.set(new int[] {color});
   }
@@ -1156,6 +1199,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void attrib(String name, float... values) {
+        printFunction("void attrib");
     VertexAttribute attrib = attribImpl(name, VertexAttribute.OTHER, PGL.FLOAT, values.length);
     if (attrib != null) attrib.set(values);
   }
@@ -1163,6 +1207,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void attrib(String name, int... values) {
+        printFunction("void attrib");
     VertexAttribute attrib = attribImpl(name, VertexAttribute.OTHER, PGL.INT, values.length);
     if (attrib != null) attrib.set(values);
   }
@@ -1170,12 +1215,14 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void attrib(String name, boolean... values) {
+        printFunction("void attrib");
     VertexAttribute attrib = attribImpl(name, VertexAttribute.OTHER, PGL.BOOL, values.length);
     if (attrib != null) attrib.set(values);
   }
 
 
   protected VertexAttribute attribImpl(String name, int kind, int type, int size) {
+        printFunction("VertexAttribute attribImpl");
     if (4 < size) {
       PGraphics.showWarning("Vertex attributes cannot have more than 4 values");
       return null;
@@ -1204,6 +1251,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void endShape(int mode) {
+        printFunction("void endShape");
     super.endShape(mode);
 
     // Input arrays are trimmed since they are expanded by doubling their old
@@ -1218,6 +1266,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setParams(float[] source) {
+        printFunction("void setParams");
     if (family != PRIMITIVE) {
       PGraphics.showWarning("Parameters can only be set to PRIMITIVE shapes");
       return;
@@ -1231,6 +1280,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setPath(int vcount, float[][] verts, int ccount, int[] codes) {
+        printFunction("void setPath");
     if (family != PATH) {
       PGraphics.showWarning("Vertex coordinates and codes can only be set to " +
                             "PATH shapes");
@@ -1252,6 +1302,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void translate(float tx, float ty) {
+        printFunction("void translate");
     if (is3D) {
       transform(TRANSLATE, tx, ty, 0);
     } else {
@@ -1262,12 +1313,14 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void translate(float tx, float ty, float tz) {
+        printFunction("void translate");
     transform(TRANSLATE, tx, ty, tz);
   }
 
 
   @Override
   public void rotate(float angle) {
+        printFunction("void rotate");
     if (is3D) {
       transform(ROTATE, angle, 0, 0, 1);
     } else {
@@ -1278,30 +1331,35 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void rotateX(float angle) {
+        printFunction("void rotateX");
     rotate(angle, 1, 0, 0);
   }
 
 
   @Override
   public void rotateY(float angle) {
+        printFunction("void rotateY");
     rotate(angle, 0, 1, 0);
   }
 
 
   @Override
   public void rotateZ(float angle) {
+        printFunction("void rotateZ");
     rotate(angle, 0, 0, 1);
   }
 
 
   @Override
   public void rotate(float angle, float v0, float v1, float v2) {
+        printFunction("void rotate");
     transform(ROTATE, angle, v0, v1, v2);
   }
 
 
   @Override
   public void scale(float s) {
+        printFunction("void scale");
     if (is3D) {
       transform(SCALE, s, s, s);
     } else {
@@ -1312,6 +1370,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void scale(float x, float y) {
+        printFunction("void scale");
     if (is3D) {
       transform(SCALE, x, y, 1);
     } else {
@@ -1322,12 +1381,14 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void scale(float x, float y, float z) {
+        printFunction("void scale");
     transform(SCALE, x, y, z);
   }
 
 
   @Override
   public void applyMatrix(PMatrix2D source) {
+        printFunction("void applyMatrix");
     transform(MATRIX, source.m00, source.m01, source.m02,
                       source.m10, source.m11, source.m12);
   }
@@ -1355,6 +1416,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void resetMatrix() {
+        printFunction("void resetMatrix");
     if (shapeCreated && matrix != null && matrixInv != null) {
       if (family == GROUP) {
         updateTessellation();
@@ -1369,6 +1431,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void transform(int type, float... args) {
+        printFunction("void transform");
     int dimensions = is3D ? 3 : 2;
     boolean invertible = true;
     checkMatrix(dimensions);
@@ -1445,6 +1508,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void applyMatrixImpl(PMatrix matrix) {
+        printFunction("void applyMatrixImpl");
     if (hasPolys) {
       tessGeo.applyMatrixOnPolyGeometry(matrix,
                                         firstPolyVertex, lastPolyVertex);
@@ -1477,6 +1541,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   protected void checkMatrix(int dimensions) {
+        printFunction("void checkMatrix");
     if (matrix == null) {
       if (dimensions == 2) {
         matrix = new PMatrix2D();
@@ -1501,6 +1566,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void bezierDetail(int detail) {
+        printFunction("void bezierDetail");
     bezierDetail = detail;
     if (0 < inGeo.codeCount) {
       markForTessellation();
@@ -1584,6 +1650,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void curveDetail(int detail) {
+        printFunction("void curveDetail");
     curveDetail = detail;
 //    pg.curveDetail(detail);
     if (0 < inGeo.codeCount) {
@@ -1594,6 +1661,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void curveTightness(float tightness) {
+        printFunction("void curveTightness");
     curveTightness = tightness;
 //    pg.curveTightness(tightness);
     if (0 < inGeo.codeCount) {
@@ -1604,6 +1672,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void curveVertex(float x, float y) {
+        printFunction("void curveVertex");
     if (family == PShape.PATH) {
       super.curveVertex(x, y);
       return;
@@ -1614,11 +1683,13 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void curveVertex(float x, float y, float z) {
+        printFunction("void curveVertex");
     curveVertexImpl(x, y, z);
   }
 
 
   protected void curveVertexImpl(float x, float y, float z) {
+        printFunction("void curveVertexImpl");
     inGeo.setMaterial(fillColor, strokeColor, strokeWeight,
                       ambientColor, specularColor, emissiveColor, shininess);
     inGeo.setNormal(normalX, normalY, normalZ);
@@ -1635,6 +1706,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int getVertexCount() {
+        printFunction("int getVertexCount");
     if (family == GROUP) return 0; // Group shapes don't have vertices
     else {
       if (root.tessUpdate) {
@@ -1661,6 +1733,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public PVector getVertex(int index, PVector vec) {
+        printFunction("PVector getVertex");
     if (vec == null) vec = new PVector();
     if (root.tessUpdate) {
       int tessIdx = getFirstTessVertex() + index;
@@ -1678,6 +1751,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getVertexX(int index) {
+        printFunction("float getVertexX");
     if (root.tessUpdate) {
       int tessIdx = getFirstTessVertex() + index;
       return root.selVertices[4 * tessIdx + 0];
@@ -1689,6 +1763,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getVertexY(int index) {
+        printFunction("float getVertexY");
     if (root.tessUpdate) {
       int tessIdx = getFirstTessVertex() + index;
       return root.selVertices[4 * tessIdx + 1];
@@ -1700,6 +1775,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getVertexZ(int index) {
+        printFunction("float getVertexZ");
     if (root.tessUpdate) {
       int tessIdx = getFirstTessVertex() + index;
       return root.selVertices[4 * tessIdx + 2];
@@ -1711,12 +1787,14 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setVertex(int index, float x, float y) {
+        printFunction("void setVertex");
     setVertex(index, x, y, 0);
   }
 
 
   @Override
   public void setVertex(int index, float x, float y, float z) {
+        printFunction("void setVertex");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setVertex()");
       return;
@@ -1752,6 +1830,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setVertex(int index, PVector vec) {
+        printFunction("void setVertex");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setVertex()");
       return;
@@ -1785,6 +1864,7 @@ public class PShapeOpenGL extends PShape {
   }
 
   private int getFirstTessVertex() {
+        printFunction("int getFirstTessVertex");
     if (root.tessKind == TRIANGLES) {
       return firstPolyVertex;
     } else if (root.tessKind == LINES) {
@@ -1795,6 +1875,7 @@ public class PShapeOpenGL extends PShape {
   }
 
   private void setModifiedTessVertex(int first, int last) {
+        printFunction("void setModifiedTessVertex");
     if (root.tessKind == TRIANGLES) {
       root.setModifiedPolyVertices(first, last);
     } else if (root.tessKind == LINES) {
@@ -1806,6 +1887,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public PVector getNormal(int index, PVector vec) {
+        printFunction("PVector getNormal");
     if (vec == null) vec = new PVector();
     if (root.tessUpdate) {
       int tessIdx = firstPolyVertex + index;
@@ -1823,6 +1905,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getNormalX(int index) {
+        printFunction("float getNormalX");
     if (root.tessUpdate) {
       return tessGeo.polyNormals[3 * (firstPolyVertex + index) + 0];
     }
@@ -1832,6 +1915,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getNormalY(int index) {
+        printFunction("float getNormalY");
     if (root.tessUpdate) {
       return tessGeo.polyNormals[3 * (firstPolyVertex + index) + 1];
     }
@@ -1841,6 +1925,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getNormalZ(int index) {
+        printFunction("float getNormalZ");
     if (root.tessUpdate) {
       return tessGeo.polyNormals[3 * (firstPolyVertex + index) + 2];
     }
@@ -1850,6 +1935,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setNormal(int index, float nx, float ny, float nz) {
+        printFunction("void setNormal");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setNormal()");
       return;
@@ -1872,6 +1958,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getTextureU(int index) {
+        printFunction("float getTextureU");
     if (root.tessUpdate) {
       return tessGeo.polyTexCoords[2 * (firstPolyVertex + index) + 0];
     }
@@ -1881,6 +1968,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getTextureV(int index) {
+        printFunction("float getTextureV");
     if (root.tessUpdate) {
       return tessGeo.polyTexCoords[2 * (firstPolyVertex + index) + 1];
     }
@@ -1890,6 +1978,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setTextureUV(int index, float u, float v) {
+        printFunction("void setTextureUV");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setTextureUV()");
       return;
@@ -1914,6 +2003,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int getFill(int index) {
+        printFunction("int getFill");
     if (family != GROUP && image == null) {
       if (root.tessUpdate) {
         return PGL.nativeToJavaARGB(tessGeo.polyColors[firstPolyVertex + index]);
@@ -1928,6 +2018,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setFill(boolean fill) {
+        printFunction("void setFill");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setFill()");
       return;
@@ -1947,6 +2038,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setFill(int fill) {
+        printFunction("void setFill");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setFill()");
       return;
@@ -1964,6 +2056,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setFillImpl(int fill) {
+        printFunction("void setFillImpl");
     if (fillColor == fill) return;
     fillColor = fill;
 
@@ -1999,6 +2092,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setFill(int index, int fill) {
+        printFunction("void setFill");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setFill()");
       return;
@@ -2019,6 +2113,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int getTint(int index) {
+        printFunction("int getTint");
     if (family != GROUP && image != null) {
       if (root.tessUpdate) {
         return PGL.nativeToJavaARGB(tessGeo.polyColors[firstPolyVertex + index]);
@@ -2033,6 +2128,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setTint(boolean tint) {
+        printFunction("void setTint");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setTint()");
       return;
@@ -2052,6 +2148,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setTint(int tint) {
+        printFunction("void setTint");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setTint()");
       return;
@@ -2069,6 +2166,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setTintImpl(int tint) {
+        printFunction("void setTintImpl");
     if (tintColor == tint) return;
     tintColor = tint;
 
@@ -2095,6 +2193,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setTint(int index, int tint) {
+        printFunction("void setTint");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setTint()");
       return;
@@ -2115,6 +2214,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int getStroke(int index) {
+        printFunction("int getStroke");
     if (family != GROUP) {
       return PGL.nativeToJavaARGB(inGeo.strokeColors[index]);
     } else {
@@ -2125,6 +2225,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setStroke(boolean stroke) {
+        printFunction("void setStroke");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setStroke()");
       return;
@@ -2143,6 +2244,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setStrokeImpl(boolean stroke) {
+        printFunction("void setStrokeImpl");
     if (this.stroke != stroke) {
       if (stroke) {
         // Before there was no stroke, now there is stroke, so current stroke
@@ -2165,6 +2267,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setStroke(int stroke) {
+        printFunction("void setStroke");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setStroke()");
       return;
@@ -2182,6 +2285,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setStrokeImpl(int stroke) {
+        printFunction("void setStrokeImpl");
     if (strokeColor == stroke) return;
     strokeColor = stroke;
 
@@ -2216,6 +2320,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setStroke(int index, int stroke) {
+        printFunction("void setStroke");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setStroke()");
       return;
@@ -2253,6 +2358,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getStrokeWeight(int index) {
+        printFunction("float getStrokeWeight");
     if (family != GROUP) {
       return inGeo.strokeWeights[index];
     } else {
@@ -2263,6 +2369,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setStrokeWeight(float weight) {
+        printFunction("void setStrokeWeight");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setStrokeWeight()");
       return;
@@ -2280,6 +2387,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setStrokeWeightImpl(float weight) {
+        printFunction("void setStrokeWeightImpl");
     if (PGraphicsOpenGL.same(strokeWeight, weight)) return;
     float oldWeight = strokeWeight;
     strokeWeight = weight;
@@ -2320,6 +2428,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setStrokeWeight(int index, float weight) {
+        printFunction("void setStrokeWeight");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setStrokeWeight()");
       return;
@@ -2332,6 +2441,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setStrokeJoin(int join) {
+        printFunction("void setStrokeJoin");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setStrokeJoin()");
       return;
@@ -2356,6 +2466,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setStrokeCap(int cap) {
+        printFunction("void setStrokeCap");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setStrokeCap()");
       return;
@@ -2380,6 +2491,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int getAmbient(int index) {
+        printFunction("int getAmbient");
     if (family != GROUP) {
       if (root.tessUpdate) {
         return PGL.nativeToJavaARGB(tessGeo.polyAmbient[firstPolyVertex + index]);
@@ -2394,6 +2506,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setAmbient(int ambient) {
+        printFunction("void setAmbient");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setAmbient()");
       return;
@@ -2411,6 +2524,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setAmbientImpl(int ambient) {
+        printFunction("void setAmbientImpl");
     if (ambientColor == ambient) return;
     ambientColor = ambient;
 
@@ -2436,6 +2550,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setAmbient(int index, int ambient) {
+        printFunction("void setAmbient");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setAmbient()");
       return;
@@ -2455,6 +2570,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int getSpecular(int index) {
+        printFunction("int getSpecular");
     if (family != GROUP) {
       if (root.tessUpdate) {
         return PGL.nativeToJavaARGB(tessGeo.polySpecular[firstPolyVertex + index]);
@@ -2469,6 +2585,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setSpecular(int specular) {
+        printFunction("void setSpecular");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setSpecular()");
       return;
@@ -2486,6 +2603,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setSpecularImpl(int specular) {
+        printFunction("void setSpecularImpl");
     if (specularColor == specular) return;
     specularColor = specular;
 
@@ -2510,6 +2628,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setSpecular(int index, int specular) {
+        printFunction("void setSpecular");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setSpecular()");
       return;
@@ -2528,6 +2647,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int getEmissive(int index) {
+        printFunction("int getEmissive");
     if (family != GROUP) {
       if (root.tessUpdate) {
         return PGL.nativeToJavaARGB(tessGeo.polyEmissive[firstPolyVertex + index]);
@@ -2543,6 +2663,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setEmissive(int emissive) {
+        printFunction("void setEmissive");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setEmissive()");
       return;
@@ -2560,6 +2681,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setEmissiveImpl(int emissive) {
+        printFunction("void setEmissiveImpl");
     if (emissiveColor == emissive) return;
     emissiveColor = emissive;
 
@@ -2584,6 +2706,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setEmissive(int index, int emissive) {
+        printFunction("void setEmissive");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setEmissive()");
       return;
@@ -2602,6 +2725,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public float getShininess(int index) {
+        printFunction("float getShininess");
     if (family != GROUP) {
       if (root.tessUpdate) {
         return tessGeo.polyShininess[firstPolyVertex + index];
@@ -2616,6 +2740,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setShininess(float shininess) {
+        printFunction("void setShininess");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setShininess()");
       return;
@@ -2633,6 +2758,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setShininessImpl(float shininess) {
+        printFunction("void setShininessImpl");
     if (PGraphicsOpenGL.same(this.shininess, shininess)) return;
     this.shininess = shininess;
 
@@ -2655,6 +2781,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void setShininess(int index, float shine) {
+        printFunction("void setShininess");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setShininess()");
       return;
@@ -2679,6 +2806,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public PVector getAttribPosition(String name, int index, PVector vec) {
+        printFunction("PVector getAttribPosition");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2702,6 +2830,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public float getAttribPositionX(String name, int index) {
+        printFunction("float getAttribPositionX");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2717,6 +2846,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public float getAttribPositionY(String name, int index) {
+        printFunction("float getAttribPositionY");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2732,6 +2862,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public float getAttribPositionZ(String name, int index) {
+        printFunction("float getAttribPositionZ");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2747,6 +2878,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public PVector getAttribNormal(String name, int index, PVector vec) {
+        printFunction("PVector getAttribNormal");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2770,6 +2902,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public float getAttribNormalX(String name, int index) {
+        printFunction("float getAttribNormalX");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2785,6 +2918,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public float getAttribNormalY(String name, int index) {
+        printFunction("float getAttribNormalY");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2800,6 +2934,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public float getAttribNormalZ(String name, int index) {
+        printFunction("float getAttribNormalZ");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2815,6 +2950,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public int getAttribColor(String name, int index) {
+        printFunction("int getAttribColor");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2831,6 +2967,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public float[] getAttrib(String name, int index, float[] values) {
+        printFunction("float[] getAttrib");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2851,6 +2988,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public int[] getAttrib(String name, int index, int[] values) {
+        printFunction("int[] getAttrib");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2871,6 +3009,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public boolean[] getAttrib(String name, int index, boolean[] values) {
+        printFunction("boolean[] getAttrib");
     VertexAttribute attrib = polyAttribs.get(name);
     if (attrib == null)
       throw new RuntimeException("Trying to get values of non existing attribute");
@@ -2895,6 +3034,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public void setAttribPosition(String name, int index, float x, float y, float z) {
+        printFunction("void setAttribPosition");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setAttribPosition()");
       return;
@@ -2921,6 +3061,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public void setAttribNormal(String name, int index, float nx, float ny, float nz) {
+        printFunction("void setAttribNormal");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setAttribNormal()");
       return;
@@ -2947,6 +3088,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public void setAttribColor(String name, int index, int color) {
+        printFunction("void setAttribColor");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setAttribColor()");
       return;
@@ -2968,6 +3110,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public void setAttrib(String name, int index, float... values) {
+        printFunction("void setAttrib");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setAttrib()");
       return;
@@ -2994,6 +3137,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public void setAttrib(String name, int index, int... values) {
+        printFunction("void setAttrib");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setAttrib()");
       return;
@@ -3020,6 +3164,7 @@ public class PShapeOpenGL extends PShape {
 
 
   public void setAttrib(String name, int index, boolean... values) {
+        printFunction("void setAttrib");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "setAttrib()");
       return;
@@ -3058,6 +3203,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int[] getVertexCodes() {
+        printFunction("int[] getVertexCodes");
     if (family == GROUP) return null;
     else {
       if (family == PRIMITIVE || family == PATH) {
@@ -3073,6 +3219,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public int getVertexCodeCount() {
+        printFunction("int getVertexCodeCount");
     if (family == GROUP) return 0;
     else {
       if (family == PRIMITIVE || family == PATH) {
@@ -3090,7 +3237,14 @@ public class PShapeOpenGL extends PShape {
    */
   @Override
   public int getVertexCode(int index) {
+        printFunction("int getVertexCode");
     return inGeo.codes[index];
+  }
+
+
+  private void dumpStack() {
+        printFunction("void dumpStack");
+    Thread.dumpStack();
   }
 
 
@@ -3103,6 +3257,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public PShape getTessellation() {
+        printFunction("PShape getTessellation");
     updateTessellation();
 
     PShape polyTess = null;
@@ -3313,6 +3468,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void beginTessellation(int kind) {
+        printFunction("void beginTessellation");
     if (kind != TRIANGLES && kind != LINES && kind != POINTS) {
       throw new IllegalArgumentException("The only valid kinds of geometry for tessellation update are TRIANGLES, LINES, or POINTS.");
     }
@@ -3416,6 +3572,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void endTessellation() {
+        printFunction("void endTessellation");
     if (root.tessUpdate) {
       if (root.tessKind == TRIANGLES && hasPolys) {
         pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyVertex.glId);
@@ -3487,6 +3644,7 @@ public class PShapeOpenGL extends PShape {
    */
   @Override
   public boolean contains(float x, float y) {
+        printFunction("boolean contains");
     if (family == PATH || family == GEOMETRY) {
       // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
       boolean c = false;
@@ -3515,6 +3673,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void updateTessellation() {
+        printFunction("void updateTessellation");
     if (!root.tessellated) {
       root.tessellate();
       root.aggregate();
@@ -3525,12 +3684,14 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void markForTessellation() {
+        printFunction("void markForTessellation");
     root.tessellated = false;
     tessellated = false;
   }
 
 
   protected void initModified() {
+        printFunction("void initModified");
     modified = false;
 
     modifiedPolyVertices = false;
@@ -3584,6 +3745,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellate() {
+        printFunction("void tessellate");
     if (root == this && parent == null) { // Root shape
       boolean initAttr = false;
       if (polyAttribs == null) {
@@ -3617,6 +3779,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void collectPolyAttribs() {
+        printFunction("void collectPolyAttribs");
     AttributeMap rootAttribs = root.polyAttribs;
     tessGeo = root.tessGeo;
 
@@ -3642,6 +3805,7 @@ public class PShapeOpenGL extends PShape {
   }
 
   protected void tessellateImpl() {
+        printFunction("void tessellateImpl");
     tessGeo = root.tessGeo;
 
     firstPolyIndexCache = -1;
@@ -3777,6 +3941,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellatePoint() {
+        printFunction("void tessellatePoint");
     float x = 0, y = 0, z = 0;
     if (params.length == 2) {
       x = params[0];
@@ -3797,6 +3962,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellateLine() {
+        printFunction("void tessellateLine");
     float x1 = 0, y1 = 0, z1 = 0;
     float x2 = 0, y2 = 0, z2 = 0;
     if (params.length == 4) {
@@ -3824,6 +3990,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellateTriangle() {
+        printFunction("void tessellateTriangle");
     float x1 = 0, y1 = 0;
     float x2 = 0, y2 = 0;
     float x3 = 0, y3 = 0;
@@ -3848,6 +4015,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellateQuad() {
+        printFunction("void tessellateQuad");
     float x1 = 0, y1 = 0;
     float x2 = 0, y2 = 0;
     float x3 = 0, y3 = 0;
@@ -3876,6 +4044,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellateRect() {
+        printFunction("void tessellateRect");
     float a = 0, b = 0, c = 0, d = 0;
     float tl = 0, tr = 0, br = 0, bl = 0;
     boolean rounded = false;
@@ -3960,6 +4129,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellateEllipse() {
+        printFunction("void tessellateEllipse");
     float a = 0, b = 0, c = 0, d = 0;
     int mode = ellipseMode;
 
@@ -4009,6 +4179,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellateArc() {
+        printFunction("void tessellateArc");
     float a = 0, b = 0, c = 0, d = 0;
     float start = 0, stop = 0;
     int mode = ellipseMode;
@@ -4071,6 +4242,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellateBox() {
+        printFunction("void tessellateBox");
     float w = 0, h = 0, d = 0;
     if (params.length == 1) {
       w = h = d = params[0];
@@ -4088,6 +4260,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellateSphere() {
+        printFunction("void tessellateSphere");
     float r = 0;
     int nu = sphereDetailU;
     int nv = sphereDetailV;
@@ -4123,6 +4296,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellatePath() {
+        printFunction("void tessellatePath");
     if (vertices == null) return;
 
     inGeo.setMaterial(fillColor, strokeColor, strokeWeight,
@@ -4193,6 +4367,7 @@ public class PShapeOpenGL extends PShape {
   }
 
   protected void saveBezierVertexSettings() {
+        printFunction("void saveBezierVertexSettings");
     savedBezierDetail = pg.bezierDetail;
     if (pg.bezierDetail != bezierDetail) {
       pg.bezierDetail(bezierDetail);
@@ -4200,12 +4375,14 @@ public class PShapeOpenGL extends PShape {
   }
 
   protected void restoreBezierVertexSettings() {
+        printFunction("void restoreBezierVertexSettings");
     if (savedBezierDetail != bezierDetail) {
       pg.bezierDetail(savedBezierDetail);
     }
   }
 
   protected void saveCurveVertexSettings() {
+        printFunction("void saveCurveVertexSettings");
     savedCurveDetail = pg.curveDetail;
     savedCurveTightness = pg.curveTightness;
     if (pg.curveDetail != curveDetail) {
@@ -4217,6 +4394,7 @@ public class PShapeOpenGL extends PShape {
   }
 
   protected void restoreCurveVertexSettings() {
+        printFunction("void restoreCurveVertexSettings");
     if (savedCurveDetail != curveDetail) {
       pg.curveDetail(savedCurveDetail);
     }
@@ -4233,6 +4411,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void aggregate() {
+        printFunction("void aggregate");
     if (root == this && parent == null) {
       // Initializing auxiliary variables in root node
       // needed for aggregation.
@@ -4271,12 +4450,10 @@ public class PShapeOpenGL extends PShape {
   //
   //                     ROOT GROUP
   //                         |
-  //       /-----------------0-----------------\
-  //       |                                   |
+  //       /-----------------0-----------------  //       |                                   |
   //  CHILD GROUP 0                       CHILD GROUP 1
   //       |                                   |
-  //       |                   /---------------0-----------------\
-  //       |                   |               |                 |
+  //       |                   /---------------0-----------------  //       |                   |               |                 |
   //   GEO SHAPE 0         GEO SHAPE 0     GEO SHAPE 1       GEO SHAPE 2
   //   4 vertices          5 vertices      6 vertices        3 vertices
   //
@@ -4285,6 +4462,7 @@ public class PShapeOpenGL extends PShape {
   // draw() from either child groups 0 or 1 should result in the first
   // 4 vertices or the last 14 vertices being rendered, respectively.
   protected void aggregateImpl() {
+        printFunction("void aggregateImpl");
     if (family == GROUP) {
       // Recursively aggregating the child shapes.
       hasPolys = false;
@@ -4334,6 +4512,7 @@ public class PShapeOpenGL extends PShape {
 
   // Updates the index cache for the range that corresponds to this shape.
   protected void updatePolyIndexCache() {
+        printFunction("void updatePolyIndexCache");
     IndexCache cache = tessGeo.polyIndexCache;
     if (family == GROUP) {
       // Updates the index cache to include the elements corresponding to
@@ -4435,11 +4614,13 @@ public class PShapeOpenGL extends PShape {
 
 
   protected boolean startStrokedTex(int n) {
+        printFunction("boolean startStrokedTex");
     return image != null && (n == firstLineIndexCache || n == firstPointIndexCache);
   }
 
 
   protected void setFirstStrokeVertex(int n, int vert) {
+        printFunction("void setFirstStrokeVertex");
     if (n == firstLineIndexCache && firstLineVertex == -1) {
       firstLineVertex = lastLineVertex = vert;
     }
@@ -4449,6 +4630,7 @@ public class PShapeOpenGL extends PShape {
   }
 
   protected void setLastStrokeVertex(int vert) {
+        printFunction("void setLastStrokeVertex");
     if (-1 < lastLineVertex) {
       lastLineVertex = vert;
     }
@@ -4458,6 +4640,7 @@ public class PShapeOpenGL extends PShape {
   }
 
   protected void updateLineIndexCache() {
+        printFunction("void updateLineIndexCache");
     IndexCache cache = tessGeo.lineIndexCache;
     if (family == GROUP) {
       firstLineIndexCache = lastLineIndexCache = -1;
@@ -4521,6 +4704,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void updatePointIndexCache() {
+        printFunction("void updatePointIndexCache");
     IndexCache cache = tessGeo.pointIndexCache;
     if (family == GROUP) {
       firstPointIndexCache = lastPointIndexCache = -1;
@@ -4597,6 +4781,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void initBuffers() {
+        printFunction("void initBuffers");
     boolean outdated = contextIsOutdated();
     context = pgl.getCurrentContext();
 
@@ -4619,6 +4804,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void initPolyBuffers() {
+        printFunction("void initPolyBuffers");
     boolean createBuffer = bufPolyVertex == null;
     if (createBuffer) bufPolyVertex = new VertexBuffer(pg, PGL.ARRAY_BUFFER, 4, PGL.SIZEOF_FLOAT, PGL.bufferUsageRetained);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyVertex.glId);
@@ -4677,6 +4863,7 @@ public class PShapeOpenGL extends PShape {
   }
 
   protected void initLineBuffers() {
+        printFunction("void initLineBuffers");
     boolean createBuffer = bufLineVertex == null;
     if (createBuffer) bufLineVertex = new VertexBuffer(pg, PGL.ARRAY_BUFFER, 4, PGL.SIZEOF_FLOAT, PGL.bufferUsageRetained);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufLineVertex.glId);
@@ -4703,6 +4890,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void initPointBuffers() {
+        printFunction("void initPointBuffers");
     boolean createBuffer = bufPointVertex == null;
     if (createBuffer) bufPointVertex = new VertexBuffer(pg, PGL.ARRAY_BUFFER, 4, PGL.SIZEOF_FLOAT, PGL.bufferUsageRetained);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPointVertex.glId);
@@ -4729,6 +4917,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected boolean contextIsOutdated() {
+        printFunction("boolean contextIsOutdated");
     boolean outdated = !pgl.contextIsCurrent(context);
     if (outdated) {
       bufPolyVertex.dispose();
@@ -4766,6 +4955,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void updateGeometry() {
+        printFunction("void updateGeometry");
     root.initBuffers();
     if (root.modified) {
       root.updateGeometryImpl();
@@ -4774,6 +4964,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void updateGeometryImpl() {
+        printFunction("void updateGeometryImpl");
     if (modifiedPolyVertices) {
       int offset = firstModifiedPolyVertex;
       int size = lastModifiedPolyVertex - offset + 1;
@@ -4905,6 +5096,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolyVertices(int offset, int size) {
+        printFunction("void copyPolyVertices");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyVertex.glId);
     tessGeo.copyPolyVertices(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4912,6 +5104,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolyColors(int offset, int size) {
+        printFunction("void copyPolyColors");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyColor.glId);
     tessGeo.copyPolyColors(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4919,6 +5112,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolyNormals(int offset, int size) {
+        printFunction("void copyPolyNormals");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyNormal.glId);
     tessGeo.copyPolyNormals(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4926,6 +5120,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolyTexCoords(int offset, int size) {
+        printFunction("void copyPolyTexCoords");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyTexCoord.glId);
     tessGeo.copyPolyTexCoords(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4933,6 +5128,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolyAmbient(int offset, int size) {
+        printFunction("void copyPolyAmbient");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyAmbient.glId);
     tessGeo.copyPolyAmbient(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4940,6 +5136,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolySpecular(int offset, int size) {
+        printFunction("void copyPolySpecular");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolySpecular.glId);
     tessGeo.copyPolySpecular(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4947,6 +5144,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolyEmissive(int offset, int size) {
+        printFunction("void copyPolyEmissive");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyEmissive.glId);
     tessGeo.copyPolyEmissive(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4954,6 +5152,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolyShininess(int offset, int size) {
+        printFunction("void copyPolyShininess");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPolyShininess.glId);
     tessGeo.copyPolyShininess(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4961,6 +5160,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPolyAttrib(VertexAttribute attrib, int offset, int size) {
+        printFunction("void copyPolyAttrib");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, attrib.buf.glId);
     tessGeo.copyPolyAttribs(attrib, offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4968,6 +5168,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyLineVertices(int offset, int size) {
+        printFunction("void copyLineVertices");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufLineVertex.glId);
     tessGeo.copyLineVertices(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4975,6 +5176,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyLineColors(int offset, int size) {
+        printFunction("void copyLineColors");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufLineColor.glId);
     tessGeo.copyLineColors(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4982,6 +5184,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyLineAttributes(int offset, int size) {
+        printFunction("void copyLineAttributes");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufLineAttrib.glId);
     tessGeo.copyLineDirections(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4989,6 +5192,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPointVertices(int offset, int size) {
+        printFunction("void copyPointVertices");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPointVertex.glId);
     tessGeo.copyPointVertices(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -4996,6 +5200,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPointColors(int offset, int size) {
+        printFunction("void copyPointColors");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPointColor.glId);
     tessGeo.copyPointColors(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -5003,6 +5208,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void copyPointAttributes(int offset, int size) {
+        printFunction("void copyPointAttributes");
     pgl.bindBuffer(PGL.ARRAY_BUFFER, bufPointAttrib.glId);
     tessGeo.copyPointOffsets(offset, size);
     pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
@@ -5010,6 +5216,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolyVertices(int first, int last) {
+        printFunction("void setModifiedPolyVertices");
     if (first < firstModifiedPolyVertex) firstModifiedPolyVertex = first;
     if (last > lastModifiedPolyVertex) lastModifiedPolyVertex = last;
     modifiedPolyVertices = true;
@@ -5018,6 +5225,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolyColors(int first, int last) {
+        printFunction("void setModifiedPolyColors");
     if (first < firstModifiedPolyColor) firstModifiedPolyColor = first;
     if (last > lastModifiedPolyColor) lastModifiedPolyColor = last;
     modifiedPolyColors = true;
@@ -5026,6 +5234,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolyNormals(int first, int last) {
+        printFunction("void setModifiedPolyNormals");
     if (first < firstModifiedPolyNormal) firstModifiedPolyNormal = first;
     if (last > lastModifiedPolyNormal) lastModifiedPolyNormal = last;
     modifiedPolyNormals = true;
@@ -5034,6 +5243,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolyTexCoords(int first, int last) {
+        printFunction("void setModifiedPolyTexCoords");
     if (first < firstModifiedPolyTexCoord) firstModifiedPolyTexCoord = first;
     if (last > lastModifiedPolyTexCoord) lastModifiedPolyTexCoord = last;
     modifiedPolyTexCoords = true;
@@ -5042,6 +5252,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolyAmbient(int first, int last) {
+        printFunction("void setModifiedPolyAmbient");
     if (first < firstModifiedPolyAmbient) firstModifiedPolyAmbient = first;
     if (last > lastModifiedPolyAmbient) lastModifiedPolyAmbient = last;
     modifiedPolyAmbient = true;
@@ -5050,6 +5261,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolySpecular(int first, int last) {
+        printFunction("void setModifiedPolySpecular");
     if (first < firstModifiedPolySpecular) firstModifiedPolySpecular = first;
     if (last > lastModifiedPolySpecular) lastModifiedPolySpecular = last;
     modifiedPolySpecular = true;
@@ -5058,6 +5270,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolyEmissive(int first, int last) {
+        printFunction("void setModifiedPolyEmissive");
     if (first < firstModifiedPolyEmissive) firstModifiedPolyEmissive = first;
     if (last > lastModifiedPolyEmissive) lastModifiedPolyEmissive = last;
     modifiedPolyEmissive = true;
@@ -5066,6 +5279,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolyShininess(int first, int last) {
+        printFunction("void setModifiedPolyShininess");
     if (first < firstModifiedPolyShininess) firstModifiedPolyShininess = first;
     if (last > lastModifiedPolyShininess) lastModifiedPolyShininess = last;
     modifiedPolyShininess = true;
@@ -5074,6 +5288,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPolyAttrib(VertexAttribute attrib, int first, int last) {
+        printFunction("void setModifiedPolyAttrib");
     if (first < attrib.firstModified) attrib.firstModified = first;
     if (last > attrib.lastModified) attrib.lastModified = last;
     attrib.modified = true;
@@ -5082,6 +5297,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedLineVertices(int first, int last) {
+        printFunction("void setModifiedLineVertices");
     if (first < firstModifiedLineVertex) firstModifiedLineVertex = first;
     if (last > lastModifiedLineVertex) lastModifiedLineVertex = last;
     modifiedLineVertices = true;
@@ -5090,6 +5306,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedLineColors(int first, int last) {
+        printFunction("void setModifiedLineColors");
     if (first < firstModifiedLineColor) firstModifiedLineColor = first;
     if (last > lastModifiedLineColor) lastModifiedLineColor = last;
     modifiedLineColors = true;
@@ -5098,6 +5315,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedLineAttributes(int first, int last) {
+        printFunction("void setModifiedLineAttributes");
     if (first < firstModifiedLineAttribute) firstModifiedLineAttribute = first;
     if (last > lastModifiedLineAttribute) lastModifiedLineAttribute = last;
     modifiedLineAttributes = true;
@@ -5106,6 +5324,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPointVertices(int first, int last) {
+        printFunction("void setModifiedPointVertices");
     if (first < firstModifiedPointVertex) firstModifiedPointVertex = first;
     if (last > lastModifiedPointVertex) lastModifiedPointVertex = last;
     modifiedPointVertices = true;
@@ -5114,6 +5333,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPointColors(int first, int last) {
+        printFunction("void setModifiedPointColors");
     if (first < firstModifiedPointColor) firstModifiedPointColor = first;
     if (last > lastModifiedPointColor) lastModifiedPointColor = last;
     modifiedPointColors = true;
@@ -5122,6 +5342,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void setModifiedPointAttributes(int first, int last) {
+        printFunction("void setModifiedPointAttributes");
     if (first < firstModifiedPointAttribute) firstModifiedPointAttribute = first;
     if (last > lastModifiedPointAttribute) lastModifiedPointAttribute = last;
     modifiedPointAttributes = true;
@@ -5138,6 +5359,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void disableStyle() {
+        printFunction("void disableStyle");
     if (openShape) {
       PGraphics.showWarning(INSIDE_BEGIN_END_ERROR, "disableStyle()");
       return;
@@ -5165,6 +5387,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void enableStyle() {
+        printFunction("void enableStyle");
     if (savedStroke) {
       setStroke(true);
       setStroke(savedStrokeColor);
@@ -5202,6 +5425,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   protected void styles(PGraphics g) {
+        printFunction("void styles");
     if (g instanceof PGraphicsOpenGL) {
       if (g.stroke) {
         setStroke(true);
@@ -5248,6 +5472,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   public void draw(PGraphics g) {
+        printFunction("void draw");
     if (g instanceof PGraphicsOpenGL) {
       PGraphicsOpenGL gl = (PGraphicsOpenGL)g;
       if (visible) {
@@ -5285,6 +5510,7 @@ public class PShapeOpenGL extends PShape {
 
 
   private void inGeoToVertices() {
+        printFunction("void inGeoToVertices");
     vertexCount = 0;
     vertexCodeCount = 0;
     if (inGeo.codeCount == 0) {
@@ -5378,6 +5604,7 @@ public class PShapeOpenGL extends PShape {
   // Or accurate 2D mode is enabled, which forces each
   // shape to be rendered separately.
   protected boolean fragmentedGroup(PGraphicsOpenGL g) {
+        printFunction("boolean fragmentedGroup");
     return g.getHint(DISABLE_OPTIMIZED_STROKE) ||
            (textures != null && (1 < textures.size() || untexChild)) ||
            strokedTexture;
@@ -5386,6 +5613,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   protected void pre(PGraphics g) {
+        printFunction("void pre");
     if (g instanceof PGraphicsOpenGL) {
       if (!style) {
         styles(g);
@@ -5398,6 +5626,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   protected void post(PGraphics g) {
+        printFunction("void post");
     if (g instanceof PGraphicsOpenGL) {
     } else {
       super.post(g);
@@ -5407,6 +5636,7 @@ public class PShapeOpenGL extends PShape {
 
   @Override
   protected void drawGeometry(PGraphics g) {
+        printFunction("void drawGeometry");
     vertexCount = inGeo.vertexCount;
     vertices = inGeo.getVertexData();
 
@@ -5420,6 +5650,7 @@ public class PShapeOpenGL extends PShape {
   // Render the geometry stored in the root shape as VBOs, for the vertices
   // corresponding to this shape. Sometimes we can have root == this.
   protected void render(PGraphicsOpenGL g, PImage texture) {
+        printFunction("void render");
     if (root == null) {
       // Some error. Root should never be null. At least it should be 'this'.
       throw new RuntimeException("Error rendering PShapeOpenGL, root shape is null");
@@ -5453,6 +5684,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void renderPolys(PGraphicsOpenGL g, PImage textureImage) {
+        printFunction("void renderPolys");
     boolean customShader = g.polyShader != null;
     boolean needNormals = customShader ? g.polyShader.accessNormals() : false;
     boolean needTexCoords = customShader ? g.polyShader.accessTexCoords() : false;
@@ -5548,6 +5780,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void rawPolys(PGraphicsOpenGL g, PImage textureImage) {
+        printFunction("void rawPolys");
     PGraphics raw = g.getRaw();
 
     raw.colorMode(RGB);
@@ -5643,6 +5876,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void renderLines(PGraphicsOpenGL g) {
+        printFunction("void renderLines");
     PShader shader = g.getLineShader();
     shader.bind();
 
@@ -5667,6 +5901,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void rawLines(PGraphicsOpenGL g) {
+        printFunction("void rawLines");
     PGraphics raw = g.getRaw();
 
     raw.colorMode(RGB);
@@ -5740,6 +5975,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void renderPoints(PGraphicsOpenGL g) {
+        printFunction("void renderPoints");
     PShader shader = g.getPointShader();
     shader.bind();
 
@@ -5764,6 +6000,7 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void rawPoints(PGraphicsOpenGL g) {
+        printFunction("void rawPoints");
     PGraphics raw = g.getRaw();
 
     raw.colorMode(RGB);
@@ -5825,3 +6062,5 @@ public class PShapeOpenGL extends PShape {
     raw.endShape();
   }
 }
+
+

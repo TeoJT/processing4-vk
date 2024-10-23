@@ -1186,6 +1186,8 @@ public class PShader implements PConstants {
 
 
   protected void setCommonUniforms() {
+    // TODO: THE PROBLEM IS RIGHT HERE:
+    // transformMatLoc should be -1 but it is 1.
     if (-1 < transformMatLoc) {
       currentPG.updateGLProjmodelview();
       setUniformMatrix(transformMatLoc, currentPG.glProjmodelview);

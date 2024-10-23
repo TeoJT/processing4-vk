@@ -134,7 +134,7 @@ public class VertexAttribsBinding {
 	  int vktype = -1;
     switch (type) {
     case GL2VK.GL_UNSIGNED_BYTE:
-	      System.out.println("GL_UNSIGNED_BYTE");
+//	      System.out.println("GL_UNSIGNED_BYTE");
 
       // UNORM: 0 to 1
       if (normalized) {
@@ -157,7 +157,7 @@ public class VertexAttribsBinding {
       actualSize = count*Byte.BYTES;
       break;
     case GL2VK.GL_UNSIGNED_SHORT:
-	      System.out.println("SHORT");
+//	      System.out.println("SHORT");
 
       // UNORM: 0 to 1
       if (normalized) {
@@ -180,17 +180,17 @@ public class VertexAttribsBinding {
       actualSize = count*Short.BYTES;
       break;
     case GL2VK.GL_UNSIGNED_INT:
-	      System.out.println("GL_UNSIGNED_INT");
+//	      System.out.println("GL_UNSIGNED_INT");
       System.err.println("vertexAttribPointer: Unsigned int not supported");
       actualSize = count*Integer.BYTES;
       break;
     case GL2VK.GL_INT:
-	      System.out.println("GL_INT");
+//	      System.out.println("GL_INT");
       System.err.println("vertexAttribPointer: signed int not supported");
       actualSize = count*Integer.BYTES;
       break;
     case GL2VK.GL_BYTE:
-	      System.out.println("GL_BYTE");
+//	      System.out.println("GL_BYTE");
 
       // SNORM: -1 to 1
       if (normalized) {
@@ -232,11 +232,11 @@ public class VertexAttribsBinding {
       else {
         System.err.println("vertexAttribPointer: not supported (unnormalized signed short)");
       }
-	      System.out.println("GL_SHORT");
+//	      System.out.println("GL_SHORT");
       actualSize = count*Short.BYTES;
       break;
     case GL2VK.GL_FLOAT:
-      System.out.println("GL_FLOAT");
+//      System.out.println("GL_FLOAT");
       if (normalized) {
         System.err.println("vertexAttribPointer: not supported (normalized float)");
       }
@@ -257,7 +257,7 @@ public class VertexAttribsBinding {
       actualSize = count*Float.BYTES;
       break;
     case GL2VK.GL_BOOL:
-	      System.out.println("GL_BOOL");
+//	      System.out.println("GL_BOOL");
         System.err.println("vertexAttribPointer: not supported (boolean)");
       actualSize = count*1;
       break;
