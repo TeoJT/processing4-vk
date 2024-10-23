@@ -526,6 +526,7 @@ public class VKSetup {
         actualExtent.width(Util.clamp(minExtent.width(), maxExtent.width(), actualExtent.width()));
         actualExtent.height(Util.clamp(minExtent.height(), maxExtent.height(), actualExtent.height()));
 
+
         return actualExtent;
     }
 

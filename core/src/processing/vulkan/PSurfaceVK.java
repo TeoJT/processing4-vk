@@ -14,6 +14,7 @@ import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.core.PSurface;
+import processing.opengl.PGraphicsOpenGL;
 
 // NEXT TODO:
 // Create a function which creates a surface with a specified width and height, puts it into
@@ -72,6 +73,7 @@ public class PSurfaceVK implements PSurface {
         pvk.selectNode(0);
         sketch.handleDraw();
         pvk.endRecord();
+        PGraphicsOpenGL.completeFinishedPixelTransfers();
       }
       if (sketch.exitCalled()) {
         sketch.dispose();

@@ -954,7 +954,6 @@ public class PVK extends PGL implements PJOGLInterface {
   public void shaderSource(int shader, String source) {
     function("shaderSource");
     gl2vk.glShaderSource(shader, source);
-    System.out.println(source);
   }
 
   @Override

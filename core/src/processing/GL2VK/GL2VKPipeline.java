@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
 import org.lwjgl.vulkan.VkOffset2D;
 import org.lwjgl.vulkan.VkPipelineColorBlendAttachmentState;
@@ -223,6 +224,7 @@ public class GL2VKPipeline {
             viewport.y(0.0f);
             viewport.width(vkbase.swapChainExtent.width());
             viewport.height(vkbase.swapChainExtent.height());
+
             viewport.minDepth(0.0f);
             viewport.maxDepth(1.0f);
 

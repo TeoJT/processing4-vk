@@ -1276,6 +1276,7 @@ public class PJOGL extends PGL {
   @Override
   protected void viewportImpl(int x, int y, int w, int h) {
     gl.glViewport(x, y, w, h);
+//    System.out.println(x+" "+y+" "+w+" "+h);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1500,7 +1501,6 @@ public class PJOGL extends PGL {
   @Override
   public void shaderSource(int shader, String source) {
     gl2.glShaderSource(shader, 1, new String[] { source }, null, 0);
-    System.out.println(source);
   }
 
   @Override
@@ -1785,6 +1785,7 @@ public class PJOGL extends PGL {
   public void scissor(int x, int y, int w, int h) {
     float scale = getPixelScale();
     gl.glScissor((int)scale * x, (int)(scale * y), (int)(scale * w), (int)(scale * h));
+//    System.out.println(((int)scale * x)+ " "+((int)(scale * y))+ " "+((int)(scale * w)) + " "+((int)(scale * h)));
 //    gl.glScissor(x, y, w, h);
   }
 

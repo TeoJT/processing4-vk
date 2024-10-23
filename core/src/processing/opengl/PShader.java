@@ -614,6 +614,7 @@ public class PShader implements PConstants {
    */
   protected int getUniformLoc(String name) {
     init();
+//    System.out.println(name+" "+glProgram+" "+pgl.getUniformLocation(glProgram, name));
     return pgl.getUniformLocation(glProgram, name);
   }
 

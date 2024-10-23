@@ -20,7 +20,7 @@ public class Sketch1 extends PApplet {
     @Override
     public void settings() {
       try {
-        size(512, 512, PV2D);
+        size(512, 512, P2D);
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -52,10 +52,10 @@ public class Sketch1 extends PApplet {
         colorMode(HSB, MAX, 255, 255);
         fill(frameCount%MAX, 255, 255);
 
-        rect(0f, 0f, 256f, 256f);
+//        rect(sin(frameCount*0.1f)*200f, 0f, 256f, 256f);
+        rect(0f, 0f, 512f, 512f);
 
         colorMode(RGB, 256);
-//        println();
 
       }
       catch (RuntimeException e) {

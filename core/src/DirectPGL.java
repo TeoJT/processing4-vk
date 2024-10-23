@@ -29,7 +29,7 @@ final static int CLR_CMP_COUNT = 4;  // color component count (r, g, b, a) -> 4
   @Override
   public void settings() {
     try {
-      size(512, 512, PV2D);
+      size(512, 512, P2D);
     }
     catch (RuntimeException e) {
       e.printStackTrace();
@@ -146,7 +146,7 @@ public void draw() {
   pgl.bindBuffer(PGL.ARRAY_BUFFER, 0);
 
   int u_brightness = pgl.getUniformLocation(sh1.glProgram, "brightness");
-  println("u_brightness: "+u_brightness);
+//  println("u_brightness: "+u_brightness);
 
   pgl.uniform1f(u_brightness, sin(frameCount*0.1f)*1f+2f);
 
