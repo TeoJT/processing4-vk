@@ -29,6 +29,9 @@ varying vec4 vertColor;
 
 void main() {
   gl_Position = transformMatrix * position;
+
+  // TODO: Add this to the GL2VK shader converter.
+  gl_Position.y *= -1.;
   // gl_Position = vec4((position.x/256.), (position.y/256.), 0.0, 1.0);
 
     

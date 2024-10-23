@@ -1680,6 +1680,15 @@ public class PJOGL extends PGL {
 
   @Override
   public void uniformMatrix4fv(int location, int count, boolean transpose, FloatBuffer mat) {
+    mat.rewind();
+    for (int y = 0; y < 4; y++) {
+      for (int x = 0; x < 4; x++) {
+        System.out.print(" "+mat.get());
+      }
+      System.out.println();
+    }
+    System.out.println();
+    mat.rewind();
     gl2.glUniformMatrix4fv(location, count, transpose, mat);
   }
 

@@ -1164,8 +1164,21 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public void uniformMatrix4fv(int location, int count, boolean transpose,
                                FloatBuffer mat) {
+
     function("uniformMatrix4fv");
     gl2vk.glUniformMatrix4fv(location, count, transpose, mat);
+
+//    mat.rewind();
+//    for (int y = 0; y < 4; y++) {
+//      for (int x = 0; x < 4; x++) {
+//        System.out.print(" "+mat.get());
+//      }
+//      System.out.println();
+//    }
+//
+//    System.out.println();
+//
+//    mat.rewind();
   }
 
   @Override
