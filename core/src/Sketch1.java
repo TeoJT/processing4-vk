@@ -20,7 +20,7 @@ public class Sketch1 extends PApplet {
     @Override
     public void settings() {
       try {
-        size(512, 512, PV2D);
+        size(1024, 1024, PV3D);
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -46,16 +46,30 @@ public class Sketch1 extends PApplet {
     public void draw() {
       try {
         background(200);
-        noStroke();
 
+        noStroke();
         int MAX = 256;
         colorMode(HSB, MAX, 255, 255);
-        fill(frameCount%MAX, 255, 255);
 
-//        rect(sin(frameCount*0.1f)*200f, 0f, 256f, 256f);
-        rect(0f, 0f, 256f, 256f);
+        float time = ((float)frameCount)*0.02f;
 
+        for (int i = 0; i < 500; i++) {
+          fill((frameCount+i*289)%MAX, 255, 255);
+          ellipseMode(CORNER);
+          ellipse(sin((float)i+time)*noise(i*23)*700f+width/2,
+                  cos((float)i+time)*noise(i*23)*700f+height/2, 64f, 64f);
+
+        }
         colorMode(RGB, 256);
+
+//        strokeCap(ROUND);
+//        stroke(255);
+//        strokeWeight(sin(((float)frameCount)*0.1f)*30f+30f);
+        fill(255, 0, 0);
+        rect(60f, 60f, 256f, 256f);
+
+//        line(60f, 600f, 360f, 600f);
+
 
       }
       catch (RuntimeException e) {

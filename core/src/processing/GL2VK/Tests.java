@@ -71,8 +71,8 @@ fragColor = inColor;
 		GL2VKPipeline pipeline = new GL2VKPipeline();
 		pipeline.compileVertex(code1);
 		pipeline.bind(1);
-//		pipeline.vertexAttribPointer(0, 2*4, 0*4, 5*4);
-//		pipeline.vertexAttribPointer(1, 3*4, 2*4, 5*4);
+		pipeline.vertexAttribPointer(0, 2, GL2VK.GL_FLOAT, false, 5*4, 0);
+		pipeline.vertexAttribPointer(1, 3, GL2VK.GL_FLOAT, false, 5*4, 2*4);
 
 		return pipeline.getAttributeDescriptions();
 	}
@@ -82,9 +82,9 @@ fragColor = inColor;
 		GL2VKPipeline pipeline = new GL2VKPipeline();
 		pipeline.compileVertex(code1);
 		pipeline.bind(1);
-//		pipeline.vertexAttribPointer(0, 2*4, 0*4, 5*4);
+    pipeline.vertexAttribPointer(0, 2, GL2VK.GL_FLOAT, false, 5*4, 0);
 		pipeline.bind(2);
-//		pipeline.vertexAttribPointer(1, 3*4, 2*4, 5*4);
+    pipeline.vertexAttribPointer(1, 3, GL2VK.GL_FLOAT, false, 5*4, 2*4);
 
 		return pipeline.getAttributeDescriptions();
 	}
@@ -104,8 +104,8 @@ fragColor = inColor;
 		GL2VKPipeline pipeline = new GL2VKPipeline();
 		pipeline.compileVertex(code1);
 		pipeline.bind(1);
-//		pipeline.vertexAttribPointer(0, 2*4, 0*4, 5*4);
-//		pipeline.vertexAttribPointer(1, 3*4, 2*4, 5*4);
+    pipeline.vertexAttribPointer(0, 2, GL2VK.GL_FLOAT, false, 5*4, 0);
+    pipeline.vertexAttribPointer(1, 3, GL2VK.GL_FLOAT, false, 5*4, 2*4);
 
 		return pipeline.getBindingDescriptions();
 	}
@@ -115,9 +115,9 @@ fragColor = inColor;
 		GL2VKPipeline pipeline = new GL2VKPipeline();
 		pipeline.compileVertex(code1);
 		pipeline.bind(1);
-//		pipeline.vertexAttribPointer(0, 2*4, 0*4, 5*4);
+    pipeline.vertexAttribPointer(0, 2, GL2VK.GL_FLOAT, false, 5*4, 0);
 		pipeline.bind(2);
-//		pipeline.vertexAttribPointer(1, 3*4, 2*4, 5*4);
+    pipeline.vertexAttribPointer(1, 3, GL2VK.GL_FLOAT, false, 5*4, 2*4);
 
 		return pipeline.getBindingDescriptions();
 	}
@@ -1902,6 +1902,51 @@ void main() {
 
 
 
+	@Test
+  public void invert_y() {
+    GL2VKShaderConverter converter = new GL2VKShaderConverter();
+
+    String code =
+        """
+void main() {
+
+    gl_Position = transformMatrix * position;
+
+    // Comment
+
+    fragColor = inColor;
+}
+        """;
+
+    String expected =
+        """
+#version 450
+void main() {
+
+    gl_Position = transformMatrix * position;
+
+
+
+    fragColor = inColor;
+    gl_Position.y *= -1.0;
+}
+""";
+
+    code = converter.removeComments(code);
+    code = converter.invertY(code);
+    code = converter.appendVersion(code);
+
+
+    if (!code.trim().replaceAll("\n", "").replaceAll(" ", "").equals(expected.trim().replaceAll("\n", "").replaceAll(" ", ""))) {
+      System.out.println("invert_y actual result: ");
+      System.out.println(code);
+      System.out.println("\ninvert_y expected: ");
+      System.out.println(expected);
+      fail();
+    }
+  }
+
+
 
 
 
@@ -2005,6 +2050,7 @@ void main() {
   gl_Position = gltovkuniforms.transformMatrix * position;
 
   vertColor = color;
+  gl_Position.y *= -1.0;
 }
 		""";
 

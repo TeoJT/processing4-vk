@@ -76,9 +76,13 @@ public class GL2VKShaderConverter {
 		// C6: convert gl_FragColor to gl2vk_FragColor and add out variable.
 		if (type == FRAGMENT) source = replaceFragOut(source);
 
-		// C7: Finally, append the version
+		// C7: append "gl_Position.y *= -1.0;" at the end of the main body
+    if (type == VERTEX) source = invertY(source);
+
+		// C8: Finally, append the version
 		source = appendVersion(source);
 
+		System.out.println(source);
 
 		return source;
 	}
@@ -126,6 +130,8 @@ public class GL2VKShaderConverter {
 		line = line.replaceAll("\\/(?!=)", " / ");
 		line = line.replace("(", "( ");
 		line = line.replace(")", " )");
+    line = line.replace("{", "{ ");
+    line = line.replace("}", " }");
 
 		// Regex failed on me so let's just program it ourselves for ==
 		String nline = "";
@@ -485,6 +491,94 @@ public class GL2VKShaderConverter {
 		return reconstructed2;
 	}
 
+	// Just steal countChars from UniformParser lmao
+	public static int countChars(String line, String c) {
+	  return UniformParser.countChars(line, c);
+	}
+
+
+
+	// OpenGL's "up" is in the negative direction, and down is positive. In Vulkan,
+	// this is inversed. Easiest way to solve this problem is simply to append the line
+	// "gl_Position.y *= -1.;" at the end of the main() function.
+	// Find the main function, find the closing bracket, and just above it, add
+	// "gl_Position.y *= -1.;".
+
+	// This time for this one we're not reconstructing it, but instead finding the index of
+	// the end of the main function, and then inserting the line directly into source.
+	public String invertY(String source) {
+	  String[] lines = source.split("\n");
+
+	  boolean inMainBody = false;
+    int bracketDepth = 0;
+    int insertionIndex = -1;
+
+    int index = 0;
+
+	  // Step 1: find main.
+    for (String originalLine : lines) {
+
+      String line = spaceOutSymbols(originalLine);
+
+      String[] elements = line.replaceAll("\t", "").trim().split(" ");
+      for (int i = 0; i < elements.length; i++) {
+        try {
+
+          if (!inMainBody) {
+            // Main found, now to find the end of the body.
+            if (elements[i].equals("void") && (elements[i+1].equals("main") || elements[i+1].equals("main("))) {
+              inMainBody = true;
+            }
+            // There should be a { bracket right after main thus kickstarting our
+            // counting.
+          }
+          // Now in the main body, count brackets, once we reach 0, we know we've exited.
+          else {
+            if (elements[i].equals("{")) {
+              bracketDepth++;
+            }
+            if (elements[i].equals("}")) {
+              bracketDepth--;
+              // Bracket depth 0? We've reached the end of the body.
+              // Insertion point aquired.
+              if (bracketDepth == 0) {
+                insertionIndex = index;
+//                System.out.println(insertionIndex);
+                break;
+              }
+            }
+          }
+
+
+        }
+        catch (RuntimeException e) {
+
+        }
+      }
+
+      // Quit early if we've already found our index
+      if (insertionIndex != -1) {
+        break;
+      }
+
+      index += originalLine.length()+1;
+//      System.out.println(originalLine+"  "+originalLine.length());
+    }
+
+    // At this point we should have our insertion point
+    // If not, uhoh.
+
+    if (insertionIndex == -1) {
+      System.err.println("Shader converter invertY: Couldn't find main body.");
+    }
+    else {
+      // Insert our famous line.
+      String insertLine = "\n  gl_Position.y *= -1.0;\n";
+      source = source.substring(0, insertionIndex)+insertLine+source.substring(insertionIndex);
+    }
+
+    return source;
+	}
 
 
 

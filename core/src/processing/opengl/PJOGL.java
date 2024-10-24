@@ -596,7 +596,7 @@ public class PJOGL extends PGL {
   }
 
 
-  protected static class Tessellator implements PGL.Tessellator {
+  public static class Tessellator implements PGL.Tessellator {
     protected GLUtessellator tess;
     protected TessellatorCallback callback;
     protected GLUCallback gluCallback;
@@ -662,7 +662,7 @@ public class PJOGL extends PGL {
       GLU.gluTessVertex(tess, v, n, data);
     }
 
-    protected class GLUCallback extends GLUtessellatorCallbackAdapter {
+    public class GLUCallback extends GLUtessellatorCallbackAdapter {
       @Override
       public void begin(int type) {
         callback.begin(type);

@@ -20,11 +20,16 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLCapabilitiesImmutable;
 import com.jogamp.opengl.glu.GLU;
+import com.jogamp.opengl.glu.GLUtessellator;
+import com.jogamp.opengl.glu.GLUtessellatorCallbackAdapter;
 
 import processing.GL2VK.GL2VK;
 import processing.opengl.PGL;
 import processing.opengl.PGraphicsOpenGL;
 import processing.opengl.PJOGL;
+import processing.opengl.PGL.TessellatorCallback;
+import processing.opengl.PJOGL.Tessellator;
+import processing.opengl.PJOGL.Tessellator.GLUCallback;
 
 public class PVK extends PGL implements PJOGLInterface {
   static {
@@ -326,13 +331,20 @@ public class PVK extends PGL implements PJOGLInterface {
 
   private GL2VK gl2vk;
 
+  /** GLU interface **/
+  // For backward compatibility idk
+  // I hope this doesn't require openGL
+  public GLU glu;
+
   public PVK(PGraphicsOpenGL pg, GL2VK gl2vk) {
     this.gl2vk = gl2vk;
     this.graphics = pg;
+    glu = new GLU();
   }
 
   public PVK(PGraphicsOpenGL pg) {
     this.graphics = pg;
+    glu = new GLU();
   }
 
   {
@@ -1612,11 +1624,115 @@ public class PVK extends PGL implements PJOGLInterface {
     return null;
   }
 
-  @Override
-  protected Tessellator createTessellator(TessellatorCallback callback) {
-    // TODO Auto-generated method stub
-    return null;
-  }
+//Tessellator
+
+
+   @Override
+   protected Tessellator createTessellator(TessellatorCallback callback) {
+     return new Tessellator(callback);
+   }
+
+
+   protected static class Tessellator implements PGL.Tessellator {
+     protected GLUtessellator tess;
+     protected TessellatorCallback callback;
+     protected GLUCallback gluCallback;
+
+     public Tessellator(TessellatorCallback callback) {
+       this.callback = callback;
+       tess = GLU.gluNewTess();
+       gluCallback = new GLUCallback();
+
+       GLU.gluTessCallback(tess, GLU.GLU_TESS_BEGIN, gluCallback);
+       GLU.gluTessCallback(tess, GLU.GLU_TESS_END, gluCallback);
+       GLU.gluTessCallback(tess, GLU.GLU_TESS_VERTEX, gluCallback);
+       GLU.gluTessCallback(tess, GLU.GLU_TESS_COMBINE, gluCallback);
+       GLU.gluTessCallback(tess, GLU.GLU_TESS_ERROR, gluCallback);
+     }
+
+     @Override
+     public void setCallback(int flag) {
+       GLU.gluTessCallback(tess, flag, gluCallback);
+     }
+
+     @Override
+     public void setWindingRule(int rule) {
+       setProperty(GLU.GLU_TESS_WINDING_RULE, rule);
+     }
+
+     public void setProperty(int property, int value) {
+       GLU.gluTessProperty(tess, property, value);
+     }
+
+     @Override
+     public void beginPolygon() {
+       beginPolygon(null);
+     }
+
+     @Override
+     public void beginPolygon(Object data) {
+       GLU.gluTessBeginPolygon(tess, data);
+     }
+
+     @Override
+     public void endPolygon() {
+       GLU.gluTessEndPolygon(tess);
+     }
+
+     @Override
+     public void beginContour() {
+       GLU.gluTessBeginContour(tess);
+     }
+
+     @Override
+     public void endContour() {
+       GLU.gluTessEndContour(tess);
+     }
+
+     @Override
+     public void addVertex(double[] v) {
+       addVertex(v, 0, v);
+     }
+
+     @Override
+     public void addVertex(double[] v, int n, Object data) {
+       GLU.gluTessVertex(tess, v, n, data);
+     }
+
+     protected class GLUCallback extends GLUtessellatorCallbackAdapter {
+       @Override
+       public void begin(int type) {
+         callback.begin(type);
+       }
+
+       @Override
+       public void end() {
+         callback.end();
+       }
+
+       @Override
+       public void vertex(Object data) {
+         callback.vertex(data);
+       }
+
+       @Override
+       public void combine(double[] coords, Object[] data,
+                           float[] weight, Object[] outData) {
+         callback.combine(coords, data, weight, outData);
+       }
+
+       @Override
+       public void error(int errnum) {
+         callback.error(errnum);
+       }
+     }
+   }
+
+
+   @Override
+   protected String tessError(int err) {
+     return glu.gluErrorString(err);
+   }
 
   @Override
   protected FontOutline createFontOutline(char ch, Object font) {

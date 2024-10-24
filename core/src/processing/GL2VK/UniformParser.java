@@ -4,43 +4,43 @@ import java.util.ArrayList;
 
 public class UniformParser {
 
-	
+
 	public static ArrayList<GLUniform> parseUniforms(String shaderSource) {
 
 		// Split into array of lines
 		String[] lines = shaderSource.split("\n");
-		
-		ArrayList<GLUniform> uniforms = new ArrayList<GLUniform>();
-		
+
+		ArrayList<GLUniform> uniforms = new ArrayList<>();
+
 		// Set to true while we're inside of a uniform struct.
 		// While in this state, any variables (i.e. items that start with
 		// vec3, float, mat4 etc) will be added as uniforms with their names.
 		boolean uniformStruct = false;
-		
+
 		int bracketDepth = 0;
 		for (String s : lines) {
-			
+
 			s = filterComments(s);
-			
+
 			// Here we're going to do a comparison to see if we're exiting struct
 			int beforeBracketDepth = bracketDepth;
-			
+
 			// Bracket depth so we only get attribs from outside bodies.
 			// You'll never see attribs/uniforms in brackets for example.
 			bracketDepth += countChars(s, "{");
 			bracketDepth -= countChars(s, "}");
-			
-			
+
+
 			// If there's a change in bracketDepth to 0 and we're in uniformStruct
 			// state, it means we're at the end of the struct block.
 			if (
-					bracketDepth != beforeBracketDepth && 
+					bracketDepth != beforeBracketDepth &&
 					bracketDepth == 0 &&
 					uniformStruct
 				) {
 				uniformStruct = false;
 			}
-			
+
 			// If we're in the state of looking for uniforms
 			if (uniformStruct) {
 				// If it's got a variable type in it, that's a uniform.
@@ -48,20 +48,20 @@ public class UniformParser {
 					// Try/catch block because there's probably cases where it will crash
 					// but it seriously doesn't matter if it breaks.
 					try {
-						
+
 						// Lil filtering
 						// Elements makes it easier to get each individual token.
 						String[] elements = s.replaceAll("\t", "").trim().split(" ");
 						String line = s.replaceAll(" ", "");
 						int offset = -1;
-						
+
 						// layout(offset ... )
 						int startIndex = line.indexOf("layout(offset=");
 						if (startIndex != -1) {
 							int endBracked = line.indexOf(')');
-							
+
 							startIndex += "layout(offset=".length();
-							
+
 							// Remember if something odd happens here, the try/catch block will catch it.
 							offset = Integer.parseInt(line.substring(startIndex, endBracked));
 						}
@@ -79,17 +79,17 @@ public class UniformParser {
 							if (size != -1 && i+1 < elements.length) {
 								// Next element should be name
 								String uniformName = removeSemicolon(elements[i+1]);
-								
+
 								// Remove ';' at the end
-								
+
 								// Unfortunately, we can't assign a uniform yet since the vertex and fragment
 								// uniforms need to be combined into one, and here if we try to assign an offset,
 								// currUniformOffset starts at 0 for fragment uniforms, which is incorrect.
 								// We will assign the offset later.
-								
+
 								// HOWEVER,
 								// If we have a layout(offset=...) then we know the offset and can
-								// set it directly. Later code will see that offset has already been 
+								// set it directly. Later code will see that offset has already been
 								// assigned and won't assign it automatically.
 								if (offset != -1) {
 									uniforms.add(new GLUniform(uniformName, size, offset));
@@ -107,7 +107,7 @@ public class UniformParser {
 					}
 				}
 			}
-			
+
 
 			// Uniforms
 //			System.out.println((bracketDepth == 0) + " " + s.contains(" uniform "));
@@ -120,21 +120,21 @@ public class UniformParser {
 				String[] elements = s.split(" ");
 				// No spaces allowed.
 				String line = s.replaceAll(" ", "");
-				
-				
+
+
 				// Get the type of uniform (push constant or descriptor)
 				int pushConstantIndex = line.indexOf("push_constant");
-				
+
 				// TODO: Descriptor layouts.
 				// Impossible (always false) condition here.
 				int descriptorIndex = line.indexOf("(([amongus]))");
-				
+
 				// PUSH CONSTANT PATH
 				if (pushConstantIndex != -1) {
-					
+
 					// Prolly don't need that.
 					String structName = "";
-					
+
 					// Scroll until we find (uniform)
 					try {
 						// Search for the element "in".
@@ -142,7 +142,7 @@ public class UniformParser {
 							if (elements[i].equals("uniform")) {
 								// The element after that should be the struct name.
 								structName = elements[i+1];
-								
+
 								// We shall start to traverse the struct adding any variable we come
 								// across as uniforms
 								uniformStruct = true;
@@ -167,11 +167,11 @@ public class UniformParser {
 		}
 		return uniforms;
 	}
-	
-	private static int countChars(String line, String c) {
+
+	public static int countChars(String line, String c) {
 		return line.length() - line.replace(c, "").length();
 	}
-	
+
 	public static String removeSemicolon(String line) {
 		if (line.charAt(line.length()-1) == ';') line = line.substring(0, line.length()-1);
 		return line;
@@ -199,7 +199,7 @@ public class UniformParser {
 		else if (val.equals("mat4")) return 4 * 4 * Float.BYTES;
 		else return -1;
 	}
-	
+
 	public static boolean hasType(String val) {
 		if (val.contains("float")) return true;
 		else if (val.contains("vec2")) return true;
@@ -222,7 +222,7 @@ public class UniformParser {
 		else if (val.contains("mat4")) return true;
 		else return false;
 	}
-	
+
 	// TODO: We also need for the /* */ comments
 	private static String filterComments(String line) {
 		int index = line.indexOf("//");
