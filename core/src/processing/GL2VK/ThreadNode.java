@@ -740,14 +740,18 @@ public class ThreadNode {
       arg0 |= (vertexOrFragment & 0x000000FF);
       setIntArg(0, index, arg0);
 
+
       // Now, we need to do the unhinged:
       // Stuff an entire buffer into the long args.
       // If we use the entire 256 bytes of pushConstant space,
       // we will need 32 long args altogether so it's not too bad I guess??
+      buffer.rewind();
       int arg = 1;
       for (int i = 0; i < size; i += Long.BYTES) {
         float val1 = buffer.get();
         float val2 = buffer.get();
+//        if (i+4 < size) val2 = buffer.get();
+
         setLongArg(arg++, index, (Float.floatToIntBits(val1) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val2) & 0xFFFFFFFFL) << 32));
       }
 

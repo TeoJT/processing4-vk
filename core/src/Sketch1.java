@@ -47,28 +47,30 @@ public class Sketch1 extends PApplet {
       try {
         background(200);
 
-        noStroke();
-        int MAX = 256;
-        colorMode(HSB, MAX, 255, 255);
 
-        float time = ((float)frameCount)*0.02f;
+//        noStroke();
+//        int MAX = 256;
+//        colorMode(HSB, MAX, 255, 255);
+//
+//        float time = ((float)frameCount)*0.02f;
+//
+//        for (int i = 0; i < 500; i++) {
+//          fill((frameCount+i*289)%MAX, 255, 255);
+//          ellipseMode(CORNER);
+//          ellipse(sin((float)i+time)*noise(i*23)*700f+width/2,
+//                  cos((float)i+time)*noise(i*23)*700f+height/2, 64f, 64f);
+//
+//        }
+//        colorMode(RGB, 256);
 
-        for (int i = 0; i < 500; i++) {
-          fill((frameCount+i*289)%MAX, 255, 255);
-          ellipseMode(CORNER);
-          ellipse(sin((float)i+time)*noise(i*23)*700f+width/2,
-                  cos((float)i+time)*noise(i*23)*700f+height/2, 64f, 64f);
-
-        }
-        colorMode(RGB, 256);
-
-//        strokeCap(ROUND);
-//        stroke(255);
-//        strokeWeight(sin(((float)frameCount)*0.1f)*30f+30f);
+        // TODO: Uniform1i
+        strokeCap(ROUND);
+        stroke(255);
+        strokeWeight(sin(((float)frameCount)*0.1f)*30f+30f);
         fill(255, 0, 0);
         rect(60f, 60f, 256f, 256f);
 
-//        line(60f, 600f, 360f, 600f);
+        line(60f, 600f, 360f, 600f);
 
 
       }

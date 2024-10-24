@@ -558,7 +558,7 @@ public class VulkanSystem {
 
     public void nodePushConstants(long pipelineLayout, int vertexOfFragment, int offset, FloatBuffer buffer) {
       // We need a size because the buffer must be in multiples of 8, but we may have a half-filled long of one float.
-      threadNodes[selectedNode].pushConstant(pipelineLayout, vertexOfFragment, offset, buffer); // TODO
+      threadNodes[selectedNode].pushConstant(pipelineLayout, vertexOfFragment, offset, buffer);
     }
 
     public void nodePushConstants(long pipelineLayout, int vertexOfFragment, int offset, float val) {

@@ -1848,8 +1848,8 @@ void main() {
 
 	@Test
 	public void space_out_symbols() {
-		String testString = "x+=x+x==x=x/=x/x*=x*x";
-		String expected = "x += x + x == x = x /= x / x *= x * x";
+		String testString = "x+=x+x==x=x/=4.2/0.9*=egg.x*egg.y";
+		String expected = "x += x + x == x = x /= 4.2 / 0.9 *= egg .x * egg .y";
 
 		String actual = GL2VKShaderConverter.spaceOutSymbols(testString);
 

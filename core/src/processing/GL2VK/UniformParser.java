@@ -182,7 +182,7 @@ public class UniformParser {
 		else if (val.equals("vec2")) return 2 * Float.BYTES;
 		else if (val.equals("vec3")) return 3 * Float.BYTES;
 		else if (val.equals("vec4")) return 4 * Float.BYTES;
-		else if (val.equals("int")) return 1 * Integer.BYTES;
+		else if (val.equals("int")) return 4 * Integer.BYTES;     // TODO: Int has a size of 16 bytes???
 		else if (val.equals("ivec2")) return 2 * Integer.BYTES;
 		else if (val.equals("ivec3")) return 3 * Integer.BYTES;
 		else if (val.equals("ivec4")) return 4 * Integer.BYTES;

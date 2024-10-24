@@ -82,7 +82,15 @@ public class GL2VKShaderConverter {
 		// C8: Finally, append the version
 		source = appendVersion(source);
 
-		System.out.println(source);
+		// Print converted source (debug)
+		if (false) {
+  		String[] sourceLines = source.split("\n");
+  		for (int i = 0; i < sourceLines.length; i++) {
+  		  System.out.println((i+1)+"  "+sourceLines[i]);
+
+  		}
+		}
+
 
 		return source;
 	}
@@ -132,12 +140,14 @@ public class GL2VKShaderConverter {
 		line = line.replace(")", " )");
     line = line.replace("{", "{ ");
     line = line.replace("}", " }");
+    line = line.replace(";", " ;");
 
 		// Regex failed on me so let's just program it ourselves for ==
 		String nline = "";
 		char[] arr = line.toCharArray();
 		for (int i = 0; i < arr.length; i++) {
 			try {
+			  // -=, += etc
 				if (	arr[i-1] != '='
 						&& arr[i-1] != '+'
 						&& arr[i-1] != '-'
@@ -149,7 +159,21 @@ public class GL2VKShaderConverter {
 						&& arr[i] == '='
 						&& arr[i+1] != '=') {
 					nline += " = ";
-				} else nline += arr[i];
+				}
+
+        // space out dot (we want it for uniform.xyz but not for 0.0)
+				else if (  (arr[i-1] < '0'
+           ||  arr[i-1] > '9')
+
+           && arr[i] == '.'
+            )
+
+        {
+          nline += " .";
+        }
+
+				else nline += arr[i];
+
 			}
 			catch (RuntimeException e) {
 				nline += arr[i];
@@ -429,11 +453,15 @@ public class GL2VKShaderConverter {
 			reconstructed1 += "\n";
 		}
 
+		///////////////////////////////////////////////////////////////////////////////////////
+
 		// uniform block code
 		// Only bother if we actually have any uniforms
+		int blockLines = 0;
 		if (!uniforms.isEmpty()) {
 			// And now append the block at the top.
 			String block = "layout(push_constant) uniform gltovkuniforms_struct {";
+      blockLines++;
 			boolean once = true;
 			for (String u : uniforms) {
 				// For a fragment shader we need to add offset to go into
@@ -443,20 +471,32 @@ public class GL2VKShaderConverter {
 					once = false;
 				}
 				else block += "\n    "+u;
+
+				blockLines++;
 			}
 			block += "\n} gltovkuniforms;\n";
+      blockLines++;
 
 			// Add our uniform block to reconstructed
 			reconstructed1 = block+reconstructed1;
 		}
 
-		String reconstructed2 = "";
 
+		////////////////////////////////////////////////////////////////////////////////
+
+		String reconstructed2 = "";
 		// Let's do it again
 		lines = reconstructed1.split("\n");
-
 		// TODO: variable arrays
+		// Skip the uniform block.
+		int index = 0;
 		for (String line : lines) {
+		  // If we're in the block, continue.
+		  if (index < blockLines) {
+	      reconstructed2 += line+"\n";
+	      index++;
+	      continue;
+		  }
 
 			String reconstructedLine = "";
 
@@ -468,7 +508,6 @@ public class GL2VKShaderConverter {
 				// Try catch block so I don't need to put index checks everywhere
 				try {
 
-//					System.out.println(elements[i]);
 					if (uniformsSet.contains(elements[i])) {
 						// Replace with gltovkuniforms.[varname]
 						reconstructedLine += "gltovkuniforms."+elements[i];
@@ -485,6 +524,8 @@ public class GL2VKShaderConverter {
 			reconstructed2 += reconstructedLine;
 
 			reconstructed2 += "\n";
+
+      index++;
 		}
 
 

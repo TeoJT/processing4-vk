@@ -298,6 +298,7 @@ public class GL2VKPipeline {
 
 
 //            vertexSize = Util.roundToMultiple8(vertexSize);
+//            System.out.println("VERTEX PUSHCONSTANT SIZE "+vertexSize);
 
 
             if (vertexSize+fragmentSize > system.getPushConstantsSizeLimit()) {
