@@ -1053,7 +1053,7 @@ void main() {
 
 		// Change
 		gl.glBindBuffer(0, testbuffer1);
-		gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, 20, null, 0);
+		gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, 20, 0);
 		ArrayList<Long> bindings2 = gl.getPipeline(glProgram1).getVKBuffers();
 		assertNotEquals(beforeBinding, bindings2.get(0));
 	}

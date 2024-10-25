@@ -1,6 +1,7 @@
 package processing.GL2VK;
 
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 
 import com.jogamp.opengl.GL;
@@ -95,10 +96,15 @@ public class GL2VK {
 	  public int cmdID = 0;
 
 	  public int location = 0;
-	  public float val0 = 0f;
-    public float val1 = 0f;
-    public float val2 = 0f;
-    public float val3 = 0f;
+	  public float valf0 = 0f;
+    public float valf1 = 0f;
+    public float valf2 = 0f;
+    public float valf3 = 0f;
+
+    public int vali0 = 0;
+    public int vali1 = 0;
+    public int vali2 = 0;
+    public int vali3 = 0;
 
     // For float matricies
     public FloatBuffer mat = null;
@@ -106,29 +112,60 @@ public class GL2VK {
     public TempUniformState(int loc, float val0) {
       cmdID = 1;
       this.location = loc;
-      this.val0 = val0;
+      this.valf0 = val0;
     }
     public TempUniformState(int loc, float val0, float val1) {
       cmdID = 2;
       this.location = loc;
-      this.val0 = val0;
-      this.val1 = val1;
+      this.valf0 = val0;
+      this.valf1 = val1;
     }
     public TempUniformState(int loc, float val0, float val1, float val2) {
       cmdID = 3;
       this.location = loc;
-      this.val0 = val0;
-      this.val1 = val1;
-      this.val2 = val2;
+      this.valf0 = val0;
+      this.valf1 = val1;
+      this.valf2 = val2;
     }
     public TempUniformState(int loc, float val0, float val1, float val2, float val3) {
       cmdID = 4;
       this.location = loc;
-      this.val0 = val0;
-      this.val1 = val1;
-      this.val2 = val2;
-      this.val3 = val3;
+      this.valf0 = val0;
+      this.valf1 = val1;
+      this.valf2 = val2;
+      this.valf3 = val3;
     }
+
+    public TempUniformState(int loc, int val0) {
+      cmdID = 5;
+      this.location = loc;
+      this.vali0 = val0;
+    }
+
+    public TempUniformState(int loc, int val0, int val1) {
+      cmdID = 6;
+      this.location = loc;
+      this.vali0 = val0;
+      this.vali1 = val1;
+    }
+
+    public TempUniformState(int loc, int val0, int val1, int val2) {
+      cmdID = 7;
+      this.location = loc;
+      this.vali0 = val0;
+      this.vali1 = val1;
+      this.vali2 = val2;
+    }
+
+    public TempUniformState(int loc, int val0, int val1, int val2, int val3) {
+      cmdID = 8;
+      this.location = loc;
+      this.vali0 = val0;
+      this.vali1 = val1;
+      this.vali2 = val2;
+      this.vali3 = val3;
+    }
+
     // Anything else
     public TempUniformState(int loc, int cmdID, FloatBuffer buff) {
       this.cmdID = cmdID;
@@ -139,16 +176,28 @@ public class GL2VK {
     public void execute() {
       switch (cmdID) {
       case 1:
-        glUniform1f(location, val0);
+        glUniform1f(location, valf0);
         break;
       case 2:
-        glUniform2f(location, val0, val1);
+        glUniform2f(location, valf0, valf1);
         break;
       case 3:
-        glUniform3f(location, val0, val1, val2);
+        glUniform3f(location, valf0, valf1, valf2);
         break;
       case 4:
-        glUniform4f(location, val0, val1, val2, val3);
+        glUniform4f(location, valf0, valf1, valf2, valf3);
+        break;
+      case 5:
+        glUniform1i(location, vali0);
+        break;
+      case 6:
+        glUniform2i(location, vali0, vali1);
+        break;
+      case 7:
+        glUniform3i(location, vali0, vali1, vali2);
+        break;
+      case 8:
+        glUniform4i(location, vali0, vali1, vali2, vali3);
         break;
       case 99:
         glUniformMatrix4fv(location, 1, false, mat);
@@ -241,6 +290,30 @@ public class GL2VK {
 //		System.out.println("glBindBuffer"+vbo);
 	}
 
+	public void glBufferData(int target, int size, int usage) {
+    // Get VK usage
+    int vkusage = 0;
+    switch (target) {
+    case GL_VERTEX_BUFFER:
+      vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+      break;
+    case GL_INDEX_BUFFER:
+      vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+      break;
+    }
+
+    if (boundBuffer <= 0) {
+      warn("glBufferData: no bound buffer.");
+      return;
+    }
+    if (buffers[boundBuffer] == null) {
+      warn("glBufferData: buffer "+boundBuffer+" doesn't exist.");
+      return;
+    }
+
+    buffers[boundBuffer].createBufferAuto(size, vkusage);
+	}
+
 	public void glBufferData(int target, int size, ByteBuffer data, int usage) {
 		// Get VK usage
 		int vkusage = 0;
@@ -267,6 +340,7 @@ public class GL2VK {
 		// which we'll likely need. Usage, I have no idea what it does.
 
 		// Create buffer if not exist or currentSize != size.
+//		System.out.println(boundBuffer);
 		buffers[boundBuffer].createBufferAuto(size, vkusage);
 
 		if (data != null) {
@@ -303,6 +377,91 @@ public class GL2VK {
 //      System.out.println();
 //    }
 	}
+
+	public void glBufferData(int target, int size, FloatBuffer data, int usage) {
+    // Get VK usage
+    int vkusage = 0;
+    switch (target) {
+    case GL_VERTEX_BUFFER:
+      vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+      break;
+    case GL_INDEX_BUFFER:
+      vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+      break;
+    }
+
+    if (boundBuffer <= 0) {
+      warn("glBufferData: no bound buffer.");
+      return;
+    }
+    if (buffers[boundBuffer] == null) {
+      warn("glBufferData: buffer "+boundBuffer+" doesn't exist.");
+      return;
+    }
+
+    buffers[boundBuffer].createBufferAuto(size, vkusage);
+
+    if (data != null) {
+      buffers[boundBuffer].bufferData(data, size, dangerMode);
+    }
+  }
+
+	public void glBufferData(int target, int size, ShortBuffer data, int usage) {
+    // Get VK usage
+    int vkusage = 0;
+    switch (target) {
+    case GL_VERTEX_BUFFER:
+      vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+      break;
+    case GL_INDEX_BUFFER:
+      vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+      break;
+    }
+
+    if (boundBuffer <= 0) {
+      warn("glBufferData: no bound buffer.");
+      return;
+    }
+    if (buffers[boundBuffer] == null) {
+      warn("glBufferData: buffer "+boundBuffer+" doesn't exist.");
+      return;
+    }
+
+    buffers[boundBuffer].createBufferAuto(size, vkusage);
+
+    if (data != null) {
+      buffers[boundBuffer].bufferData(data, size, dangerMode);
+    }
+  }
+
+  public void glBufferData(int target, int size, IntBuffer data, int usage) {
+    // Get VK usage
+    int vkusage = 0;
+    switch (target) {
+    case GL_VERTEX_BUFFER:
+      vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+      break;
+    case GL_INDEX_BUFFER:
+      vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+      break;
+    }
+
+    if (boundBuffer <= 0) {
+      warn("glBufferData: no bound buffer.");
+      return;
+    }
+    if (buffers[boundBuffer] == null) {
+      warn("glBufferData: buffer "+boundBuffer+" doesn't exist.");
+      return;
+    }
+
+    buffers[boundBuffer].createBufferAuto(size, vkusage);
+
+    if (data != null) {
+      buffers[boundBuffer].bufferData(data, size, dangerMode);
+    }
+  }
+
 
 	private boolean pipelineInitiated() {
 	  return programs[boundProgram].initiated;
@@ -681,6 +840,54 @@ public class GL2VK {
 //      tempUniformStates.add(new TempUniformState(location, 99, mat));
 //    }
 	}
+
+	public void glUniform1i(int location, int value0) {
+
+    GLUniform uniform = programs[boundProgram].getUniform(location);
+
+    if (pipelineInitiated()) {
+      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0);
+    }
+    else {
+      tempUniformStates.add(new TempUniformState(location, value0));
+    }
+  }
+
+  public void glUniform2i(int location, int value0, int value1) {
+
+    GLUniform uniform = programs[boundProgram].getUniform(location);
+
+    if (pipelineInitiated()) {
+      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1);
+    }
+    else {
+      tempUniformStates.add(new TempUniformState(location, value0, value1));
+    }
+  }
+
+  public void glUniform3i(int location, int value0, int value1, int value2) {
+
+    GLUniform uniform = programs[boundProgram].getUniform(location);
+
+    if (pipelineInitiated()) {
+      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2);
+    }
+    else {
+      tempUniformStates.add(new TempUniformState(location, value0, value1, value2));
+    }
+  }
+
+  public void glUniform4i(int location, int value0, int value1, int value2, int vulue3) {
+
+    GLUniform uniform = programs[boundProgram].getUniform(location);
+
+    if (pipelineInitiated()) {
+      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2, vulue3);
+    }
+    else {
+      tempUniformStates.add(new TempUniformState(location, value0, value1, value2, vulue3));
+    }
+  }
 
 	public void glUniformMatrix4fv(int location, int count, boolean transpose, FloatBuffer mat) {
 //	  System.out.println("glUniformMatrix4fv");

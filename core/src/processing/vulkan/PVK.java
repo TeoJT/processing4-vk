@@ -24,6 +24,7 @@ import com.jogamp.opengl.glu.GLUtessellator;
 import com.jogamp.opengl.glu.GLUtessellatorCallbackAdapter;
 
 import processing.GL2VK.GL2VK;
+import processing.GL2VK.Util;
 import processing.opengl.PGL;
 import processing.opengl.PGraphicsOpenGL;
 import processing.opengl.PJOGL;
@@ -542,6 +543,7 @@ public class PVK extends PGL implements PJOGLInterface {
   public static ByteBuffer convertToByteBuffer(Buffer outputBuffer) {
     if (outputBuffer == null) return null;
 
+    Util.beginTmr();
     ByteBuffer byteBuffer = null;
     if (outputBuffer instanceof ByteBuffer) {
         byteBuffer = (ByteBuffer) outputBuffer;
@@ -573,8 +575,12 @@ public class PVK extends PGL implements PJOGLInterface {
     else {
       System.err.println("Unknown buffer "+outputBuffer.getClass().toString());
     }
+    Util.endTmr("convertToByteBuffer");
     return byteBuffer;
   }
+
+
+
 
   @Override
   public void bufferData(int target, int size, Buffer data, int usage) {
@@ -591,7 +597,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
     function("bufferData");
 
-    ByteBuffer databyte = convertToByteBuffer(data);
+//    ByteBuffer databyte = convertToByteBuffer(data);
 
 
 //    System.out.println();
@@ -621,9 +627,22 @@ public class PVK extends PGL implements PJOGLInterface {
 //    databyte.rewind();
 ////    newData.rewind();
 //    System.out.println();
-//  }
 
-    gl2vk.glBufferData(gl2vktarget, size, databyte, usage);
+    if (data instanceof ByteBuffer) {
+      gl2vk.glBufferData(gl2vktarget, size, (ByteBuffer)data, usage);
+    } else if (data instanceof CharBuffer) {
+      gl2vk.glBufferData(gl2vktarget, size, (ByteBuffer)data, usage);
+    } else if (data instanceof ShortBuffer) {
+      gl2vk.glBufferData(gl2vktarget, size, (ShortBuffer)data, usage);
+    } else if (data instanceof IntBuffer) {
+      gl2vk.glBufferData(gl2vktarget, size, (IntBuffer)data, usage);
+    } else if (data instanceof LongBuffer) {
+      System.err.println("bufferData: LongBuffer not support");
+    } else if (data instanceof FloatBuffer) {
+      gl2vk.glBufferData(gl2vktarget, size, (FloatBuffer)data, usage);
+    } else if (data instanceof DoubleBuffer) {
+      System.err.println("bufferData: DoubleBuffer not support");
+    }
   }
 
   @Override
@@ -1063,22 +1082,27 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void uniform1i(int location, int value) {
-
+    function("uniform1i");
+    gl2vk.glUniform1i(location, value);
   }
 
   @Override
   public void uniform2i(int location, int value0, int value1) {
-
+    function("uniform2i");
+    gl2vk.glUniform2i(location, value0, value1);
   }
 
   @Override
   public void uniform3i(int location, int value0, int value1, int value2) {
+    function("uniform3i");
+    gl2vk.glUniform3i(location, value0, value1, value2);
   }
 
   @Override
   public void uniform4i(int location, int value0, int value1, int value2,
                         int value3) {
-
+    function("uniform4i");
+    gl2vk.glUniform4i(location, value0, value1, value2, value3);
   }
 
   @Override

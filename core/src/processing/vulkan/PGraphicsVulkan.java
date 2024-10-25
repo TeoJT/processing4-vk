@@ -8,8 +8,6 @@ import processing.opengl.PJOGL;
 
 public class PGraphicsVulkan extends PGraphicsOpenGL {
 
-  public GL2VK gl2vk = null;
-
   public PGraphicsVulkan() {
     super();
   }
@@ -22,6 +20,10 @@ public class PGraphicsVulkan extends PGraphicsOpenGL {
   @Override
   public PSurface createSurface() {
     return surface = new PSurfaceVK(this);
+  }
+
+  public void selectNode(int node) {
+    ((PVK)pgl).selectNode(node);
   }
 
 

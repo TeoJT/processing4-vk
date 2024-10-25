@@ -15,9 +15,13 @@ import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
 import static org.lwjgl.vulkan.VK10.vkCmdCopyBuffer;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.nio.Buffer;
 import java.nio.BufferOverflowException;
+import java.nio.IntBuffer;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -49,13 +53,15 @@ public class GraphicsBuffer {
     // - There's no previous buffer
     // - Buffer size != new size.
     public void createBufferAuto(int size, int usage) {
-    	if (!bufferAssigned || bufferSize != size) {
+    	if (!bufferAssigned || size > bufferSize) {
     		// Delete old buffers
     		destroy();
     		// Create new one
     		createBuffer(size, usage);
     	}
     }
+
+    public static int bufferCount = 0;
 
 
     // Creates a buffer without allocating any data
@@ -103,6 +109,7 @@ public class GraphicsBuffer {
 	        this.stagingBufferMemory = pBufferMemory.get(0);
 
     	}
+    	bufferCount++;
     }
 
     public void destroy() {
@@ -115,6 +122,71 @@ public class GraphicsBuffer {
 	        vkDestroyBuffer(system.device, stagingBuffer, null);
 	        vkFreeMemory(system.device, stagingBufferMemory, null);
     	}
+//    	bufferCount--;
+    }
+
+    // TODO: Make multithreaded
+    public ByteBuffer map(int size) {
+      try(MemoryStack stack = stackPush()) {
+
+
+          // alloc pointer for our data
+          PointerBuffer pointer = stack.mallocPointer(1);
+          vkMapMemory(system.device, stagingBufferMemory, 0, size, 0, pointer);
+
+          // Here instead of some mem copy function we can just
+          // copy each and every byte of buffer.
+          ByteBuffer datato = pointer.getByteBuffer(0, size);
+
+          return datato;
+      }
+    }
+
+    public FloatBuffer mapFloat(int size) {
+      try(MemoryStack stack = stackPush()) {
+          // alloc pointer for our data
+          PointerBuffer pointer = stack.mallocPointer(1);
+          vkMapMemory(system.device, stagingBufferMemory, 0, size, 0, pointer);
+
+          // Here instead of some mem copy function we can just
+          // copy each and every byte of buffer.
+          FloatBuffer datato = pointer.getFloatBuffer(0, size/Float.BYTES);
+
+          return datato;
+      }
+    }
+
+    public ShortBuffer mapShort(int size) {
+      try(MemoryStack stack = stackPush()) {
+          // alloc pointer for our data
+          PointerBuffer pointer = stack.mallocPointer(1);
+          vkMapMemory(system.device, stagingBufferMemory, 0, size, 0, pointer);
+
+          // Here instead of some mem copy function we can just
+          // copy each and every byte of buffer.
+          ShortBuffer datato = pointer.getShortBuffer(0, size/Short.BYTES);
+
+          return datato;
+      }
+    }
+
+    public IntBuffer mapInt(int size) {
+      try(MemoryStack stack = stackPush()) {
+          // alloc pointer for our data
+          PointerBuffer pointer = stack.mallocPointer(1);
+          vkMapMemory(system.device, stagingBufferMemory, 0, size, 0, pointer);
+
+          // Here instead of some mem copy function we can just
+          // copy each and every byte of buffer.
+          IntBuffer datato = pointer.getIntBuffer(0, size/Integer.BYTES);
+
+          return datato;
+      }
+    }
+
+    // TODO: Make multithreaded
+    public void unmap() {
+      vkUnmapMemory(system.device, stagingBufferMemory);
     }
 
 
@@ -122,61 +194,75 @@ public class GraphicsBuffer {
     // TODO: version where memory is constantly unmapped
     public void bufferData(ByteBuffer data, int size, boolean nodeMode) {
 
+      System.out.println("5");
     	// If debug mode enabled
     	if (system == null) return;
 
-    	try(MemoryStack stack = stackPush()) {
+  	    ByteBuffer datato = map(size);
+    		datato.rewind();
+    		data.rewind();
+    		while (datato.hasRemaining()) {
+    			datato.put(data.get());
+    		}
+    		datato.rewind();
+    		unmap();
 
-
-	        // alloc pointer for our data
-	        PointerBuffer pointer = stack.mallocPointer(1);
-
-	        vkMapMemory(system.device, stagingBufferMemory, 0, size, 0, pointer);
-
-	        // Here instead of some mem copy function we can just
-	        // copy each and every byte of buffer.
-        	ByteBuffer datato = pointer.getByteBuffer(0, size);
-	        try {
-	        	// Now for some reason we need to put in floats instead of bytes.
-	        	// Maybe something to do with the ordering of bytes in a float.
-	        	// Whatever, it works and that's what matters.
-	    		datato.rewind();
-	    		data.rewind();
-
-	    		while (datato.hasRemaining()) {
-	    			datato.put(data.get());
-	    		}
-	    		datato.rewind();
-
-//	    		FloatBuffer printout = (FloatBuffer)
-
-	    		// Just to print out stuff
-//	    		data.rewind();
-//	    		datato.rewind();
-//	    		while (datato.hasRemaining()) {
-//	    			System.out.println(datato.getFloat());
-//	    			System.out.println(data.getFloat());
-//	    		}
-//	    		datato.rewind();
-	        }
-	        catch (BufferOverflowException e) {
-	        	System.err.println("Buffer overflow: tried to write buffer of size "+size+" into buffer of size "+datato.capacity());
-	        }
-
-	        vkUnmapMemory(system.device, stagingBufferMemory);
-
-
-	        if (nodeMode) {
-		        system.nodeBufferData(stagingBuffer, bufferID, size);
-	        }
-	        else {
-	        	vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);
-	        }
-
-
-//	        vkDestroyBuffer(system.device, stagingBuffer, null);
-//	        vkFreeMemory(system.device, stagingBufferMemory, null);
-    	}
+//        if (nodeMode) {
+//	        system.nodeBufferData(stagingBuffer, bufferID, size);
+//        }
+//        else {
+      	vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);
+//        }
     }
 
+    public void bufferData(FloatBuffer data, int size, boolean nodeMode) {
+
+      // If debug mode enabled
+      if (system == null) return;
+
+        FloatBuffer datato = mapFloat(size);
+        datato.rewind();
+        data.rewind();
+        while (datato.hasRemaining()) {
+          datato.put(data.get());
+        }
+        datato.rewind();
+        unmap();
+
+        vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);
+    }
+
+    public void bufferData(ShortBuffer data, int size, boolean nodeMode) {
+
+      // If debug mode enabled
+      if (system == null) return;
+
+        ShortBuffer datato = mapShort(size);
+        datato.rewind();
+        data.rewind();
+        while (datato.hasRemaining()) {
+          datato.put(data.get());
+        }
+        datato.rewind();
+        unmap();
+
+        vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);
+    }
+
+    public void bufferData(IntBuffer data, int size, boolean nodeMode) {
+
+      // If debug mode enabled
+      if (system == null) return;
+
+        IntBuffer datato = mapInt(size);
+        datato.rewind();
+        data.rewind();
+        while (datato.hasRemaining()) {
+          datato.put(data.get());
+        }
+        datato.rewind();
+        unmap();
+
+        vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);
+    }
 }

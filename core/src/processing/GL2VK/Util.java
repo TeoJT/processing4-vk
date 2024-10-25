@@ -54,11 +54,11 @@ public class Util {
 
 
 	// Lil debugging tools here
-	long tmrnbefore = 0L;
-	public void beginTmr() {
+	private static long tmrnbefore = 0L;
+	public static void beginTmr() {
 		tmrnbefore = System.nanoTime();
 	}
-	public void endTmr(String name) {
+	public static void endTmr(String name) {
 		long us = ((System.nanoTime()-tmrnbefore)/1000L);
 		System.out.println(
 				name+": "+us+"us"+

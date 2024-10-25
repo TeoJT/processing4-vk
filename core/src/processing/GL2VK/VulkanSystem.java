@@ -577,6 +577,23 @@ public class VulkanSystem {
     	threadNodes[selectedNode].pushConstant(pipelineLayout, vertexOfFragment, offset, val0, val1, val2, val3);
     }
 
+    public void nodePushConstants(long pipelineLayout, int vertexOfFragment, int offset, int val) {
+      threadNodes[selectedNode].pushConstant(pipelineLayout, vertexOfFragment, offset, val);
+    }
+
+    public void nodePushConstants(long pipelineLayout, int vertexOfFragment, int offset, int val0, int val1) {
+      threadNodes[selectedNode].pushConstant(pipelineLayout, vertexOfFragment, offset, val0, val1);
+    }
+
+    public void nodePushConstants(long pipelineLayout, int vertexOfFragment, int offset, int val0, int val1, int val2) {
+      threadNodes[selectedNode].pushConstant(pipelineLayout, vertexOfFragment, offset, val0, val1, val2);
+    }
+
+    public void nodePushConstants(long pipelineLayout, int vertexOfFragment, int offset, int val0, int val1, int val2, int val3) {
+      threadNodes[selectedNode].pushConstant(pipelineLayout, vertexOfFragment, offset, val0, val1, val2, val3);
+    }
+
+
 
 
 

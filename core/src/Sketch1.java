@@ -17,10 +17,12 @@ import java.io.IOException;
 
 public class Sketch1 extends PApplet {
 
+  PShape particle = null;
+
     @Override
     public void settings() {
       try {
-        size(1024, 1024, PV3D);
+        size(1024, 1024, PV2D);
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -33,6 +35,16 @@ public class Sketch1 extends PApplet {
       try {
         surface.setLocation(100, 100);
 
+//        particle = createShape();
+//        particle.beginShape(QUAD);
+//        particle.stroke(255);
+//        particle.strokeWeight(5f);
+//        particle.fill(50, 50, 150);
+//        particle.vertex(0f, 0f);
+//        particle.vertex(50f, 0f);
+//        particle.vertex(50f, 50f);
+//        particle.vertex(0f, 50f);
+//        particle.endShape();
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -47,30 +59,36 @@ public class Sketch1 extends PApplet {
       try {
         background(200);
 
+        println();
 
-//        noStroke();
-//        int MAX = 256;
-//        colorMode(HSB, MAX, 255, 255);
-//
-//        float time = ((float)frameCount)*0.02f;
-//
-//        for (int i = 0; i < 500; i++) {
-//          fill((frameCount+i*289)%MAX, 255, 255);
-//          ellipseMode(CORNER);
-//          ellipse(sin((float)i+time)*noise(i*23)*700f+width/2,
-//                  cos((float)i+time)*noise(i*23)*700f+height/2, 64f, 64f);
-//
-//        }
-//        colorMode(RGB, 256);
+        noStroke();
+        int MAX = 256;
+        colorMode(HSB, MAX, 255, 255);
+
+        float time = ((float)frameCount)*0.02f;
+
+        for (int i = 0; i < 2000; i++) {
+          selectNode(i%7);
+          fill((frameCount+i*289)%MAX, 255, 255);
+          ellipseMode(CORNER);
+          ellipse(sin((float)i+time)*noise(i*23)*700f+width/2,
+                  cos((float)i+time)*noise(i*23)*700f+height/2, 64f, 64f);
+        }
+        colorMode(RGB, 256);
+        flush();
+
+        selectNode(1);
 
         // TODO: Uniform1i
         strokeCap(ROUND);
-        stroke(255);
-        strokeWeight(sin(((float)frameCount)*0.1f)*30f+30f);
         fill(255, 0, 0);
-        rect(60f, 60f, 256f, 256f);
+        strokeWeight(sin(((float)frameCount)*0.1f)*30f+30f);
+        stroke(255);
+        rect(mouseX, mouseY, 256f, 256f);
 
         line(60f, 600f, 360f, 600f);
+
+//        shape(particle);
 
 
       }

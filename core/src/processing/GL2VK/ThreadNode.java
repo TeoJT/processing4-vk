@@ -759,7 +759,7 @@ public class ThreadNode {
       wakeThread(index);
     }
 
-    private int pushConstant(long pipelineLayout, int vertexOrFragment, int offset, int size) {
+    private int getNextIndexForPushConstant(long pipelineLayout, int vertexOrFragment, int offset, int size) {
     	int index = getNextCMDIndex();
 
     	println("call CMD_PUSH_CONSTANT (index "+index+")");
@@ -781,7 +781,7 @@ public class ThreadNode {
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, float val) {
-		int index = pushConstant(pipelineLayout, vertexOrFragment, offset, 4);
+		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 4);
 
 		setLongArg(1, index, Float.floatToIntBits(val) & 0xFFFFFFFFL);
 
@@ -790,7 +790,7 @@ public class ThreadNode {
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, float val0, float val1) {
-		int index = pushConstant(pipelineLayout, vertexOrFragment, offset, 8);
+		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 8);
 
 		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
 
@@ -799,7 +799,7 @@ public class ThreadNode {
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, float val0, float val1, float val2) {
-		int index = pushConstant(pipelineLayout, vertexOrFragment, offset, 12);
+		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 12);
 
 		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
 		setLongArg(2, index, (Float.floatToIntBits(val2) & 0xFFFFFFFFL));
@@ -809,13 +809,51 @@ public class ThreadNode {
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, float val0, float val1, float val2, float val3) {
-		int index = pushConstant(pipelineLayout, vertexOrFragment, offset, 16);
+		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 16);
 
 		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
 		setLongArg(2, index, (Float.floatToIntBits(val2) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val3) & 0xFFFFFFFFL) << 32));
 
         cmdID.set(index, CMD_PUSH_CONSTANT);
         wakeThread(index);
+    }
+
+    public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, int val) {
+      int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 4);
+
+      setLongArg(1, index, val & 0xFFFFFFFFL);
+
+      cmdID.set(index, CMD_PUSH_CONSTANT);
+      wakeThread(index);
+    }
+
+    public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, int val0, int val1) {
+      int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 8);
+
+      setLongArg(1, index, (val0 & 0xFFFFFFFFL) | ((val1 & 0xFFFFFFFFL) << 32));
+
+      cmdID.set(index, CMD_PUSH_CONSTANT);
+      wakeThread(index);
+    }
+
+    public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, int val0, int val1, int val2) {
+      int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 12);
+
+      setLongArg(1, index, (val0 & 0xFFFFFFFFL) | ((val1 & 0xFFFFFFFFL) << 32));
+      setLongArg(2, index, (val2 & 0xFFFFFFFFL));
+
+      cmdID.set(index, CMD_PUSH_CONSTANT);
+      wakeThread(index);
+    }
+
+    public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, int val0, int val1, int val2, int val3) {
+      int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 16);
+
+      setLongArg(1, index, (val0 & 0xFFFFFFFFL) | ((val1 & 0xFFFFFFFFL) << 32));
+      setLongArg(2, index, (val2 & 0xFFFFFFFFL) | ((val3 & 0xFFFFFFFFL) << 32));
+
+      cmdID.set(index, CMD_PUSH_CONSTANT);
+      wakeThread(index);
     }
 
 

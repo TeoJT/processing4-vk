@@ -250,8 +250,6 @@ public class PSurfaceVK implements PSurface {
 
   @Override
   public void setFrameRate(float fps) {
-    // TODO Auto-generated method stub
-
   }
 
   @Override

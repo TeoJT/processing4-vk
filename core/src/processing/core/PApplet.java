@@ -44,6 +44,7 @@ import processing.awt.ShimAWT;
 import processing.data.*;
 import processing.event.*;
 import processing.opengl.*;
+import processing.vulkan.PGraphicsVulkan;
 
 
 /**
@@ -1759,6 +1760,12 @@ public class PApplet implements PConstants {
 
   public PGraphics createGraphics(int w, int h) {
     return createGraphics(w, h, JAVA2D);
+  }
+
+  public void selectNode(int node) {
+    if (g instanceof PGraphicsVulkan) {
+      ((PGraphicsVulkan)g).selectNode(node);
+    }
   }
 
 
@@ -9604,9 +9611,9 @@ public class PApplet implements PConstants {
 
   /**
    *
-   * Calculates a new <b>color</b> that is a blend of two other colors. The <b>amt</b> parameter 
-   * controls the amount of each color to use where an amount of 0.0 will produce 
-   * the first color, 1.0 will return the second color, and 0.5 is halfway in 
+   * Calculates a new <b>color</b> that is a blend of two other colors. The <b>amt</b> parameter
+   * controls the amount of each color to use where an amount of 0.0 will produce
+   * the first color, 1.0 will return the second color, and 0.5 is halfway in
    * between. Values between 0.0 and 1.0 will interpolate between the two colors in
    * that proportion. <br />
    * An amount below 0 will be treated as 0. Likewise, amounts above 1 will be
