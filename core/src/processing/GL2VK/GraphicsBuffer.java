@@ -27,6 +27,50 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkBufferCopy;
 
+
+//     ChatGPT response to an optimised buffering approach:
+//Ah, I see what you're asking now! In Vulkan, you cannot directly "buffer" data during rendering within a VkRenderPass instance in the same way you might in some higher-level graphics APIs. However, you can achieve similar functionality through the use of dynamic buffers and descriptor sets. Here’s how that works:
+//
+//Dynamic Buffers in Vulkan
+//Dynamic Vertex Buffers:
+//
+//You can create a vertex buffer that allows for dynamic updates.
+//Use buffer updates (e.g., vkMapMemory followed by writing data) to change the contents of the buffer.
+//Using Descriptor Sets:
+//
+//Create a descriptor set that points to the buffer.
+//Update the descriptor set as needed during rendering.
+//Steps to Buffer Data Dynamically
+//Create Dynamic Buffers:
+//
+//When creating your vertex buffer, allocate enough space to allow for dynamic updates.
+//Use VK_BUFFER_USAGE_VERTEX_BUFFER_BIT and VK_BUFFER_USAGE_TRANSFER_DST_BIT when creating the buffer.
+//Map Buffer Memory:
+//
+//Use vkMapMemory to access the buffer memory and write your vertex data into it.
+//void* data;
+//vkMapMemory(device, vertexBufferMemory, 0, bufferSize, 0, &data);
+//memcpy(data, newVertexData, sizeof(newVertexData));
+//vkUnmapMemory(device, vertexBufferMemory);
+//Update Descriptor Sets:
+//
+//If using descriptor sets, update them to point to the new data.
+//Call vkUpdateDescriptorSets to update the descriptor set with new buffer information.
+//Bind Buffers and Draw:
+//
+//In your command buffer, bind the vertex buffer and draw as usual.
+//vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+//vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+//Considerations
+//Performance: Dynamic updates to buffers during rendering can impact performance. It's usually better to batch updates and minimize the frequency of changes if possible.
+//Synchronization: Be cautious of synchronization issues when updating buffers while rendering. Use fences and semaphores appropriately.
+//Conclusion
+//While you cannot directly buffer data inside a VkRenderPass instance, you can achieve dynamic updates to your vertex data by using dynamic buffers and updating descriptor sets appropriately. This allows for flexible rendering scenarios where vertex data can change during the rendering process.
+//
+//If you have any more questions or need clarification on specific parts, feel free to ask!
+
+
+
 public class GraphicsBuffer {
 
     public long bufferID = -1;

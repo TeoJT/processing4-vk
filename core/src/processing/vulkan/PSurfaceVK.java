@@ -8,12 +8,15 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import processing.GL2VK.GL2VK;
+import processing.GL2VK.VMouseEvent;
 import processing.awt.ShimAWT;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.core.PSurface;
+import processing.event.KeyEvent;
+import processing.event.MouseEvent;
 import processing.opengl.PGraphicsOpenGL;
 
 // NEXT TODO:
@@ -34,6 +37,8 @@ public class PSurfaceVK implements PSurface {
 
   private AnimatorTask animationThread;
   private boolean isStopped = true;
+
+  private NEWTMouseListener mouseListener;
 
   private PVK pvk;
 
@@ -101,7 +106,6 @@ public class PSurfaceVK implements PSurface {
     sketchHeight = sketch.sketchHeight();
 
     initIcons();
-    initVK();
     initWindow();
     initListeners();
     initAnimator();
@@ -134,16 +138,66 @@ public class PSurfaceVK implements PSurface {
     // TODO: make work for vulkan
   }
 
-  private void initVK() {
-//    pvk.vk.prepareSize(sketchWidth, sketchHeight);
+
+  protected void nativeMouseEvent(int mouseX, int mouseY, int peAction) {
+    int scale = 1;
+//    if (PApplet.platform == PConstants.MACOS) {
+//      scale = (int) getCurrentPixelScale();
+//    } else {
+//      scale = (int) getPixelScale();
+//    }
+    int sx = mouseX / scale;
+    int sy = mouseY / scale;
+    int mx = sx;
+    int my = sy;
+
+//    if (pvk.presentMode()) {
+//      mx -= (int)pvk.presentX;
+//      my -= (int)pvk.presentY;
+//      //noinspection IntegerDivisionInFloatingPointContext
+//      if (peAction == KeyEvent.RELEASE &&
+//          pvk.insideStopButton(sx, sy - screenRect.height / windowScaleFactor)) {
+//        sketch.exit();
+//      }
+//      if (mx < 0 || sketchWidth < mx || my < 0 || sketchHeight < my) {
+//        return;
+//      }
+//    }
+
+    MouseEvent me = new MouseEvent(new Object(), 0,
+                                   peAction, 0,
+                                   mx, my,
+                                   0,
+                                   0);
+
+    sketch.postEvent(me);
   }
 
+
+
+//NEWT mouse listener
+ protected class NEWTMouseListener extends VMouseEvent {
+   public NEWTMouseListener() {
+     super();
+   }
+
+   @Override
+   public void mouseMoved(int x, int y) {
+     nativeMouseEvent(x, y, MouseEvent.MOVE);
+   }
+ }
+
+
+
+
   protected void initListeners() {
-    // TODO: Don't need that..?
+    // TODO: create NEWTMouseListener class which binds to glfw to provide mouse and keyboard input.
+
+    mouseListener = new NEWTMouseListener();
   }
 
   private void initWindow() {
-    // TODO: Call to vulkan C++ to init window.
+
   }
 
   private void initAnimator() {

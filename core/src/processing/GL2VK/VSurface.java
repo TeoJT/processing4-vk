@@ -9,6 +9,10 @@ import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetInputMode;
+import static org.lwjgl.glfw.GLFW.GLFW_CURSOR;
+import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL;
 import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -62,12 +66,20 @@ public class VSurface {
         // glfwSetWindowUserPointer(window, userPointer);
         // Please notice that the reference must be freed manually with JNINativeInterface.nDeleteGlobalRef
         glfwSetFramebufferSizeCallback(window, this::framebufferResizeCallback);
+        glfwSetCursorPosCallback(window, this::cursorMoveCallback);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
+
+
 
     private void framebufferResizeCallback(long window, int width, int height) {
         // HelloTriangleApplication app = MemoryUtil.memGlobalRefToObject(glfwGetWindowUserPointer(window));
         // app.framebufferResize = true;
         framebufferResize = true;
+    }
+
+    private void cursorMoveCallback(long window, double xpos, double ypos) {
+      VMouseEvent.invokeMouseMove((int)xpos, (int)ypos);
     }
 
     public void createSurface(VkInstance instance) {
