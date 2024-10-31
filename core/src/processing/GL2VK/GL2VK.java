@@ -344,7 +344,7 @@ public class GL2VK {
 		buffers[boundBuffer].createBufferAuto(size, vkusage);
 
 		if (data != null) {
-		  buffers[boundBuffer].bufferData(data, size, dangerMode);
+		  buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
 		}
 
 //  ByteBuffer newData = null;
@@ -402,7 +402,7 @@ public class GL2VK {
     buffers[boundBuffer].createBufferAuto(size, vkusage);
 
     if (data != null) {
-      buffers[boundBuffer].bufferData(data, size, dangerMode);
+      buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
     }
   }
 
@@ -430,7 +430,7 @@ public class GL2VK {
     buffers[boundBuffer].createBufferAuto(size, vkusage);
 
     if (data != null) {
-      buffers[boundBuffer].bufferData(data, size, dangerMode);
+      buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
     }
   }
 
@@ -458,7 +458,7 @@ public class GL2VK {
     buffers[boundBuffer].createBufferAuto(size, vkusage);
 
     if (data != null) {
-      buffers[boundBuffer].bufferData(data, size, dangerMode);
+      buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
     }
   }
 
