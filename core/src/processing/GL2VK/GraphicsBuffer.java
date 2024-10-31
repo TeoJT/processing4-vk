@@ -230,6 +230,10 @@ public class GraphicsBuffer {
       }
     }
 
+    public ByteBuffer mapByte() {
+      return mapByte(bufferSize, bufferMemoryID);
+    }
+
     public FloatBuffer mapFloat(int size, long mem) {
       try(MemoryStack stack = stackPush()) {
           // alloc pointer for our data
@@ -277,6 +281,9 @@ public class GraphicsBuffer {
       vkUnmapMemory(system.device, mem);
     }
 
+    public void unmap() {
+      vkUnmapMemory(system.device, bufferMemoryID);
+    }
 
     // Sends data straight to the gpu
     // TODO: version where memory is constantly unmapped
@@ -308,12 +315,14 @@ public class GraphicsBuffer {
       if (system == null) return;
 
         FloatBuffer datato = mapFloat(size, bufferMemoryID);
+
         datato.rewind();
         data.rewind();
         while (datato.hasRemaining()) {
           datato.put(data.get());
         }
         datato.rewind();
+
         unmap(bufferMemoryID);
 
 //        vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);

@@ -290,9 +290,8 @@ public class GL2VK {
 //		System.out.println("glBindBuffer"+vbo);
 	}
 
-	public void glBufferData(int target, int size, int usage) {
-    // Get VK usage
-    int vkusage = 0;
+	private int getBufferUsage(int target) {
+	  int vkusage = 0;
     switch (target) {
     case GL_VERTEX_BUFFER:
       vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
@@ -301,8 +300,12 @@ public class GL2VK {
       vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
       break;
     }
+    return vkusage;
+	}
 
-    if (boundBuffer <= 0) {
+	// Method for null buffers to only buffer the data.
+	public void glBufferData(int target, int size, int usage) {
+	  if (boundBuffer <= 0) {
       warn("glBufferData: no bound buffer.");
       return;
     }
@@ -311,21 +314,10 @@ public class GL2VK {
       return;
     }
 
-    buffers[boundBuffer].createBufferAuto(size, vkusage);
+    buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target));
 	}
 
 	public void glBufferData(int target, int size, ByteBuffer data, int usage) {
-		// Get VK usage
-		int vkusage = 0;
-		switch (target) {
-		case GL_VERTEX_BUFFER:
-			vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-			break;
-		case GL_INDEX_BUFFER:
-			vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-			break;
-		}
-
 		if (boundBuffer <= 0) {
 			warn("glBufferData: no bound buffer.");
 			return;
@@ -341,7 +333,7 @@ public class GL2VK {
 
 		// Create buffer if not exist or currentSize != size.
 //		System.out.println(boundBuffer);
-		buffers[boundBuffer].createBufferAuto(size, vkusage);
+		buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target));
 
 		if (data != null) {
 		  buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
@@ -915,6 +907,17 @@ public class GL2VK {
       tempUniformStates.add(new TempUniformState(location, 99, mat));
     }
   }
+
+
+  public ByteBuffer glMapBuffer(int target, int access) {
+    return buffers[boundBuffer].mapByte();
+  }
+
+  public void glUnmapBuffer(int target) {
+    buffers[boundBuffer].unmap();
+  }
+
+
 
 //	public void glUniform2f(int location, float value0, float value1) {
 //		if (programs[boundProgram] == null) {

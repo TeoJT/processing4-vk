@@ -29,9 +29,6 @@ import processing.opengl.PGL;
 import processing.opengl.PGraphicsOpenGL;
 import processing.opengl.PJOGL;
 import processing.opengl.PGL.TessellatorCallback;
-import processing.opengl.PJOGL.Tessellator;
-import processing.opengl.PJOGL.Tessellator.GLUCallback;
-
 public class PVK extends PGL implements PJOGLInterface {
   static {
     FALSE = GL.GL_FALSE;
@@ -642,6 +639,12 @@ public class PVK extends PGL implements PJOGLInterface {
       gl2vk.glBufferData(gl2vktarget, size, (FloatBuffer)data, usage);
     } else if (data instanceof DoubleBuffer) {
       System.err.println("bufferData: DoubleBuffer not support");
+    } else if (data == null) {
+      // Just create the buffer
+      gl2vk.glBufferData(gl2vktarget, size, usage);
+    }
+    else {
+      System.err.println("bufferData: Unknown buffer type "+data.getClass().getName());
     }
   }
 
@@ -676,8 +679,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public ByteBuffer mapBuffer(int target, int access) {
-    // TODO Auto-generated method stub
-    return null;
+    return gl2vk.glMapBuffer(target, access);
   }
 
   @Override
@@ -689,7 +691,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void unmapBuffer(int target) {
-    // TODO Auto-generated method stub
+    gl2vk.glUnmapBuffer(target);
 
   }
 

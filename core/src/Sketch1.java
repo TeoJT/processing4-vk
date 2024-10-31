@@ -67,7 +67,7 @@ public class Sketch1 extends PApplet {
 
         float time = ((float)frameCount)*0.02f;
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10000; i++) {
           selectNode(i%7);
           fill((frameCount+i*289)%MAX, 255, 255);
           ellipseMode(CORNER);
@@ -86,7 +86,7 @@ public class Sketch1 extends PApplet {
         stroke(255);
         rect(mouseX, mouseY, 256f, 256f);
 
-        line(60f, 600f, 360f, 600f);
+//        line(60f, 600f, 360f, 600f);
 
 //        shape(particle);
 
