@@ -43,12 +43,12 @@ public class GLExample {
   public static void main(String[] args) {
     try {
       GL2VK gl = new GL2VK(1200, 800);
-//      triangles();
-//      trianglesSeparate();
-//      throttleTest();
-//      indices();
-//      indicesUniform();
-      coolIndicies(gl);
+//      triangles(gl);
+//      trianglesSeparate(gl);
+//      throttleTest(gl);
+//      indices(gl);
+//      indicesUniform(gl);
+//      coolIndicies(gl);
 
     }
     catch (Exception e) {
@@ -719,7 +719,7 @@ public class GLExample {
 	    	// Buffer data
 	    	createVertices(vertices);
 	    	buff.rewind();
-			memcpy(buff, vertices);
+	    	memcpy(buff, vertices);
 
 	    	gl.glBindBuffer(GL2VK.GL_VERTEX_BUFFER, vertexBuffer[i]);
 	    	gl.glBufferData(GL2VK.GL_VERTEX_BUFFER, size, buff, 0);

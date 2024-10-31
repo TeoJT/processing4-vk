@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.lwjgl.PointerBuffer;
@@ -14,6 +15,7 @@ import org.lwjgl.system.Pointer;
 public class Util {
     public static final int UINT32_MAX = 0xFFFFFFFF;
     public static final long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
+
 
     public static PointerBuffer asPointerBuffer(MemoryStack stack, Collection<String> collection) {
 
@@ -53,18 +55,42 @@ public class Util {
     }
 
 
+
+  public static HashSet<String> disableList = new HashSet<>();
+
+  static {
+    disableList.add("useProgram");
+    disableList.add("uniformMatrix4fv");
+    disableList.add("bindBuffer");
+    disableList.add("glVertexAttribPointer");
+    disableList.add("vertexAttribPointer");
+    disableList.add("drawElementsImpl");
+    disableList.add("drawElements");
+
+    disableList.add("submitAndPresent");
+    disableList.add("endrecords");
+    disableList.add("awaits");
+    disableList.add("executeCommands");
+    disableList.add("endRenderpass");
+
+  }
+
 	// Lil debugging tools here
 	private static long tmrnbefore = 0L;
 	public static void beginTmr() {
 		tmrnbefore = System.nanoTime();
 	}
-	public static void endTmr(String name) {
-		long us = ((System.nanoTime()-tmrnbefore)/1000L);
+	public static long endTmr(String name) {
+	  if (disableList.contains(name)) return 0L;
+
+		long ns = ((System.nanoTime()-tmrnbefore));
 		System.out.println(
-				name+": "+us+"us"+
-				(us > 1000 ? " ("+(us/1000L)+"ms)" : "") +
-				(us > 1000000 ? " ("+(us/1000000L)+"s)" : "")
+        name+": "+ns+"ns"+
+				(ns > 1000 ? " ("+(ns/1000L)+"us)" : "") +
+				(ns > 1000000 ? " ("+(ns/1000000L)+"ms)" : "") +
+        (ns > 1000000000 ? " ("+(ns/1000000000L)+"s)" : "")
 		);
+		return ns;
 	}
 
 	public static int roundToMultiple8(int input) {

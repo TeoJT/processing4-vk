@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import processing.GL2VK.GL2VK;
+import processing.GL2VK.Util;
 import processing.GL2VK.VMouseEvent;
 import processing.awt.ShimAWT;
 import processing.core.PApplet;
@@ -60,8 +61,12 @@ public class PSurfaceVK implements PSurface {
       timer.scheduleAtFixedRate(this, 0, period);
     }
 
+    long then = 0;
+
     @Override
     public void run() {
+//      System.out.println("INTERVAL "+(System.nanoTime()-then));
+//      Util.beginTmr();
       if (gl2vk == null) {
         gl2vk = new GL2VK(graphics.width, graphics.height);
         pvk.setGL2VK(gl2vk);
@@ -74,17 +79,25 @@ public class PSurfaceVK implements PSurface {
       if (!sketch.finished) {
         pvk.getGL(pvk);
 
+//      Util.beginTmr();
         pvk.beginRecord();
         pvk.selectNode(0);
         sketch.handleDraw();
         pvk.endRecord();
+
+//      Util.beginTmr();
+
+//        Util.beginTmr();
         PGraphicsOpenGL.completeFinishedPixelTransfers();
+//        Util.endTmr("completeFinishedPixelTransfers");
       }
       if (sketch.exitCalled()) {
         sketch.dispose();
         sketch.exitActual();
         pvk.cleanup();
       }
+//      Util.endTmr("end entire cycle");
+//      then = System.nanoTime();
     }
   }
 

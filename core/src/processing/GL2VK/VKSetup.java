@@ -639,6 +639,7 @@ public class VKSetup {
         boolean extensionsSupported = checkDeviceExtensionSupport(device);
         boolean swapChainAdequate = false;
         boolean integrated = false;
+        boolean discrete = false;
         int pushConstantsSize = 0;
 
         if(extensionsSupported) {
@@ -654,6 +655,7 @@ public class VKSetup {
                 SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, stack);
                 swapChainAdequate = swapChainSupport.formats.hasRemaining() && swapChainSupport.presentModes.hasRemaining();
                 integrated = deviceProperties.deviceType() == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+                discrete = deviceProperties.deviceType() == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
             }
         }
 

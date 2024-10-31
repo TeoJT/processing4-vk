@@ -1,3 +1,4 @@
+import processing.GL2VK.Util;
 import processing.core.*;
 import processing.data.*;
 import processing.event.*;
@@ -22,7 +23,7 @@ public class PShapeTest extends PApplet {
     @Override
     public void settings() {
       try {
-        size(1024, 1024, PV2D);
+        size(1024, 1024, P2D);
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -34,8 +35,6 @@ public class PShapeTest extends PApplet {
     public void setup() {
       try {
         surface.setLocation(100, 100);
-
-        println("--- CREATE PSHAPE ---\n\n\n\n");
         particle = createShape();
         particle.beginShape(QUAD);
         particle.stroke(255);
@@ -60,7 +59,25 @@ public class PShapeTest extends PApplet {
     public void draw() {
       try {
         background(200);
-        shape(particle);
+
+        Util.beginTmr();
+        for (int i = 0; i < 100; i++) {
+//          Util.beginTmr();
+          selectNode((i/4)%8);
+//          println("--------------\n \n\n\n\n");
+          pushMatrix();
+          translate(random(-50, width), random(-50, height));
+          shape(particle);
+          popMatrix();
+
+//          if (Util.endTmr("One cycle") > 1000000L) {
+//            System.err.println(i);
+//          }
+//          Util.endTmr("One cycle");
+        }
+        Util.endTmr("One frame");
+
+//        println("fps: "+frameRate);
       }
       catch (RuntimeException e) {
         e.printStackTrace();

@@ -362,12 +362,12 @@ public class PVK extends PGL implements PJOGLInterface {
   }
 
   public void beginRecord() {
-    function("beginRecord");
+    report("beginRecord");
     gl2vk.beginRecord();
   }
 
   public void endRecord() {
-    function("endRecord");
+    report("endRecord");
     gl2vk.endRecord();
   }
 
@@ -375,7 +375,7 @@ public class PVK extends PGL implements PJOGLInterface {
     gl2vk.selectNode(node);
   }
 
-  private void function(String func) {
+  private void report(String func) {
 //    System.out.println(func);
   }
 
@@ -521,7 +521,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void genBuffers(int n, IntBuffer buffers) {
-    function("genBuffers");
+    report("genBuffers");
     gl2vk.glGenBuffers(n, buffers);
   }
 
@@ -532,15 +532,15 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void bindBuffer(int target, int buffer) {
-    function("bindBuffer");
+    report("bindBuffer");
     gl2vk.glBindBuffer(target, buffer);
+    Util.endTmr("bindBuffer");
   }
 
 
   public static ByteBuffer convertToByteBuffer(Buffer outputBuffer) {
     if (outputBuffer == null) return null;
 
-    Util.beginTmr();
     ByteBuffer byteBuffer = null;
     if (outputBuffer instanceof ByteBuffer) {
         byteBuffer = (ByteBuffer) outputBuffer;
@@ -572,7 +572,6 @@ public class PVK extends PGL implements PJOGLInterface {
     else {
       System.err.println("Unknown buffer "+outputBuffer.getClass().toString());
     }
-    Util.endTmr("convertToByteBuffer");
     return byteBuffer;
   }
 
@@ -592,7 +591,7 @@ public class PVK extends PGL implements PJOGLInterface {
       System.err.println("bufferData: Dunno what to do with target "+target);
     }
 
-    function("bufferData");
+    report("bufferData");
 
 //    ByteBuffer databyte = convertToByteBuffer(data);
 
@@ -778,7 +777,7 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public void vertexAttribPointer(int index, int size, int type,
                                   boolean normalized, int stride, int offset) {
-    function("vertexAttribPointer");
+    report("vertexAttribPointer");
 
     int gl2vktype = 0;
     if (type == UNSIGNED_BYTE)
@@ -816,7 +815,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void drawArraysImpl(int mode, int first, int count) {
-    function("drawArrays");
+    report("drawArrays");
     gl2vk.glDrawArrays(mode, first, count);
   }
 
@@ -832,7 +831,7 @@ public class PVK extends PGL implements PJOGLInterface {
     else if (type == UNSIGNED_SHORT) {
       gl2vktype = GL2VK.GL_UNSIGNED_SHORT;
     }
-    function("drawElements");
+    report("drawElements");
     gl2vk.glDrawElements(mode, count, gl2vktype, offset);
   }
 
@@ -972,7 +971,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public int createShader(int type) {
-    function("createShader");
+    report("createShader");
     int gl2vktype = 0;
     if (type == VERTEX_SHADER) {
       gl2vktype = GL2VK.GL_VERTEX_SHADER;
@@ -985,13 +984,13 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void shaderSource(int shader, String source) {
-    function("shaderSource");
+    report("shaderSource");
     gl2vk.glShaderSource(shader, source);
   }
 
   @Override
   public void compileShader(int shader) {
-    function("compileShader");
+    report("compileShader");
     gl2vk.glCompileShader(shader);
   }
 
@@ -1003,7 +1002,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void deleteShader(int shader) {
-    function("deleteShader");
+    report("deleteShader");
     gl2vk.glDeleteShader(shader);
 
   }
@@ -1017,13 +1016,13 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public int createProgram() {
-    function("createProgram");
+    report("createProgram");
     return gl2vk.glCreateProgram();
   }
 
   @Override
   public void attachShader(int program, int shader) {
-    function("attachShader");
+    report("attachShader");
     gl2vk.glAttachShader(program, shader);
   }
 
@@ -1035,15 +1034,13 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void linkProgram(int program) {
-    function("linkProgram");
+    report("linkProgram");
     gl2vk.glLinkProgram(program);
   }
 
   @Override
   public void useProgram(int program) {
-    function("useProgram");
     gl2vk.glUseProgram(program);
-
   }
 
   @Override
@@ -1060,7 +1057,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public int getAttribLocation(int program, String name) {
-    function("getAttribLocation");
+    report("getAttribLocation");
     return gl2vk.glGetAttribLocation(program, name);
   }
 
@@ -1071,7 +1068,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public int getUniformLocation(int program, String name) {
-    function("getUniformLocation");
+    report("getUniformLocation");
     return gl2vk.getUniformLocation(program, name);
   }
 
@@ -1084,39 +1081,39 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void uniform1i(int location, int value) {
-    function("uniform1i");
+    report("uniform1i");
     gl2vk.glUniform1i(location, value);
   }
 
   @Override
   public void uniform2i(int location, int value0, int value1) {
-    function("uniform2i");
+    report("uniform2i");
     gl2vk.glUniform2i(location, value0, value1);
   }
 
   @Override
   public void uniform3i(int location, int value0, int value1, int value2) {
-    function("uniform3i");
+    report("uniform3i");
     gl2vk.glUniform3i(location, value0, value1, value2);
   }
 
   @Override
   public void uniform4i(int location, int value0, int value1, int value2,
                         int value3) {
-    function("uniform4i");
+    report("uniform4i");
     gl2vk.glUniform4i(location, value0, value1, value2, value3);
   }
 
   @Override
   public void uniform1f(int location, float value) {
-    function("uniform1f");
+    report("uniform1f");
     gl2vk.glUniform1f(location, value);
 
   }
 
   @Override
   public void uniform2f(int location, float value0, float value1) {
-    function("uniform2f");
+    report("uniform2f");
     gl2vk.glUniform2f(location, value0, value1);
 
   }
@@ -1124,7 +1121,7 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public void uniform3f(int location, float value0, float value1,
                         float value2) {
-    function("uniform3f");
+    report("uniform3f");
     gl2vk.glUniform3f(location, value0, value1, value2);
 
   }
@@ -1132,7 +1129,7 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public void uniform4f(int location, float value0, float value1, float value2,
                         float value3) {
-    function("uniform4f");
+    report("uniform4f");
     gl2vk.glUniform4f(location, value0, value1, value2, value3);
 
   }
@@ -1203,7 +1200,7 @@ public class PVK extends PGL implements PJOGLInterface {
   public void uniformMatrix4fv(int location, int count, boolean transpose,
                                FloatBuffer mat) {
 
-    function("uniformMatrix4fv");
+    report("uniformMatrix4fv");
     gl2vk.glUniformMatrix4fv(location, count, transpose, mat);
 
 //    mat.rewind();
@@ -1233,7 +1230,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void getShaderiv(int shader, int pname, IntBuffer params) {
-    function("getShaderiv");
+    report("getShaderiv");
     int gl2vkpname = 0;
     if (pname == COMPILE_STATUS) {
       gl2vkpname = GL2VK.GL_COMPILE_STATUS;
@@ -1253,13 +1250,13 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public String getShaderInfoLog(int shader) {
-    function("getShaderInfoLog");
+    report("getShaderInfoLog");
     return gl2vk.glGetShaderInfoLog(shader);
   }
 
   @Override
   public String getShaderSource(int shader) {
-    function("getShaderSource");
+    report("getShaderSource");
     return gl2vk.glGetShaderSource(shader);
   }
 

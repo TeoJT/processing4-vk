@@ -256,6 +256,7 @@ public class ThreadNode {
 //	        			  if (id == NO_CMD) System.err.println(myID+" NO_CMD warning");
 //        				  threadState.set(STATE_RUNNING);
 //	        		  }
+//	        		  Util.beginTmr();
 
 
 	        		  // ======================
@@ -349,7 +350,10 @@ public class ThreadNode {
 	        	            threadState.set(STATE_ENTERING_SLEEP);
 	        	            goToSleepMode = true;
 
+	        	            // RATIO
 //	        	            System.out.println("("+myID+") Sleep time "+(sleepTime/1000L)+"us  Run time "+(runTime/1000L)+"us");
+
+//	        	            System.out.println("("+myID+") Active-to-sleep ratio "+(int)((((double)runTime)/((double)sleepTime))*100d)+"%");
 
 						    break;
 	        		  case CMD_KILL:
@@ -959,5 +963,6 @@ public class ThreadNode {
 			}
 			count++;
 		}
+//		System.out.println("Waited "+count+"");
 	}
 }

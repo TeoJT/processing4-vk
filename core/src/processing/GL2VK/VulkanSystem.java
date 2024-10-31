@@ -58,7 +58,7 @@ public class VulkanSystem {
     public VKSetup vkbase;
 
 	private int selectedNode = 0;
-	private ThreadNode[] threadNodes = new ThreadNode[7];
+	private ThreadNode[] threadNodes = new ThreadNode[8];
 
 
     // ======= METHODS ======= //
@@ -333,7 +333,9 @@ public class VulkanSystem {
         	// Frames in flight stuff
             Frame thisFrame = inFlightFrames.get(currentFrame);
 
+//            Util.beginTmr();
             vkWaitForFences(device, thisFrame.pFence(), true, Util.UINT64_MAX);
+//            Util.endTmr("wait 1");
 
             IntBuffer currentImageIndex = stack.mallocInt(1);
 
@@ -353,9 +355,11 @@ public class VulkanSystem {
             this.currentImageIndex = currentImageIndex.get(0);
 
             // Fence wait for images in flight.
-            if(imagesInFlight.containsKey(imageIndex)) {
-                vkWaitForFences(device, imagesInFlight.get(imageIndex).fence(), true, Util.UINT64_MAX);
-            }
+//            Util.beginTmr();
+//            if(imagesInFlight.containsKey(imageIndex)) {
+//                vkWaitForFences(device, imagesInFlight.get(imageIndex).fence(), true, Util.UINT64_MAX);
+//            }
+//            Util.endTmr("wait 2");
 
             imagesInFlight.put(imageIndex, thisFrame);
 
@@ -409,6 +413,7 @@ public class VulkanSystem {
 
     public void endRecord() {
     	// Before we can end recording, we need to think about our secondary command buffers
+
 
     	for (ThreadNode n : threadNodes) {
 	    	n.endRecord();
