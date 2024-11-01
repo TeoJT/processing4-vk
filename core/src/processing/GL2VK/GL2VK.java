@@ -43,6 +43,14 @@ public class GL2VK {
 	public static final int GL_TRUE = 1;
 	public static final int GL_FALSE = 0;
 
+	public static final int STREAM_DRAW = 1;
+	public static final int STREAM_READ = 2;
+	public static final int STATIC_DRAW = 3;
+	public static final int DYNAMIC_DRAW = 4;
+
+	public static final boolean RETAINED_MODE = true;
+  public static final boolean IMMEDIATE_MODE = false;
+
 	public static final int DEBUG_MODE = 42;
 
 	// Shaders aren't actually anything significant, they're really temporary data structures
@@ -314,7 +322,17 @@ public class GL2VK {
       return;
     }
 
-    buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target));
+
+    // STATIC_DRAW used by immediate rendering
+    if (usage == STATIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
+    }
+    // And dynamic used for immediate.
+    else if (usage == DYNAMIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
+    }
+    else warn("Unknown usage "+usage+".");
+
 	}
 
 	public void glBufferData(int target, int size, ByteBuffer data, int usage) {
@@ -329,15 +347,21 @@ public class GL2VK {
 
 
 		// Note: target is for specifying vertex_array, indicies_array
-		// which we'll likely need. Usage, I have no idea what it does.
+		// which we'll likely need.
 
-		// Create buffer if not exist or currentSize != size.
-//		System.out.println(boundBuffer);
-		buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target));
 
-		if (data != null) {
-		  buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
-		}
+    // STATIC_DRAW used by immediate rendering
+    if (usage == STATIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
+      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size);
+    }
+    // And dynamic used for immediate.
+    else if (usage == DYNAMIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
+      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size);
+    }
+    else warn("Unknown usage "+usage+".");
+
 
 //  ByteBuffer newData = null;
 //    System.out.println(boundBuffer+"VK BUFFER "+buffers[boundBuffer].bufferID);
@@ -371,16 +395,6 @@ public class GL2VK {
 	}
 
 	public void glBufferData(int target, int size, FloatBuffer data, int usage) {
-    // Get VK usage
-    int vkusage = 0;
-    switch (target) {
-    case GL_VERTEX_BUFFER:
-      vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-      break;
-    case GL_INDEX_BUFFER:
-      vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-      break;
-    }
 
     if (boundBuffer <= 0) {
       warn("glBufferData: no bound buffer.");
@@ -391,25 +405,19 @@ public class GL2VK {
       return;
     }
 
-    buffers[boundBuffer].createBufferAuto(size, vkusage);
-
-    if (data != null) {
-      buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
+    if (usage == STATIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
+      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size);
     }
+    else if (usage == DYNAMIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
+      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size);
+    }
+    else warn("Unknown usage "+usage+".");
+
   }
 
 	public void glBufferData(int target, int size, ShortBuffer data, int usage) {
-    // Get VK usage
-    int vkusage = 0;
-    switch (target) {
-    case GL_VERTEX_BUFFER:
-      vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-      break;
-    case GL_INDEX_BUFFER:
-      vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-      break;
-    }
-
     if (boundBuffer <= 0) {
       warn("glBufferData: no bound buffer.");
       return;
@@ -419,25 +427,18 @@ public class GL2VK {
       return;
     }
 
-    buffers[boundBuffer].createBufferAuto(size, vkusage);
-
-    if (data != null) {
-      buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
+    if (usage == STATIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
+      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size);
     }
+    else if (usage == DYNAMIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
+      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size);
+    }
+    else warn("Unknown usage "+usage+".");
   }
 
   public void glBufferData(int target, int size, IntBuffer data, int usage) {
-    // Get VK usage
-    int vkusage = 0;
-    switch (target) {
-    case GL_VERTEX_BUFFER:
-      vkusage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-      break;
-    case GL_INDEX_BUFFER:
-      vkusage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-      break;
-    }
-
     if (boundBuffer <= 0) {
       warn("glBufferData: no bound buffer.");
       return;
@@ -447,11 +448,15 @@ public class GL2VK {
       return;
     }
 
-    buffers[boundBuffer].createBufferAuto(size, vkusage);
-
-    if (data != null) {
-      buffers[boundBuffer].bufferDataImmediate(data, size, dangerMode);
+    if (usage == STATIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
+      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size);
     }
+    else if (usage == DYNAMIC_DRAW) {
+      buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
+      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size);
+    }
+    else warn("Unknown usage "+usage+".");
   }
 
 
@@ -910,7 +915,7 @@ public class GL2VK {
 
 
   public ByteBuffer glMapBuffer(int target, int access) {
-    return buffers[boundBuffer].mapByte();
+    return buffers[boundBuffer].map();
   }
 
   public void glUnmapBuffer(int target) {

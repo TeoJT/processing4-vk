@@ -77,7 +77,7 @@ public class PShapeTest extends PApplet {
         }
 //        Util.endTmr("One frame");
 
-//        println("fps: "+frameRate);
+        println("fps: "+frameRate);
       }
       catch (RuntimeException e) {
         e.printStackTrace();

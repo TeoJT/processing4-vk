@@ -590,22 +590,19 @@ public class PVK extends PGL implements PJOGLInterface {
       System.err.println("bufferData: Dunno what to do with target "+target);
     }
 
-//    if (usage == STREAM_DRAW) {
-//      System.out.println("STREAM_DRAW");
-//    } else if (usage == STREAM_READ) {
-//        System.out.println("STREAM_READ");
-//    } else if (usage == STATIC_DRAW) {
-//        System.out.println("STATIC_DRAW");
-//    } else if (usage == DYNAMIC_DRAW) {
-//        System.out.println("DYNAMIC_DRAW");
-//    }
-//    else System.out.println(usage);
-
-    // TODO:
-    // DYNAMIC_DRAW should be used to specify retained mode
-    // STATIC_DRAW should be used to specify immediate mode.
-    // According to the OpenGL specs this should be the other way round, but
-    // for some reason that's the way Processing uses it.
+    int gl2vkusage = -1;
+    if (usage == STREAM_DRAW) {
+      gl2vkusage = GL2VK.STREAM_DRAW;
+    } else if (usage == STREAM_READ) {
+      gl2vkusage = GL2VK.STREAM_READ;
+    } else if (usage == STATIC_DRAW) {
+      gl2vkusage = GL2VK.STATIC_DRAW;
+    } else if (usage == DYNAMIC_DRAW) {
+      gl2vkusage = GL2VK.DYNAMIC_DRAW;
+    }
+    else {
+      System.err.println("bufferData: Unknown usage "+usage);
+    }
 
 
     report("bufferData");
@@ -642,22 +639,22 @@ public class PVK extends PGL implements PJOGLInterface {
 //    System.out.println();
 
     if (data instanceof ByteBuffer) {
-      gl2vk.glBufferData(gl2vktarget, size, (ByteBuffer)data, usage);
+      gl2vk.glBufferData(gl2vktarget, size, (ByteBuffer)data, gl2vkusage);
     } else if (data instanceof CharBuffer) {
-      gl2vk.glBufferData(gl2vktarget, size, (ByteBuffer)data, usage);
+      gl2vk.glBufferData(gl2vktarget, size, (ByteBuffer)data, gl2vkusage);
     } else if (data instanceof ShortBuffer) {
-      gl2vk.glBufferData(gl2vktarget, size, (ShortBuffer)data, usage);
+      gl2vk.glBufferData(gl2vktarget, size, (ShortBuffer)data, gl2vkusage);
     } else if (data instanceof IntBuffer) {
-      gl2vk.glBufferData(gl2vktarget, size, (IntBuffer)data, usage);
+      gl2vk.glBufferData(gl2vktarget, size, (IntBuffer)data, gl2vkusage);
     } else if (data instanceof LongBuffer) {
       System.err.println("bufferData: LongBuffer not support");
     } else if (data instanceof FloatBuffer) {
-      gl2vk.glBufferData(gl2vktarget, size, (FloatBuffer)data, usage);
+      gl2vk.glBufferData(gl2vktarget, size, (FloatBuffer)data, gl2vkusage);
     } else if (data instanceof DoubleBuffer) {
       System.err.println("bufferData: DoubleBuffer not support");
     } else if (data == null) {
       // Just create the buffer
-      gl2vk.glBufferData(gl2vktarget, size, usage);
+      gl2vk.glBufferData(gl2vktarget, size, gl2vkusage);
     }
     else {
       System.err.println("bufferData: Unknown buffer type "+data.getClass().getName());

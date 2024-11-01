@@ -74,13 +74,16 @@ import org.lwjgl.vulkan.VkBufferCopy;
 
 public class GraphicsBuffer {
 
-    private int instance = -1;
-    public long[] buffers = new long[128];
-    private long[] bufferMemory = new long[128];
-//    private boolean bufferAssigned = false;
+
+    private int instance = 0;
+    private final static int MAX_INSTANCES = 128;
+
+    public long[] buffers = new long[MAX_INSTANCES];
+    private long[] bufferMemory = new long[MAX_INSTANCES];
+    public long[] stagingBuffers = new long[MAX_INSTANCES];
+    private long[] stagingBufferMemory = new long[MAX_INSTANCES];
+
     private int[] bufferSize = new int[128];
-//    private long stagingBuffer = -1;
-//    private long stagingBufferMemory = -1;
 
     private VulkanSystem system;
     private VKSetup vkbase;
@@ -98,6 +101,8 @@ public class GraphicsBuffer {
       for (int i = 0; i < buffers.length; i++) {
         buffers[i] = -1;
         bufferMemory[i] = -1;
+        stagingBuffers[i] = -1;
+        stagingBufferMemory[i] = -1;
       }
     }
 
@@ -105,13 +110,19 @@ public class GraphicsBuffer {
     // Releases any previous buffers and creates a buffer IF
     // - There's no previous buffer
     // - Buffer size != new size.
-    public void createBufferAuto(int size, int usage) {
-      instance++;
+    public void createBufferAuto(int size, int vertexIndexUsage, boolean retainedMode) {
+
     	if (buffers[instance] == -1 || size > bufferSize[instance]) {
     		// Delete old buffers
     		destroy();
+
     		// Create new one
-    		createBufferImmediateMode(size, usage);
+    		if (retainedMode) {
+          createBufferRetainedMode(size, vertexIndexUsage);
+    		}
+    		else {
+          createBufferImmediateMode(size, vertexIndexUsage);
+    		}
     	}
     }
 
@@ -155,66 +166,75 @@ public class GraphicsBuffer {
 
 
     public long getCurrBuffer() {
-      return buffers[instance];
+      if (instance == 0) instance = 1;
+
+      // Problem: we need to know whether we're doing retained or immediate.
+      // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
+      if (stagingBuffers[instance-1] != -1) {
+        // Retained
+        return stagingBuffers[instance-1];
+      }
+      else {
+        // Immediate
+        return buffers[instance-1];
+      }
     }
 
 
     public void reset() {
-      instance = -1;
+      instance = 0;
     }
 
 
     // TODO.
-    public void createBufferRetainedMode() {
-//   // If in debug mode, just assign a dummy value
-//      if (system == null) {
-//        this.bufferID = (long)(Math.random()*100000.);
-//
-//        return;
-//      }
-//
-//      try(MemoryStack stack = stackPush()) {
-//
-//        // Not from anywhere, just alloc pointers we can use
-//        // to get back from createbuffer method
-//            LongBuffer pBuffer = stack.mallocLong(1);
-//            LongBuffer pBufferMemory = stack.mallocLong(1);
-//
-//
-//            // Actually create our buffer.
-//            vkbase.createBuffer(size,
-//                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage,
-//                    VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
-//                    pBuffer,
-//                    pBufferMemory);
-//
-//            // Pointer variables now populated
-//
-//            // GraphicsBuffedr object, set with our new pointer variables.
-//            this.bufferID = pBuffer.get(0);
-//            this.bufferMemoryID = pBufferMemory.get(0);
-//            this.bufferAssigned = true;
-//            this.bufferSize = size;
-//
-//      }
-//      bufferCount++;
+    public void createBufferRetainedMode(int size, int usage) {
+      // If in debug mode, just assign a dummy value
+      if (system == null) {
+        this.buffers[instance] = (long)(Math.random()*100000.);
+
+        return;
+      }
+
+      try(MemoryStack stack = stackPush()) {
+
+        // Not from anywhere, just alloc pointers we can use
+        // to get back from createbuffer method
+            LongBuffer pBuffer = stack.mallocLong(1);
+            LongBuffer pBufferMemory = stack.mallocLong(1);
+
+
+            // Buffer which is usable by both CPU and GPU
+            vkbase.createBuffer(size,
+                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage,
+                    VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
+                    pBuffer,
+                    pBufferMemory);
+
+            // Pointer variables now populated
+
+            // GraphicsBuffedr object, set with our new pointer variables.
+            buffers[instance] = pBuffer.get(0);
+            bufferMemory[instance] = pBufferMemory.get(0);
+            bufferSize[instance] = size;
+      }
+
+
+      // STAGING BUFFER
+      try(MemoryStack stack = stackPush()) {
+        LongBuffer pBuffer = stack.mallocLong(1);
+        LongBuffer pBufferMemory = stack.mallocLong(1);
+        vkbase.createBuffer(size,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT | usage,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                pBuffer,
+                pBufferMemory);
+
+        this.stagingBuffers[instance] = pBuffer.get(0);
+        this.stagingBufferMemory[instance] = pBufferMemory.get(0);
+      }
+      bufferCount++;
     }
 
-//    private void createStagingBuffer(int size) {
-//      try(MemoryStack stack = stackPush()) {
-//        // STAGING BUFFER
-//        LongBuffer pBuffer = stack.mallocLong(1);
-//        LongBuffer pBufferMemory = stack.mallocLong(1);
-//        vkbase.createBuffer(size,
-//                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-//                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-//                pBuffer,
-//                pBufferMemory);
-//
-//        this.stagingBuffer = pBuffer.get(0);
-//        this.stagingBufferMemory = pBufferMemory.get(0);
-//      }
-//    }
 
 
 
@@ -248,8 +268,18 @@ public class GraphicsBuffer {
       }
     }
 
-    public ByteBuffer mapByte() {
-      return mapByte(bufferSize[instance], bufferMemory[instance]);
+    public ByteBuffer map() {
+
+      // Problem: we need to know whether we're doing retained or immediate.
+      // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
+      if (stagingBufferMemory[instance] != -1) {
+        // Retained
+        return mapByte(bufferSize[instance], stagingBufferMemory[instance]);
+      }
+      else {
+        // Immediate
+        return mapByte(bufferSize[instance], bufferMemory[instance]);
+      }
     }
 
     public FloatBuffer mapFloat(int size, long mem) {
@@ -297,18 +327,32 @@ public class GraphicsBuffer {
     // TODO: Make multithreaded
     public void unmap(long mem) {
       vkUnmapMemory(system.device, mem);
+      instance++;
     }
 
     public void unmap() {
-      vkUnmapMemory(system.device, bufferMemory[instance]);
+      // Problem: we need to know whether we're doing retained or immediate.
+      // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
+      if (stagingBufferMemory[instance] != -1) {
+        // Retained
+        unmap(stagingBufferMemory[instance]);
+      }
+      else {
+        // Immediate
+        unmap(bufferMemory[instance]);
+      }
     }
+
+    /////////////////////////////////////////////////////
+    // TODO: These take a lot of time, move them to threadNodes.
+    // Don't worry, the problem of all this copy+paste code will be solved
+    // by moving the problem somewhere else.
 
     // Sends data straight to the gpu
     // TODO: version where memory is constantly unmapped
-    public void bufferDataImmediate(ByteBuffer data, int size, boolean nodeMode) {
-
-    	// If debug mode enabled
-    	if (system == null) return;
+    public void bufferDataImmediate(ByteBuffer data, int size) {
+      	// If debug mode enabled
+      	if (system == null) return;
 
   	    ByteBuffer datato = mapByte(size, bufferMemory[instance]);
     		datato.rewind();
@@ -318,19 +362,11 @@ public class GraphicsBuffer {
     		}
     		datato.rewind();
     		unmap(bufferMemory[instance]);
-
-//        if (nodeMode) {
-//	        system.nodeBufferData(stagingBuffer, bufferID, size);
-//        }
-//        else {
-//      	vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);
-//        }
     }
 
-    public void bufferDataImmediate(FloatBuffer data, int size, boolean nodeMode) {
-
-      // If debug mode enabled
-      if (system == null) return;
+    public void bufferDataImmediate(FloatBuffer data, int size) {
+        // If debug mode enabled
+        if (system == null) return;
 
         FloatBuffer datato = mapFloat(size, bufferMemory[instance]);
 
@@ -342,14 +378,11 @@ public class GraphicsBuffer {
         datato.rewind();
 
         unmap(bufferMemory[instance]);
-
-//        vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);
     }
 
-    public void bufferDataImmediate(ShortBuffer data, int size, boolean nodeMode) {
-
-      // If debug mode enabled
-      if (system == null) return;
+    public void bufferDataImmediate(ShortBuffer data, int size) {
+        // If debug mode enabled
+        if (system == null) return;
 
         ShortBuffer datato = mapShort(size, bufferMemory[instance]);
         datato.rewind();
@@ -359,14 +392,11 @@ public class GraphicsBuffer {
         }
         datato.rewind();
         unmap(bufferMemory[instance]);
-
-//        vkbase.copyBufferAndWait(bufferMemoryID, bufferID, size);
     }
 
-    public void bufferDataImmediate(IntBuffer data, int size, boolean nodeMode) {
-
-      // If debug mode enabled
-      if (system == null) return;
+    public void bufferDataImmediate(IntBuffer data, int size) {
+        // If debug mode enabled
+        if (system == null) return;
 
         IntBuffer datato = mapInt(size, bufferMemory[instance]);
         datato.rewind();
@@ -376,7 +406,83 @@ public class GraphicsBuffer {
         }
         datato.rewind();
         unmap(bufferMemory[instance]);
+    }
 
-//        vkbase.copyBufferAndWait(bufferMemoryID, bufferID, size);
+
+
+
+
+
+
+
+
+
+    ////////////////////////////////////////////////////////////////
+    // Retained mode
+
+    public void bufferDataRetained(ByteBuffer data, int size) {
+        // If debug mode enabled
+        if (system == null) return;
+
+        ByteBuffer datato = mapByte(size, stagingBuffers[instance]);
+        datato.rewind();
+        data.rewind();
+        while (datato.hasRemaining()) {
+          datato.put(data.get());
+        }
+        datato.rewind();
+        unmap(stagingBuffers[instance]);
+
+        vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
+    }
+
+    public void bufferDataRetained(FloatBuffer data, int size) {
+        // If debug mode enabled
+        if (system == null) return;
+
+        FloatBuffer datato = mapFloat(size, stagingBuffers[instance]);
+
+        datato.rewind();
+        data.rewind();
+        while (datato.hasRemaining()) {
+          datato.put(data.get());
+        }
+        datato.rewind();
+
+        unmap(stagingBuffers[instance]);
+
+        vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
+    }
+
+    public void bufferDataRetained(ShortBuffer data, int size) {
+        // If debug mode enabled
+        if (system == null) return;
+
+        ShortBuffer datato = mapShort(size, stagingBuffers[instance]);
+        datato.rewind();
+        data.rewind();
+        while (datato.hasRemaining()) {
+          datato.put(data.get());
+        }
+        datato.rewind();
+        unmap(stagingBuffers[instance]);
+
+        vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
+    }
+
+    public void bufferDataRetained(IntBuffer data, int size) {
+        // If debug mode enabled
+        if (system == null) return;
+
+        IntBuffer datato = mapInt(size, stagingBuffers[instance]);
+        datato.rewind();
+        data.rewind();
+        while (datato.hasRemaining()) {
+          datato.put(data.get());
+        }
+        datato.rewind();
+        unmap(stagingBuffers[instance]);
+
+        vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
     }
 }
