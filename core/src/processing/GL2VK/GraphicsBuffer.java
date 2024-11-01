@@ -262,8 +262,22 @@ public class GraphicsBuffer {
       }
     }
 
+
+    public ByteBuffer map(int instance) {
+      // Problem: we need to know whether we're doing retained or immediate.
+      // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
+      if (stagingBufferMemory[instance] != -1) {
+        // Retained
+        return mapByte(bufferSize[instance], stagingBufferMemory[instance]);
+      }
+      else {
+        // Immediate
+        return mapByte(bufferSize[instance], bufferMemory[instance]);
+      }
+    }
+
     // TODO: Make multithreaded
-    public ByteBuffer mapByte(int size, long mem) {
+    public static ByteBuffer mapByte(int size, long mem) {
       try(MemoryStack stack = stackPush()) {
 
 
@@ -279,20 +293,7 @@ public class GraphicsBuffer {
       }
     }
 
-    public ByteBuffer map(int instance) {
-      // Problem: we need to know whether we're doing retained or immediate.
-      // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
-      if (stagingBufferMemory[instance] != -1) {
-        // Retained
-        return mapByte(bufferSize[instance], stagingBufferMemory[instance]);
-      }
-      else {
-        // Immediate
-        return mapByte(bufferSize[instance], bufferMemory[instance]);
-      }
-    }
-
-    public FloatBuffer mapFloat(int size, long mem) {
+    public static FloatBuffer mapFloat(int size, long mem) {
       try(MemoryStack stack = stackPush()) {
           // alloc pointer for our data
           PointerBuffer pointer = stack.mallocPointer(1);
@@ -306,7 +307,7 @@ public class GraphicsBuffer {
       }
     }
 
-    public ShortBuffer mapShort(int size, long mem) {
+    public static ShortBuffer mapShort(int size, long mem) {
       try(MemoryStack stack = stackPush()) {
           // alloc pointer for our data
           PointerBuffer pointer = stack.mallocPointer(1);
@@ -335,7 +336,7 @@ public class GraphicsBuffer {
     }
 
     // TODO: Make multithreaded
-    public void unmap(long mem) {
+    public static void unmap(long mem) {
       vkUnmapMemory(system.device, mem);
     }
 

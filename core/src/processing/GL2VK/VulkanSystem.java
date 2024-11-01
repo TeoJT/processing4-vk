@@ -58,7 +58,7 @@ public class VulkanSystem {
     public VKSetup vkbase;
 
 	private int selectedNode = 0;
-	private ThreadNode[] threadNodes = new ThreadNode[8];
+	private UnhingedThreadNode[] threadNodes = new UnhingedThreadNode[8];
 
 
     // ======= METHODS ======= //
@@ -132,7 +132,7 @@ public class VulkanSystem {
 
     private void createThreadNodes() {
     	for (int i = 0; i < threadNodes.length; i++) {
-    		threadNodes[i] = new ThreadNode(this, i);
+    		threadNodes[i] = new UnhingedThreadNode(this, i);
     	}
     }
 

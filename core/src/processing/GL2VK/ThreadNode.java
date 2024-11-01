@@ -99,26 +99,26 @@ public class ThreadNode {
 	// To avoid clashing from the main thread accessing the front of the queue while the
 	// other thread is accessing the end of the queue, best solution is to make this big
 	// enough lol.
-	private final static int MAX_QUEUE_LENGTH = 2048;
+	protected final static int MAX_QUEUE_LENGTH = 10000;
 
-	private VulkanSystem system;
-	private VKSetup vkbase;
-	private int myID = 0;
+	protected VulkanSystem system;
+	protected VKSetup vkbase;
+	protected int myID = 0;
 
-	private VkCommandBuffer[] cmdbuffers;
+	protected VkCommandBuffer[] cmdbuffers;
 
 	// NOT to be set by main thread
-	private AtomicInteger currentFrame = new AtomicInteger(0);
-	private AtomicInteger currentImage = new AtomicInteger(0);
-	private long commandPool;
+	protected AtomicInteger currentFrame = new AtomicInteger(0);
+	protected AtomicInteger currentImage = new AtomicInteger(0);
+	protected long commandPool;
 
-	private AtomicInteger threadState = new AtomicInteger(STATE_INACTIVE);
-	private AtomicBoolean openCmdBuffer = new AtomicBoolean(false);
+	protected AtomicInteger threadState = new AtomicInteger(STATE_INACTIVE);
+	protected AtomicBoolean openCmdBuffer = new AtomicBoolean(false);
 
 	// Read-only begin info for beginning our recording of commands
 	// (what am i even typing i need sleep)
 	// One for each frames in flight
-	private VkCommandBufferBeginInfo[] beginInfos;
+	protected VkCommandBufferBeginInfo[] beginInfos;
 	// Just to keep it from being garbage collected or something
 	private VkCommandBufferInheritanceInfo[] inheritanceInfos;
 
@@ -126,8 +126,8 @@ public class ThreadNode {
 	// There are two seperate indexes, one for our thread (main thread) and one for this thread.
 	// We add item to queue (cmdindex = 0 -> 1) and then eventually thread updates its own index
 	// as it works on cmd   (myIndex  = 0 -> 1)
-	private int cmdindex = 0;  // Start at one because thread will have already consumed index 0
-	private Thread thread;
+	protected int cmdindex = 0;  // Start at one because thread will have already consumed index 0
+	protected Thread thread;
 
 	// Accessed by 2 threads so volatile (i was told that volatile avoids outdated caching issues)
 	// (source: the internet, the most truthful place, i think)
@@ -140,9 +140,9 @@ public class ThreadNode {
 	// The other option is to put all arguments from every command into
 	// the one cmd class, which isn't the most readable or memory efficient,
 	// but we care about going FAST.
-	private AtomicIntegerArray cmdID = new AtomicIntegerArray(MAX_QUEUE_LENGTH);
-	private AtomicLongArray[] cmdLongArgs = new AtomicLongArray[128];
-	private AtomicIntegerArray[] cmdIntArgs = new AtomicIntegerArray[128];
+	protected AtomicIntegerArray cmdID = new AtomicIntegerArray(MAX_QUEUE_LENGTH);
+	protected AtomicLongArray[] cmdLongArgs = new AtomicLongArray[128];
+	protected AtomicIntegerArray[] cmdIntArgs = new AtomicIntegerArray[128];
 	public long currentPipeline = 0L;
 
 
@@ -163,7 +163,7 @@ public class ThreadNode {
 	}
 
 
-	private void println(String message) {
+	protected void println(String message) {
 		if (DEBUG) {
 			System.out.println("("+myID+") "+message);
 		}
@@ -227,7 +227,7 @@ public class ThreadNode {
         }
 	}
 
-	private void startThread() {
+	protected void startThread() {
 		// Inside of thread, we run logic which checks for items in the queue
 		// and then executes the vk commands that correspond to the int
 		thread = new Thread(new Runnable() {
@@ -579,7 +579,7 @@ public class ThreadNode {
 	}
 
 
-	private void wakeThread(int cmdindex) {
+	protected void wakeThread(int cmdindex) {
 		// There's a bug if we just call wakethread after setting cmdIndex.
 		// I'm going to copy+paste it here:
 		// Let's say we're calling endCommands:
@@ -732,6 +732,7 @@ public class ThreadNode {
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, FloatBuffer buffer) {
+
       int index = getNextCMDIndex();
     println("call CMD_PUSH_CONSTANT (index "+index+")");
       // Long0:   pipelineLayout
@@ -969,6 +970,6 @@ public class ThreadNode {
 			}
 			count++;
 		}
-//		System.out.println("Waited "+count+"");
+//		System.out.println("Waited "+count+"ms");
 	}
 }
