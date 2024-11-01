@@ -19,6 +19,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
 import java.nio.Buffer;
 import java.nio.BufferOverflowException;
 import java.nio.IntBuffer;
@@ -73,10 +74,11 @@ import org.lwjgl.vulkan.VkBufferCopy;
 
 public class GraphicsBuffer {
 
-    public long bufferID = -1;
-    private long bufferMemoryID = -1;
-    private boolean bufferAssigned = false;
-    private int bufferSize = 0;
+    private int instance = -1;
+    public long[] buffers = new long[128];
+    private long[] bufferMemory = new long[128];
+//    private boolean bufferAssigned = false;
+    private int[] bufferSize = new int[128];
 //    private long stagingBuffer = -1;
 //    private long stagingBufferMemory = -1;
 
@@ -92,12 +94,20 @@ public class GraphicsBuffer {
     public GraphicsBuffer() {
     }
 
+    {
+      for (int i = 0; i < buffers.length; i++) {
+        buffers[i] = -1;
+        bufferMemory[i] = -1;
+      }
+    }
+
 
     // Releases any previous buffers and creates a buffer IF
     // - There's no previous buffer
     // - Buffer size != new size.
     public void createBufferAuto(int size, int usage) {
-    	if (!bufferAssigned || size > bufferSize) {
+      instance++;
+    	if (buffers[instance] == -1 || size > bufferSize[instance]) {
     		// Delete old buffers
     		destroy();
     		// Create new one
@@ -112,7 +122,7 @@ public class GraphicsBuffer {
     public void createBufferImmediateMode(int size, int usage) {
     	// If in debug mode, just assign a dummy value
     	if (system == null) {
-    		this.bufferID = (long)(Math.random()*100000.);
+    		this.buffers[instance] = (long)(Math.random()*100000.);
 
     		return;
     	}
@@ -135,14 +145,24 @@ public class GraphicsBuffer {
             // Pointer variables now populated
 
             // GraphicsBuffedr object, set with our new pointer variables.
-            this.bufferID = pBuffer.get(0);
-            this.bufferMemoryID = pBufferMemory.get(0);
-            this.bufferAssigned = true;
-            this.bufferSize = size;
+            buffers[instance] = pBuffer.get(0);
+            bufferMemory[instance] = pBufferMemory.get(0);
+            bufferSize[instance] = size;
 
     	}
     	bufferCount++;
     }
+
+
+    public long getCurrBuffer() {
+      return buffers[instance];
+    }
+
+
+    public void reset() {
+      instance = -1;
+    }
+
 
     // TODO.
     public void createBufferRetainedMode() {
@@ -204,11 +224,9 @@ public class GraphicsBuffer {
     	// If debug mode enabled
     	if (system == null) return;
 
-    	if (bufferID != -1 && bufferMemoryID != -1) {
-	        vkDestroyBuffer(system.device, bufferID, null);
-	        vkFreeMemory(system.device, bufferMemoryID, null);
-//	        vkDestroyBuffer(system.device, stagingBuffer, null);
-//	        vkFreeMemory(system.device, stagingBufferMemory, null);
+    	if (buffers[instance] != -1 && bufferMemory[instance] != -1) {
+	        vkDestroyBuffer(system.device, buffers[instance], null);
+	        vkFreeMemory(system.device, bufferMemory[instance], null);
     	}
 //    	bufferCount--;
     }
@@ -231,7 +249,7 @@ public class GraphicsBuffer {
     }
 
     public ByteBuffer mapByte() {
-      return mapByte(bufferSize, bufferMemoryID);
+      return mapByte(bufferSize[instance], bufferMemory[instance]);
     }
 
     public FloatBuffer mapFloat(int size, long mem) {
@@ -282,7 +300,7 @@ public class GraphicsBuffer {
     }
 
     public void unmap() {
-      vkUnmapMemory(system.device, bufferMemoryID);
+      vkUnmapMemory(system.device, bufferMemory[instance]);
     }
 
     // Sends data straight to the gpu
@@ -292,14 +310,14 @@ public class GraphicsBuffer {
     	// If debug mode enabled
     	if (system == null) return;
 
-  	    ByteBuffer datato = mapByte(size, bufferMemoryID);
+  	    ByteBuffer datato = mapByte(size, bufferMemory[instance]);
     		datato.rewind();
     		data.rewind();
     		while (datato.hasRemaining()) {
     			datato.put(data.get());
     		}
     		datato.rewind();
-    		unmap(bufferMemoryID);
+    		unmap(bufferMemory[instance]);
 
 //        if (nodeMode) {
 //	        system.nodeBufferData(stagingBuffer, bufferID, size);
@@ -314,7 +332,7 @@ public class GraphicsBuffer {
       // If debug mode enabled
       if (system == null) return;
 
-        FloatBuffer datato = mapFloat(size, bufferMemoryID);
+        FloatBuffer datato = mapFloat(size, bufferMemory[instance]);
 
         datato.rewind();
         data.rewind();
@@ -323,7 +341,7 @@ public class GraphicsBuffer {
         }
         datato.rewind();
 
-        unmap(bufferMemoryID);
+        unmap(bufferMemory[instance]);
 
 //        vkbase.copyBufferAndWait(stagingBuffer, bufferID, size);
     }
@@ -333,14 +351,14 @@ public class GraphicsBuffer {
       // If debug mode enabled
       if (system == null) return;
 
-        ShortBuffer datato = mapShort(size, bufferMemoryID);
+        ShortBuffer datato = mapShort(size, bufferMemory[instance]);
         datato.rewind();
         data.rewind();
         while (datato.hasRemaining()) {
           datato.put(data.get());
         }
         datato.rewind();
-        unmap(bufferMemoryID);
+        unmap(bufferMemory[instance]);
 
 //        vkbase.copyBufferAndWait(bufferMemoryID, bufferID, size);
     }
@@ -350,14 +368,14 @@ public class GraphicsBuffer {
       // If debug mode enabled
       if (system == null) return;
 
-        IntBuffer datato = mapInt(size, bufferMemoryID);
+        IntBuffer datato = mapInt(size, bufferMemory[instance]);
         datato.rewind();
         data.rewind();
         while (datato.hasRemaining()) {
           datato.put(data.get());
         }
         datato.rewind();
-        unmap(bufferMemoryID);
+        unmap(bufferMemory[instance]);
 
 //        vkbase.copyBufferAndWait(bufferMemoryID, bufferID, size);
     }

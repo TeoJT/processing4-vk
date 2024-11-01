@@ -81,8 +81,6 @@ public class Util {
 		tmrnbefore = System.nanoTime();
 	}
 	public static long endTmr(String name) {
-	  if (disableList.contains(name)) return 0L;
-
 		long ns = ((System.nanoTime()-tmrnbefore));
 		System.out.println(
         name+": "+ns+"ns"+
@@ -92,6 +90,25 @@ public class Util {
 		);
 		return ns;
 	}
+
+	public static long endTmrWarn(String name) {
+    long ns = ((System.nanoTime()-tmrnbefore));
+
+    String msg =
+        name+": "+ns+"ns"+
+        (ns > 1000 ? " ("+(ns/1000L)+"us)" : "") +
+        (ns > 1000000 ? " ("+(ns/1000000L)+"ms)" : "") +
+        (ns > 1000000000 ? " ("+(ns/1000000000L)+"s)" : "");
+
+    if (ns > 1000000L) {
+      System.err.println(msg);
+    }
+    else {
+      System.out.println(msg);
+    }
+
+    return ns;
+  }
 
 	public static int roundToMultiple8(int input) {
 		// let's say we have 22

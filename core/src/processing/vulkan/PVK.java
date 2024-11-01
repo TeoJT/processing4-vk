@@ -534,7 +534,6 @@ public class PVK extends PGL implements PJOGLInterface {
   public void bindBuffer(int target, int buffer) {
     report("bindBuffer");
     gl2vk.glBindBuffer(target, buffer);
-    Util.endTmr("bindBuffer");
   }
 
 
@@ -590,6 +589,24 @@ public class PVK extends PGL implements PJOGLInterface {
     else {
       System.err.println("bufferData: Dunno what to do with target "+target);
     }
+
+//    if (usage == STREAM_DRAW) {
+//      System.out.println("STREAM_DRAW");
+//    } else if (usage == STREAM_READ) {
+//        System.out.println("STREAM_READ");
+//    } else if (usage == STATIC_DRAW) {
+//        System.out.println("STATIC_DRAW");
+//    } else if (usage == DYNAMIC_DRAW) {
+//        System.out.println("DYNAMIC_DRAW");
+//    }
+//    else System.out.println(usage);
+
+    // TODO:
+    // DYNAMIC_DRAW should be used to specify retained mode
+    // STATIC_DRAW should be used to specify immediate mode.
+    // According to the OpenGL specs this should be the other way round, but
+    // for some reason that's the way Processing uses it.
+
 
     report("bufferData");
 

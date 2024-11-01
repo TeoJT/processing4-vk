@@ -23,7 +23,7 @@ public class PShapeTest extends PApplet {
     @Override
     public void settings() {
       try {
-        size(1024, 1024, P2D);
+        size(1024, 1024, PV2D);
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -38,7 +38,7 @@ public class PShapeTest extends PApplet {
         particle = createShape();
         particle.beginShape(QUAD);
         particle.stroke(255);
-        particle.strokeWeight(5f);
+        particle.strokeWeight(3f);
 //        particle.noStroke();
         particle.fill(50, 50, 150);
         particle.vertex(0f, 0f);
@@ -58,12 +58,12 @@ public class PShapeTest extends PApplet {
     @Override
     public void draw() {
       try {
-        background(200);
+        background(0);
 
-        Util.beginTmr();
-        for (int i = 0; i < 100; i++) {
+//        Util.beginTmr();
+        for (int i = 0; i < 10000; i++) {
 //          Util.beginTmr();
-          selectNode((i/4)%8);
+          selectNode((i/1)%8);
 //          println("--------------\n \n\n\n\n");
           pushMatrix();
           translate(random(-50, width), random(-50, height));
@@ -75,7 +75,7 @@ public class PShapeTest extends PApplet {
 //          }
 //          Util.endTmr("One cycle");
         }
-        Util.endTmr("One frame");
+//        Util.endTmr("One frame");
 
 //        println("fps: "+frameRate);
       }

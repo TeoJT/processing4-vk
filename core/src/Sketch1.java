@@ -86,9 +86,7 @@ public class Sketch1 extends PApplet {
         stroke(255);
         rect(mouseX, mouseY, 256f, 256f);
 
-//        line(60f, 600f, 360f, 600f);
-
-//        shape(particle);
+        println("fps: "+frameRate);
 
 
       }

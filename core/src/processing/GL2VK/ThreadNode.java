@@ -99,7 +99,7 @@ public class ThreadNode {
 	// To avoid clashing from the main thread accessing the front of the queue while the
 	// other thread is accessing the end of the queue, best solution is to make this big
 	// enough lol.
-	private final static int MAX_QUEUE_LENGTH = 1024;
+	private final static int MAX_QUEUE_LENGTH = 2048;
 
 	private VulkanSystem system;
 	private VKSetup vkbase;
@@ -353,7 +353,7 @@ public class ThreadNode {
 	        	            // RATIO
 //	        	            System.out.println("("+myID+") Sleep time "+(sleepTime/1000L)+"us  Run time "+(runTime/1000L)+"us");
 
-//	        	            System.out.println("("+myID+") Active-to-sleep ratio "+(int)((((double)runTime)/((double)sleepTime))*100d)+"%");
+//	        	            System.out.println("("+myID+") Active-to-sleep ratio "+(int)((((double)runTime)/((double)(runTime+sleepTime)))*100d)+"%");
 
 						    break;
 	        		  case CMD_KILL:
@@ -454,6 +454,14 @@ public class ThreadNode {
 	        			  int size             = ((arg0 >> 24) & 0x000000FF);
 	        			  int offset           = ((arg0 >> 8) & 0x0000FFFF);
 	        			  int vertexOrFragment = (arg0 & 0x000000FF);
+
+	        			  if (size <= 0) {
+	        			    System.err.println("CONCURRENCY ISSUE");
+                    System.err.println("arg0 "+Integer.toHexString(arg0));
+                    System.err.println("size "+size);
+                    System.err.println("offset "+offset);
+                    System.err.println("vertexOrFragment "+vertexOrFragment);
+	        			  }
 
 	        			  // Needs to be in multiples of 8 for long buffer.
 	        			  // TODO: actually sort out.
@@ -595,18 +603,18 @@ public class ThreadNode {
 		// If it's on STATE_NEXT_CMD, it means that it might have an outdated cmdid, which we can fix
 		// by simply interrupting it as soon as it eventually goes into sleep mode
 		if (threadState.get() == STATE_ENTERING_SLEEP || threadState.get() == STATE_NEXT_CMD) {
+
 			// Uhoh, unlucky. This means we just gotta wait until we're entering sleep state then wake up.
 			while (threadState.get() != STATE_SLEEPING) {
-				try {
-					Thread.sleep(0, 1000);
-				} catch (InterruptedException e) {
-				}
+				// Busy loop
 			}
-			println("INTERRUPT");
 
+			println("INTERRUPT");
 			threadState.set(STATE_SLEEPING_INTERRUPTED);
+
 			thread.interrupt();
 		}
+
 		if (threadState.get() == STATE_SLEEPING) {
 			println("INTERRUPT");
 
@@ -646,7 +654,7 @@ public class ThreadNode {
     }
 
 
-    public void drawIndexed(int indiciesSize, long indiciesBuffer, ArrayList<Long> vertexBuffers, int offset, int type) {
+    public void drawIndexed(int indiciesSize, long indiciesBuffer, ArrayList<Long> vertexBuffers, int offset, int type) {;
         int index = getNextCMDIndex();
 		println("call CMD_DRAW_INDEXED (index "+index+")");
 
@@ -679,11 +687,9 @@ public class ThreadNode {
         }
 
         setIntArg(2, index, offsettype);
-
         for (int i = 0; i < vertexBuffers.size(); i++) {
         	setLongArg(i+1, index, vertexBuffers.get(i));
         }
-
         cmdID.set(index, CMD_DRAW_INDEXED);
         wakeThread(index);
     }

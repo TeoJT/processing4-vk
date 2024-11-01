@@ -1315,9 +1315,7 @@ public class PJOGL extends PGL {
   public void bindBuffer(int target, int buffer) {
         report("bindBuffer");
 //        System.out.println("bindBuffer: "+buffer);
-    Util.beginTmr();
     gl.glBindBuffer(target, buffer);
-    Util.endTmr("bindBuffer");
   }
 
   @Override
@@ -1497,9 +1495,7 @@ public class PJOGL extends PGL {
   @Override
   public void vertexAttribPointer(int index, int size, int type, boolean normalized, int stride, int offset) {
         report("vertexAttribPointer");
-    Util.beginTmr();
     gl2.glVertexAttribPointer(index, size, type, normalized, stride, offset);
-    Util.endTmr("vertexAttribPointer");
   }
 
   @Override
@@ -1523,9 +1519,7 @@ public class PJOGL extends PGL {
   @Override
   public void drawElementsImpl(int mode, int count, int type, int offset) {
         report("drawElementsImpl");
-    Util.beginTmr();
     gl.glDrawElements(mode, count, type, offset);
-    Util.endTmr("drawElementsImpl");
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1746,9 +1740,7 @@ public class PJOGL extends PGL {
   @Override
   public void useProgram(int program) {
         report("useProgram");
-    Util.beginTmr();
     gl2.glUseProgram(program);
-    Util.endTmr("useProgram");
   }
 
   @Override
@@ -1912,9 +1904,7 @@ public class PJOGL extends PGL {
   @Override
   public void uniformMatrix4fv(int location, int count, boolean transpose, FloatBuffer mat) {
         report("uniformMatrix4fv");
-    Util.beginTmr();
     gl2.glUniformMatrix4fv(location, count, transpose, mat);
-    Util.endTmr("uniformMatrix4fv");
   }
 
   @Override

@@ -514,7 +514,7 @@ public class GL2VK {
 		if (checkAndPrepareProgram() == false) return;
 
 //		System.out.println("glDrawElements "+boundBuffer+" count "+count+" type "+type+" offset "+offset+"  buffer "+buffers[boundBuffer].bufferID);
-		system.nodeDrawIndexed(count, buffers[boundBuffer].bufferID, programs[boundProgram].getVKBuffers(), offset, type);
+		system.nodeDrawIndexed(count, buffers[boundBuffer].getCurrBuffer(), programs[boundProgram].getVKBuffers(), offset, type);
 	}
 
 
@@ -971,6 +971,9 @@ public class GL2VK {
 
 
 	public void beginRecord() {
+	  for (int i = 1; i < bufferIndex; i++) {
+	    buffers[i].reset();
+	  }
 		system.beginRecord();
 		changeProgram = true;
 	}

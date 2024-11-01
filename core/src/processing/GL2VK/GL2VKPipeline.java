@@ -476,7 +476,7 @@ public class GL2VKPipeline {
     		while (binding.myBinding > bufferArray.size()-1) {
     			bufferArray.add(0L);
     		}
-    		bufferArray.set(binding.myBinding, binding.buffer.bufferID);
+    		bufferArray.set(binding.myBinding, binding.buffer.getCurrBuffer());
     	}
 
     	return bufferArray;
