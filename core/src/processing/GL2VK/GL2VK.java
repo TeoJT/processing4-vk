@@ -353,12 +353,12 @@ public class GL2VK {
     // STATIC_DRAW used by immediate rendering
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size);
+      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
     }
     // And dynamic used for immediate.
     else if (usage == DYNAMIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size);
+      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size, buffers[boundBuffer].getInstance());
     }
     else warn("Unknown usage "+usage+".");
 
@@ -407,13 +407,14 @@ public class GL2VK {
 
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size);
+      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
     }
     else if (usage == DYNAMIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size);
+      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size, buffers[boundBuffer].getInstance());
     }
     else warn("Unknown usage "+usage+".");
+    buffers[boundBuffer].increaseInstance();
 
   }
 
@@ -429,13 +430,14 @@ public class GL2VK {
 
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size);
+      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
     }
     else if (usage == DYNAMIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size);
+      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size, buffers[boundBuffer].getInstance());
     }
     else warn("Unknown usage "+usage+".");
+    buffers[boundBuffer].increaseInstance();
   }
 
   public void glBufferData(int target, int size, IntBuffer data, int usage) {
@@ -450,13 +452,14 @@ public class GL2VK {
 
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size);
+      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
     }
     else if (usage == DYNAMIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size);
+      if (data != null) buffers[boundBuffer].bufferDataRetained(data, size, buffers[boundBuffer].getInstance());
     }
     else warn("Unknown usage "+usage+".");
+    buffers[boundBuffer].increaseInstance();
   }
 
 
@@ -915,11 +918,12 @@ public class GL2VK {
 
 
   public ByteBuffer glMapBuffer(int target, int access) {
-    return buffers[boundBuffer].map();
+    return buffers[boundBuffer].map(buffers[boundBuffer].getInstance());
   }
 
   public void glUnmapBuffer(int target) {
-    buffers[boundBuffer].unmap();
+    buffers[boundBuffer].unmap(buffers[boundBuffer].getInstance());
+    buffers[boundBuffer].increaseInstance();
   }
 
 

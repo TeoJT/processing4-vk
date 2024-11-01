@@ -20,6 +20,7 @@ import java.nio.FloatBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.Buffer;
 import java.nio.BufferOverflowException;
 import java.nio.IntBuffer;
@@ -75,22 +76,22 @@ import org.lwjgl.vulkan.VkBufferCopy;
 public class GraphicsBuffer {
 
 
-    private int instance = 0;
+    private int globalInstance = 0;
     private final static int MAX_INSTANCES = 128;
 
     public long[] buffers = new long[MAX_INSTANCES];
-    private long[] bufferMemory = new long[MAX_INSTANCES];
+    private volatile long[] bufferMemory = new long[MAX_INSTANCES];
     public long[] stagingBuffers = new long[MAX_INSTANCES];
     private long[] stagingBufferMemory = new long[MAX_INSTANCES];
 
     private int[] bufferSize = new int[128];
 
-    private VulkanSystem system;
-    private VKSetup vkbase;
+    private static VulkanSystem system;
+    private static VKSetup vkbase;
 
-    public GraphicsBuffer(VulkanSystem system) {
-    	this.system = system;
-    	this.vkbase = system.vkbase;
+    public GraphicsBuffer(VulkanSystem s) {
+    	system = s;
+    	vkbase = s.vkbase;
     }
 
     // Debug mode constructor
@@ -110,18 +111,19 @@ public class GraphicsBuffer {
     // Releases any previous buffers and creates a buffer IF
     // - There's no previous buffer
     // - Buffer size != new size.
+    // NOT THREAD SAFE HERE
     public void createBufferAuto(int size, int vertexIndexUsage, boolean retainedMode) {
 
-    	if (buffers[instance] == -1 || size > bufferSize[instance]) {
+    	if (buffers[globalInstance] == -1 || size > bufferSize[globalInstance]) {
     		// Delete old buffers
-    		destroy();
+    		destroy(globalInstance);
 
     		// Create new one
     		if (retainedMode) {
-          createBufferRetainedMode(size, vertexIndexUsage);
+          createBufferRetainedMode(size, vertexIndexUsage, globalInstance);
     		}
     		else {
-          createBufferImmediateMode(size, vertexIndexUsage);
+          createBufferImmediateMode(size, vertexIndexUsage, globalInstance);
     		}
     	}
     }
@@ -130,10 +132,10 @@ public class GraphicsBuffer {
 
 
     // Creates a buffer without allocating any data
-    public void createBufferImmediateMode(int size, int usage) {
+    private void createBufferImmediateMode(int size, int usage, int inst) {
     	// If in debug mode, just assign a dummy value
     	if (system == null) {
-    		this.buffers[instance] = (long)(Math.random()*100000.);
+    		this.buffers[inst] = (long)(Math.random()*100000.);
 
     		return;
     	}
@@ -156,38 +158,38 @@ public class GraphicsBuffer {
             // Pointer variables now populated
 
             // GraphicsBuffedr object, set with our new pointer variables.
-            buffers[instance] = pBuffer.get(0);
-            bufferMemory[instance] = pBufferMemory.get(0);
-            bufferSize[instance] = size;
+            buffers[inst] = pBuffer.get(0);
+            bufferMemory[inst] = pBufferMemory.get(0);
+            bufferSize[inst] = size;
 
     	}
     	bufferCount++;
     }
 
 
+    // Needs to be called when it
     public long getCurrBuffer() {
-      if (instance == 0) instance = 1;
+      if (globalInstance == 0) globalInstance = 1;
 
       // Problem: we need to know whether we're doing retained or immediate.
       // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
-      if (stagingBuffers[instance-1] != -1) {
+      if (stagingBuffers[globalInstance-1] != -1) {
         // Retained
-        return stagingBuffers[instance-1];
+        return stagingBuffers[globalInstance-1];
       }
       else {
         // Immediate
-        return buffers[instance-1];
+        return buffers[globalInstance-1];
       }
     }
 
 
     public void reset() {
-      instance = 0;
+      globalInstance = 0;
     }
 
-
-    // TODO.
-    public void createBufferRetainedMode(int size, int usage) {
+    // NOT THREAD SAFE
+    private void createBufferRetainedMode(int size, int usage, int instance) {
       // If in debug mode, just assign a dummy value
       if (system == null) {
         this.buffers[instance] = (long)(Math.random()*100000.);
@@ -240,7 +242,7 @@ public class GraphicsBuffer {
 
 
 
-    public void destroy() {
+    public void destroy(int instance) {
     	// If debug mode enabled
     	if (system == null) return;
 
@@ -249,6 +251,15 @@ public class GraphicsBuffer {
 	        vkFreeMemory(system.device, bufferMemory[instance], null);
     	}
 //    	bufferCount--;
+    }
+
+    public void destroy() {
+      for (int i = 0; i < buffers.length; i++) {
+        if (buffers[i] != -1 && bufferMemory[i] != -1) {
+          vkDestroyBuffer(system.device, buffers[i], null);
+          vkFreeMemory(system.device, bufferMemory[i], null);
+        }
+      }
     }
 
     // TODO: Make multithreaded
@@ -268,8 +279,7 @@ public class GraphicsBuffer {
       }
     }
 
-    public ByteBuffer map() {
-
+    public ByteBuffer map(int instance) {
       // Problem: we need to know whether we're doing retained or immediate.
       // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
       if (stagingBufferMemory[instance] != -1) {
@@ -310,7 +320,7 @@ public class GraphicsBuffer {
       }
     }
 
-    public IntBuffer mapInt(int size, long mem) {
+    public static IntBuffer mapInt(int size, long mem) {
       try(MemoryStack stack = stackPush()) {
           // alloc pointer for our data
           PointerBuffer pointer = stack.mallocPointer(1);
@@ -327,10 +337,17 @@ public class GraphicsBuffer {
     // TODO: Make multithreaded
     public void unmap(long mem) {
       vkUnmapMemory(system.device, mem);
-      instance++;
     }
 
-    public void unmap() {
+    public void increaseInstance() {
+      globalInstance++;
+    }
+
+    public int getInstance() {
+      return globalInstance;
+    }
+
+    public void unmap(int instance) {
       // Problem: we need to know whether we're doing retained or immediate.
       // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
       if (stagingBufferMemory[instance] != -1) {
@@ -350,25 +367,31 @@ public class GraphicsBuffer {
 
     // Sends data straight to the gpu
     // TODO: version where memory is constantly unmapped
-    public void bufferDataImmediate(ByteBuffer data, int size) {
+
+    // IMMEDIATE MODE METHODS TO BE USED IN MULTITHREADING
+    public void bufferDataImmediate(ByteBuffer data, int size, int instance) {
       	// If debug mode enabled
       	if (system == null) return;
 
-  	    ByteBuffer datato = mapByte(size, bufferMemory[instance]);
+      	long mem = bufferMemory[instance];
+
+  	    ByteBuffer datato = mapByte(size, mem);
     		datato.rewind();
     		data.rewind();
     		while (datato.hasRemaining()) {
     			datato.put(data.get());
     		}
     		datato.rewind();
-    		unmap(bufferMemory[instance]);
+    		unmap(mem);
     }
 
-    public void bufferDataImmediate(FloatBuffer data, int size) {
+    public void bufferDataImmediate(FloatBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        FloatBuffer datato = mapFloat(size, bufferMemory[instance]);
+        long mem = bufferMemory[instance];
+
+        FloatBuffer datato = mapFloat(size, mem);
 
         datato.rewind();
         data.rewind();
@@ -377,35 +400,39 @@ public class GraphicsBuffer {
         }
         datato.rewind();
 
-        unmap(bufferMemory[instance]);
+        unmap(mem);
     }
 
-    public void bufferDataImmediate(ShortBuffer data, int size) {
+    public void bufferDataImmediate(ShortBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        ShortBuffer datato = mapShort(size, bufferMemory[instance]);
+        long mem = bufferMemory[instance];
+
+        ShortBuffer datato = mapShort(size, mem);
         datato.rewind();
         data.rewind();
         while (datato.hasRemaining()) {
           datato.put(data.get());
         }
         datato.rewind();
-        unmap(bufferMemory[instance]);
+        unmap(mem);
     }
 
-    public void bufferDataImmediate(IntBuffer data, int size) {
+    public void bufferDataImmediate(IntBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        IntBuffer datato = mapInt(size, bufferMemory[instance]);
+        long mem = bufferMemory[instance];
+
+        IntBuffer datato = mapInt(size, mem);
         datato.rewind();
         data.rewind();
         while (datato.hasRemaining()) {
           datato.put(data.get());
         }
         datato.rewind();
-        unmap(bufferMemory[instance]);
+        unmap(mem);
     }
 
 
@@ -419,8 +446,9 @@ public class GraphicsBuffer {
 
     ////////////////////////////////////////////////////////////////
     // Retained mode
+    // NOT TO BE USED IN MULTITHREADING
 
-    public void bufferDataRetained(ByteBuffer data, int size) {
+    public void bufferDataRetained(ByteBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
@@ -436,7 +464,7 @@ public class GraphicsBuffer {
         vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
     }
 
-    public void bufferDataRetained(FloatBuffer data, int size) {
+    public void bufferDataRetained(FloatBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
@@ -454,7 +482,7 @@ public class GraphicsBuffer {
         vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
     }
 
-    public void bufferDataRetained(ShortBuffer data, int size) {
+    public void bufferDataRetained(ShortBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
@@ -470,7 +498,7 @@ public class GraphicsBuffer {
         vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
     }
 
-    public void bufferDataRetained(IntBuffer data, int size) {
+    public void bufferDataRetained(IntBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
