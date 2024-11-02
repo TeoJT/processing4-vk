@@ -38,6 +38,7 @@ import java.util.zip.*;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
+import processing.GL2VK.ThreadNode;
 // TODO have this removed by 4.0 final
 import processing.awt.ShimAWT;
 
@@ -1766,6 +1767,10 @@ public class PApplet implements PConstants {
     if (g instanceof PGraphicsVulkan) {
       ((PGraphicsVulkan)g).selectNode(node);
     }
+  }
+
+  public void printThreadNodeReport() {
+    ThreadNode.getTimedReport();
   }
 
 

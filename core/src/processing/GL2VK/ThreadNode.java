@@ -79,6 +79,8 @@ public class ThreadNode {
 	public final static int STATE_WAKING = 5;
 	public final static int STATE_SLEEPING_INTERRUPTED = 6;
 	public final static int STATE_NEXT_CMD = 7;
+	public final static int STATE_LINGERING = 8;
+	public final static int STATE_LINGERING_LAST_CHANCE = 9;
 
 
 	// CURRENT BUGS:
@@ -100,6 +102,14 @@ public class ThreadNode {
 	// other thread is accessing the end of the queue, best solution is to make this big
 	// enough lol.
 	protected final static int MAX_QUEUE_LENGTH = 10000;
+
+	// In order to avoid expensive interrupt calls waking a thread up from sleep, we can
+	// busy loop for a little while after we have no more tasks to do. If we get another task
+	// during this lingering period, great! We avoided an expensive interrupt() call. If not,
+	// then we go to sleep, and eventually get woken up by interrupt().
+	// How long does this linger time last?
+	// Well it's up to you, this value is in microseconds.
+  protected final static long LINGER_TIME = 500L;
 
 	protected VulkanSystem system;
 	protected VKSetup vkbase;
@@ -144,6 +154,13 @@ public class ThreadNode {
 	protected AtomicLongArray[] cmdLongArgs = new AtomicLongArray[128];
 	protected AtomicIntegerArray[] cmdIntArgs = new AtomicIntegerArray[128];
 	public long currentPipeline = 0L;
+
+	// Some benchmarking variables.
+	private static int  interruptsCalled = 0;
+	private static long interruptPenalty = 0L;
+  private static long oddStateStallPenalty = 0L;
+  private static long threadFinishWait = 0L;
+  private static long fullQueueStallPenalty = 0L;
 
 
 
@@ -239,7 +256,10 @@ public class ThreadNode {
 
         		  boolean pipelineBound = false;
 
-    			  ByteBuffer pushConstantBuffer = null;
+        		  long lingerTimer = 0;
+        		  long lingerTimestampBefore = 0L;
+
+        		  ByteBuffer pushConstantBuffer = null;
 
 	        	  // Loop until receive KILL_THREAD cmd
 	        	  while (true) {
@@ -262,29 +282,32 @@ public class ThreadNode {
 	        		  // ======================
 	        		  // CMD EXECUTOR
 	        		  // ======================
-
-
-	        		  // As soon as we're at this point we need to tell the main thread that this is a
-	        		  // time-sensitive point where we are in the process of getting the next
-	        		  // cmd, and in between that verrrry small timeframe, it could be set to something
-	        		  // different. The next command will most definitely be 0 -> something else, so
-	        		  // our thread may end up reading an outdated version (i.e. 0, or NO_CMD).
-	        		  // If that happens, our main thread needs to see the state is STATE_NEXT_CMD, and
-	        		  // then call wakeThread which will make sure our thread's got the right value.
-
-        			  threadState.set(STATE_NEXT_CMD);
-
 	        		  switch (cmdID.getAndSet(index, 0)) {
 	        		  case NO_CMD:
-	        			  threadState.set(STATE_ENTERING_SLEEP);
-	        			  goToSleepMode = true;
+	        		    // Only go to sleep if we've been lingering for long enough.
+	        		    if ((lingerTimer/1000L) < LINGER_TIME) {
+	        		      // Keep running
+                    threadState.set(STATE_LINGERING);
+	        		      lingerTimer += System.nanoTime()-lingerTimestampBefore;
+                    lingerTimestampBefore = System.nanoTime();
+
+                    if ((lingerTimer/1000L) >= LINGER_TIME) {
+                      threadState.set(STATE_LINGERING_LAST_CHANCE);
+                    }
+	        		    }
+	        		    else {
+//                    System.out.println("GOING TO SLEEP");
+	                  threadState.set(STATE_ENTERING_SLEEP);
+	                  goToSleepMode = true;
+	        		    }
+
 	        			  myIndex--;
 	        			  break;
 	        		  case CMD_DRAW_ARRAYS: {
-	        			  // TODO: Similar to drawIndexed, pass a list of bound buffers
-	        			  // instead of the one interleaved list.
-
 	        			  threadState.set(STATE_RUNNING);
+	        			  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
 	        			  println("CMD_DRAW_ARRAYS (index "+index+")");
 	        			  int size = cmdIntArgs[0].get(index);
 	        			  int first = cmdIntArgs[1].get(index);
@@ -308,6 +331,9 @@ public class ThreadNode {
 	        			  // Probably the most important command
 	        		  case CMD_BEGIN_RECORD:
 	        			  	threadState.set(STATE_RUNNING);
+	                  lingerTimer = 0L;
+                    lingerTimestampBefore = System.nanoTime();
+
 	        			  	sleepTime = 0;
 	        			  	runTime = 0;
 	        			  	println("CMD_BEGIN_RECORD");
@@ -336,6 +362,9 @@ public class ThreadNode {
 	        	            break;
 	        		  case CMD_END_RECORD:
 	        			  	threadState.set(STATE_RUNNING);
+	                  lingerTimer = 0L;
+                    lingerTimestampBefore = System.nanoTime();
+
 	        			  	println("CMD_END_RECORD (index "+index+")");
 
 	        			  	if (openCmdBuffer.get() == true) {
@@ -358,6 +387,9 @@ public class ThreadNode {
 						    break;
 	        		  case CMD_KILL:
 	        			  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
 	        			  goToSleepMode = false;
 	        			  kill = true;
 	        			  break;
@@ -365,6 +397,7 @@ public class ThreadNode {
 	        		  // This goes pretty much unused.
 	        		  case CMD_BUFFER_DATA:
 	        			  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
 	        			  println("CMD_BUFFER_DATA (index "+index+")");
 
 //	        			  vkCmdEndRenderPass(system.currentCommandBuffer);
@@ -373,15 +406,19 @@ public class ThreadNode {
 	        			  break;
 
 	        		  case CMD_BIND_PIPELINE:
-	        			  // Ensure we have a bound pipeline before anything
-
 	        			  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
 	        			  println("CMD_BIND_PIPELINE (index "+index+")");
-	        	          vkCmdBindPipeline(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, cmdLongArgs[0].get(index));
+      	          vkCmdBindPipeline(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, cmdLongArgs[0].get(index));
 	        			  break;
 
 	        		  case CMD_DRAW_INDEXED: {
 	        			  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
 	        			  println("CMD_DRAW_INDEXED (index "+index+")");
 	        			  // Int0: indiciesSize
 	        			  // Long0: indiciesBuffer
@@ -442,6 +479,9 @@ public class ThreadNode {
 	        		  }
 	        		  case CMD_PUSH_CONSTANT:
 	        			  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
 	        			  println("CMD_PUSH_CONSTANT (index "+index+")");
 	        			  // Long0:   pipelineLayout
 	        			  // Int0:    Size/offset/vertexOrFragment
@@ -536,6 +576,7 @@ public class ThreadNode {
 	        			  }
 	        			  catch (InterruptedException e) {
 	        				  threadState.set(STATE_WAKING);
+	                  lingerTimer = 0;
 	        				  println("WAKEUP");
 	        			  }
         				  sleepTime += System.nanoTime()-before;
@@ -551,7 +592,9 @@ public class ThreadNode {
 	int stalltime = 0;
 
 	private int getNextCMDIndex() {
-		int ret = (cmdindex)%MAX_QUEUE_LENGTH;
+		int ret = cmdindex;
+
+		long before = System.nanoTime();
 		while (cmdID.get(ret) != NO_CMD) {
 			// We're forced to wait until the thread has caught up with some of the queue
 //			try {
@@ -560,7 +603,11 @@ public class ThreadNode {
 //			}
 //			println("WARNING  queue clash, cmdid is "+ret);
 		}
+		fullQueueStallPenalty += System.nanoTime()-before;
 		cmdindex++;
+		if (cmdindex >= MAX_QUEUE_LENGTH) {
+		  cmdindex = 0;
+		}
 		return ret;
 	}
 
@@ -579,7 +626,31 @@ public class ThreadNode {
 	}
 
 
+  public static void getTimedReport() {
+    System.out.println("------------------------");
+
+    System.out.println("Interrupts called         "+interruptsCalled);
+    System.out.println("Interrupt penalty         "+(interruptPenalty/1000L)+"us");
+    System.out.println("Unlucky stall penalty     "+(oddStateStallPenalty/1000L)+"us");
+    System.out.println("Full queue stall penalty  "+(fullQueueStallPenalty/1000L)+"us");
+    System.out.println("Finish up wait            "+(threadFinishWait/1000L)+"us");
+
+    // You should only call this method once lol.
+    interruptsCalled = 0;
+    interruptPenalty = 0L;
+    oddStateStallPenalty = 0L;
+    threadFinishWait = 0L;
+    fullQueueStallPenalty = 0L;
+  }
+
+
 	protected void wakeThread(int cmdindex) {
+
+	  // Thread's already awake if we're lingering. Skip the interrupt() call!
+	  if (threadState.get() == STATE_LINGERING) {
+	    return;
+	  }
+
 		// There's a bug if we just call wakethread after setting cmdIndex.
 		// I'm going to copy+paste it here:
 		// Let's say we're calling endCommands:
@@ -596,23 +667,50 @@ public class ThreadNode {
 		}
 
 
+
 		// Only need to interrupt if sleeping.
 		// We call it here because if wakeThread is called, then a command was called, and
 		// when a command was called, that means we should definitely not be asleep
 		// (avoids concurrency issues with await()
 		// If it's on STATE_NEXT_CMD, it means that it might have an outdated cmdid, which we can fix
 		// by simply interrupting it as soon as it eventually goes into sleep mode
-		if (threadState.get() == STATE_ENTERING_SLEEP || threadState.get() == STATE_NEXT_CMD) {
+
+		// NOTE: With the new lingering mode, it means that STATE_NEXT_CMD is deprecated.
+
+		// Here's the new solution:
+		// If we're on the verge of going from lingering to entering state, we must wait for either 1 of 2 outcomes:
+		// - worker thread has read the updated cmdid and will update its state to STATE_RUNNING, hence we can continue
+		//   without calling interrupt()
+		// OR
+		// - worker thread has read an outdated state (0 NO_CMD) and is now going to sleep, so we need to
+		//   call interrupt() (bummer).
+
+
+		if (threadState.get() == STATE_ENTERING_SLEEP || threadState.get() == STATE_LINGERING_LAST_CHANCE) {  // || threadState.get() == STATE_NEXT_CMD
 
 			// Uhoh, unlucky. This means we just gotta wait until we're entering sleep state then wake up.
-			while (threadState.get() != STATE_SLEEPING) {
+		  long before = System.nanoTime();
+			while (threadState.get() != STATE_SLEEPING && threadState.get() != STATE_RUNNING) {
 				// Busy loop
+			}
+			oddStateStallPenalty += System.nanoTime()-before;
+
+			// Running? We can happily continue and skip the interrupt() :D
+			if (threadState.get() == STATE_RUNNING) {
+			  return;
 			}
 
 			println("INTERRUPT");
 			threadState.set(STATE_SLEEPING_INTERRUPTED);
 
+			// Before we call interrupt let's do a lil benchmarking
+			before = System.nanoTime();
+
+			// Actually call interrupt
 			thread.interrupt();
+
+			interruptPenalty += System.nanoTime()-before;
+			interruptsCalled++;
 		}
 
 		if (threadState.get() == STATE_SLEEPING) {
@@ -624,7 +722,15 @@ public class ThreadNode {
 			// to go back to sleep, it immediately wakes up because those interrupts are still in
 			// the queue. We tell it "it's been interrupted once, don't bother it any further."
 			threadState.set(STATE_SLEEPING_INTERRUPTED);
-			thread.interrupt();
+
+      // Before we call interrupt let's do a lil benchmarking
+      long before = System.nanoTime();
+
+      // Actually call interrupt
+      thread.interrupt();
+
+      interruptPenalty += System.nanoTime()-before;;
+      interruptsCalled++;
 		}
 
 		// We also need to consider the case for when a thread is ABOUT to enter sleep mode.
@@ -637,15 +743,15 @@ public class ThreadNode {
 
     public void drawArrays(ArrayList<Long> buffers, int size, int first) {
         int index = getNextCMDIndex();
-		println("call CMD_DRAW_ARRAYS (index "+index+")");
+        println("call CMD_DRAW_ARRAYS (index "+index+")");
 
         for (int i = 0; i < buffers.size(); i++) {
         	setLongArg(i, index, buffers.get(i));
         }
 
-		setIntArg(0, index, size);
-		setIntArg(1, index, first);
-		setIntArg(2, index, buffers.size());
+    		setIntArg(0, index, size);
+    		setIntArg(1, index, first);
+    		setIntArg(2, index, buffers.size());
         // Remember, last thing we should set is cmdID, set it before and
         // our thread may begin executing drawArrays without all the commands
         // being properly set.
@@ -656,7 +762,7 @@ public class ThreadNode {
 
     public void drawIndexed(int indiciesSize, long indiciesBuffer, ArrayList<Long> vertexBuffers, int offset, int type) {;
         int index = getNextCMDIndex();
-		println("call CMD_DRAW_INDEXED (index "+index+")");
+        println("call CMD_DRAW_INDEXED (index "+index+")");
 
 		  // Int0: indiciesSize
 		  // Long0: indiciesBuffer
@@ -701,7 +807,7 @@ public class ThreadNode {
     // We would need a class that contains the args we wanna pass tho.
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, ByteBuffer buffer) {
     	int index = getNextCMDIndex();
-		println("call CMD_PUSH_CONSTANT (index "+index+")");
+    	println("call CMD_PUSH_CONSTANT (index "+index+")");
 		  // Long0:   pipelineLayout
 		  // Int0:    Size/offset/vertexOrFragment
 		  // Long1-X: bufferData (needs to be reconstructed
@@ -734,7 +840,7 @@ public class ThreadNode {
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, FloatBuffer buffer) {
 
       int index = getNextCMDIndex();
-    println("call CMD_PUSH_CONSTANT (index "+index+")");
+      println("call CMD_PUSH_CONSTANT (index "+index+")");
       // Long0:   pipelineLayout
       // Int0:    Size/offset/vertexOrFragment
       // Long1-X: bufferData (needs to be reconstructed
@@ -792,38 +898,38 @@ public class ThreadNode {
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, float val) {
-		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 4);
+    		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 4);
 
-		setLongArg(1, index, Float.floatToIntBits(val) & 0xFFFFFFFFL);
+    		setLongArg(1, index, Float.floatToIntBits(val) & 0xFFFFFFFFL);
 
         cmdID.set(index, CMD_PUSH_CONSTANT);
         wakeThread(index);
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, float val0, float val1) {
-		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 8);
+    		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 8);
 
-		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
+    		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
 
         cmdID.set(index, CMD_PUSH_CONSTANT);
         wakeThread(index);
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, float val0, float val1, float val2) {
-		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 12);
+    		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 12);
 
-		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
-		setLongArg(2, index, (Float.floatToIntBits(val2) & 0xFFFFFFFFL));
+    		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
+    		setLongArg(2, index, (Float.floatToIntBits(val2) & 0xFFFFFFFFL));
 
         cmdID.set(index, CMD_PUSH_CONSTANT);
         wakeThread(index);
     }
 
     public void pushConstant(long pipelineLayout, int vertexOrFragment, int offset, float val0, float val1, float val2, float val3) {
-		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 16);
+    		int index = getNextIndexForPushConstant(pipelineLayout, vertexOrFragment, offset, 16);
 
-		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
-		setLongArg(2, index, (Float.floatToIntBits(val2) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val3) & 0xFFFFFFFFL) << 32));
+    		setLongArg(1, index, (Float.floatToIntBits(val0) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val1) & 0xFFFFFFFFL) << 32));
+    		setLongArg(2, index, (Float.floatToIntBits(val2) & 0xFFFFFFFFL) | ((Float.floatToIntBits(val3) & 0xFFFFFFFFL) << 32));
 
         cmdID.set(index, CMD_PUSH_CONSTANT);
         wakeThread(index);
@@ -892,84 +998,89 @@ public class ThreadNode {
     }
 
 
-	public void beginRecord(int currentFrame, int currentImage) {
-		println("call begin record");
-        int index = getNextCMDIndex();
-        setIntArg(0, index, currentImage);
-        setIntArg(1, index, currentFrame);
-        cmdID.set(index, CMD_BEGIN_RECORD);
+  	public void beginRecord(int currentFrame, int currentImage) {
+  		println("call begin record");
+          int index = getNextCMDIndex();
+          setIntArg(0, index, currentImage);
+          setIntArg(1, index, currentFrame);
+          cmdID.set(index, CMD_BEGIN_RECORD);
 
-        wakeThread(index);
-	}
+          wakeThread(index);
+  	}
 
-	public void endRecord() {
-        int index = getNextCMDIndex();
-        cmdID.set(index, CMD_END_RECORD);
-		println("call CMD_END_RECORD (index "+index+")");
-        // No arguments
-        wakeThread(index);
-		currentPipeline = 0;
-	}
+  	public void endRecord() {
+          int index = getNextCMDIndex();
+          cmdID.set(index, CMD_END_RECORD);
+  		println("call CMD_END_RECORD (index "+index+")");
+          // No arguments
+          wakeThread(index);
+  		currentPipeline = 0;
+  	}
 
-	public void kill() {
-		println("kill thread");
-        int index = getNextCMDIndex();
-        cmdID.set(index, CMD_KILL);
-        // No arguments
-        wakeThread(index);
-	}
+  	public void kill() {
+  		println("kill thread");
+          int index = getNextCMDIndex();
+          cmdID.set(index, CMD_KILL);
+          // No arguments
+          wakeThread(index);
+  	}
 
-	public void killAndCleanup() {
-		kill();
-		// Wait for thread to end
-		while (threadState.get() != STATE_KILLED) {
-			// Do the classic ol "wait 1ms each loop"
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-			}
-		}
-		// Now clean up our mess
+  	public void killAndCleanup() {
+  		kill();
+  		// Wait for thread to end
+  		while (threadState.get() != STATE_KILLED) {
+  			// Do the classic ol "wait 1ms each loop"
+  			try {
+  				Thread.sleep(1);
+  			} catch (InterruptedException e) {
+  			}
+  		}
+  		// Now clean up our mess
 
-		if (openCmdBuffer.get() == true) {
-			vkEndCommandBuffer(cmdbuffers[currentFrame.get()]);
-		}
+  		if (openCmdBuffer.get() == true) {
+  			vkEndCommandBuffer(cmdbuffers[currentFrame.get()]);
+  		}
 
-		try(MemoryStack stack = stackPush()) {
-			ArrayList<VkCommandBuffer> deleteList = new ArrayList<>();
-			for (int i = 0; i < cmdbuffers.length; i++) {
-				deleteList.add(cmdbuffers[i]);
-			}
-			vkFreeCommandBuffers(system.device, commandPool, Util.asPointerBuffer(stack, deleteList));
-		}
-		vkDestroyCommandPool(system.device, commandPool, null);
-	}
+  		try(MemoryStack stack = stackPush()) {
+  			ArrayList<VkCommandBuffer> deleteList = new ArrayList<>();
+  			for (int i = 0; i < cmdbuffers.length; i++) {
+  				deleteList.add(cmdbuffers[i]);
+  			}
+  			vkFreeCommandBuffers(system.device, commandPool, Util.asPointerBuffer(stack, deleteList));
+  		}
+  		vkDestroyCommandPool(system.device, commandPool, null);
+  	}
 
-	public VkCommandBuffer getBuffer() {
-		return cmdbuffers[currentFrame.get()];
-	}
+  	public VkCommandBuffer getBuffer() {
+  		return cmdbuffers[currentFrame.get()];
+  	}
 
-	public void await() {
-		int count = 0;
-		// We wait until it has finished its commands
+  	public void await() {
+  		int count = 0;
+  		// We wait until it has finished its commands
 
-		// In order for the thread to be properly done its work it must:
-		// - be in sleep mode
-		// - its cmd buffer must be closed
-		while (
-				!(threadState.get() == STATE_SLEEPING &&
-				openCmdBuffer.get() == false)
-				) {
+  		// In order for the thread to be properly done its work it must:
+  		// - be in sleep mode
+  		// - its cmd buffer must be closed
 
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-			}
-			if (count == 500) {
-				System.err.println("("+this.myID+") BUG WARNING  looplock'd waiting for a thread that won't respond (state "+threadState.get()+")");
-			}
-			count++;
-		}
-//		System.out.println("Waited "+count+"ms");
-	}
+  		// Lets do accurate scientific measuring instead of just using count to get the
+  		// benchmarks for threadFinishWait.
+  		long before = System.nanoTime();
+  		while (
+  				!(threadState.get() == STATE_SLEEPING &&
+  				openCmdBuffer.get() == false)
+  				) {
+
+  			try {
+  				Thread.sleep(1);
+  			} catch (InterruptedException e) {
+  			}
+  			if (count == 500) {
+  				System.err.println("("+this.myID+") BUG WARNING  looplock'd waiting for a thread that won't respond (state "+threadState.get()+")");
+  				System.exit(1);
+  			}
+  			count++;
+  		}
+  		threadFinishWait += System.nanoTime()-before;
+  	}
 }

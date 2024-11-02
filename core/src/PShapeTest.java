@@ -61,19 +61,21 @@ public class PShapeTest extends PApplet {
         background(0);
 
 //        Util.beginTmr();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10000; i++) {
 //          Util.beginTmr();
           selectNode((i/4)%8);
 //          println("--------------\n \n\n\n\n");
           pushMatrix();
           translate(random(-50, width), random(-50, height));
           shape(particle);
+//          for (int j = 0; j < 100000; j++) {}
           popMatrix();
 
 //          Util.endTmr("One cycle");
         }
 //        Util.endTmr("One frame");
 
+        printThreadNodeReport();
         println("fps: "+frameRate);
       }
       catch (RuntimeException e) {
