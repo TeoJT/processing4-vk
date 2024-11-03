@@ -375,6 +375,11 @@ public class PVK extends PGL implements PJOGLInterface {
     gl2vk.selectNode(node);
   }
 
+
+  public void bufferMultithreaded(boolean onoff) {
+    gl2vk.bufferMultithreaded(onoff);
+  }
+
   private void report(String func) {
 //    System.out.println(func);
   }

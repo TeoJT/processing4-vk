@@ -1769,6 +1769,12 @@ public class PApplet implements PConstants {
     }
   }
 
+  public void bufferMultithreaded(boolean onoff) {
+    if (g instanceof PGraphicsVulkan) {
+      ((PGraphicsVulkan)g).bufferMultithreaded(onoff);
+    }
+  }
+
   public void printThreadNodeReport() {
     ThreadNode.getTimedReport();
   }

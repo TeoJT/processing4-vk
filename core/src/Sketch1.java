@@ -1,3 +1,4 @@
+import processing.GL2VK.Util;
 import processing.core.*;
 import processing.data.*;
 import processing.event.*;
@@ -58,6 +59,7 @@ public class Sketch1 extends PApplet {
     public void draw() {
       try {
         background(200);
+        bufferMultithreaded(true);
 
 //        println();
 
@@ -85,7 +87,10 @@ public class Sketch1 extends PApplet {
         strokeWeight(sin(((float)frameCount)*0.1f)*30f+30f);
         stroke(255);
         rect(mouseX, mouseY, 256f, 256f);
+        bufferMultithreaded(false);
+        flush();
 
+//        printThreadNodeReport();
         println("fps: "+frameRate);
 
 

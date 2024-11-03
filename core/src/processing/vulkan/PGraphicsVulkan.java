@@ -26,5 +26,8 @@ public class PGraphicsVulkan extends PGraphicsOpenGL {
     ((PVK)pgl).selectNode(node);
   }
 
+  public void bufferMultithreaded(boolean onoff) {
+    ((PVK)pgl).bufferMultithreaded(onoff);
+  }
 
 }

@@ -34,6 +34,8 @@ import static org.lwjgl.vulkan.VK10.vkDestroyCommandPool;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -69,6 +71,11 @@ public class ThreadNode {
 	public final static int CMD_BUFFER_DATA = 6;
 	public final static int CMD_BIND_PIPELINE = 7;
 	public final static int CMD_PUSH_CONSTANT = 8;
+  public final static int CMD_BUFFER_FLOAT_DATA = 9;
+  public final static int CMD_BUFFER_BYTE_DATA = 10;
+  public final static int CMD_BUFFER_SHORT_DATA = 11;
+  public final static int CMD_BUFFER_LONG_DATA = 12;
+  public final static int CMD_BUFFER_INT_DATA = 13;
 
 	// ThreadNode state statuses
 	public final static int STATE_INACTIVE = 0;
@@ -154,6 +161,21 @@ public class ThreadNode {
 	protected AtomicLongArray[] cmdLongArgs = new AtomicLongArray[128];
 	protected AtomicIntegerArray[] cmdIntArgs = new AtomicIntegerArray[128];
 	public long currentPipeline = 0L;
+
+	private static final int MAX_BUFFERS = 4096;
+
+	protected int floatBuffersIndex = 0;
+  protected int shortBuffersIndex = 0;
+  protected int byteBuffersIndex = 0;
+  protected int longBuffersIndex = 0;
+  protected int intBuffersIndex = 0;
+  protected int graphicsBufferIndex = 0;
+  protected GraphicsBuffer[] graphicsBuffers = new GraphicsBuffer[MAX_BUFFERS];
+	protected FloatBuffer[] floatBuffers = new FloatBuffer[MAX_BUFFERS];
+  protected ShortBuffer[] shortBuffers = new ShortBuffer[MAX_BUFFERS];
+  protected IntBuffer[]   intBuffers = new IntBuffer[MAX_BUFFERS];
+  protected ByteBuffer[]  byteBuffers  = new ByteBuffer[MAX_BUFFERS];
+  protected LongBuffer[]  longBuffers  = new LongBuffer[MAX_BUFFERS];
 
 	// Some benchmarking variables.
 	private static int  interruptsCalled = 0;
@@ -477,7 +499,7 @@ public class ThreadNode {
 
 	        			  break;
 	        		  }
-	        		  case CMD_PUSH_CONSTANT:
+	        		  case CMD_PUSH_CONSTANT: {
 	        			  threadState.set(STATE_RUNNING);
                   lingerTimer = 0L;
                   lingerTimestampBefore = System.nanoTime();
@@ -550,8 +572,74 @@ public class ThreadNode {
 	        			  }
 
 	        			  vkCmdPushConstants(cmdbuffer, pipelineLayout, vkType, offset, pushConstantBuffer);
-
+	        		  }
 	        			  break;
+	        		  case CMD_BUFFER_FLOAT_DATA: {
+                  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
+
+	        		    int size = cmdIntArgs[0].get(index);
+                  int bufferIndex = cmdIntArgs[1].get(index);
+                  int instance = cmdIntArgs[2].get(index);
+                  int graphicsIndex = cmdIntArgs[3].get(index);
+
+	        		    graphicsBuffers[graphicsIndex].bufferDataImmediate(floatBuffers[bufferIndex], size, instance);
+                  break;
+	        		  }
+                case CMD_BUFFER_BYTE_DATA: {
+                  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
+                  int size = cmdIntArgs[0].get(index);
+                  int bufferIndex = cmdIntArgs[1].get(index);
+                  int instance = cmdIntArgs[2].get(index);
+                  int graphicsIndex = cmdIntArgs[3].get(index);
+
+                  graphicsBuffers[graphicsIndex].bufferDataImmediate(byteBuffers[bufferIndex], size, instance);
+                  break;
+                }
+                case CMD_BUFFER_SHORT_DATA: {
+                  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
+                  int size = cmdIntArgs[0].get(index);
+                  int bufferIndex = cmdIntArgs[1].get(index);
+                  int instance = cmdIntArgs[2].get(index);
+                  int graphicsIndex = cmdIntArgs[3].get(index);
+
+                  graphicsBuffers[graphicsIndex].bufferDataImmediate(shortBuffers[bufferIndex], size, instance);
+                  break;
+                }
+                case CMD_BUFFER_INT_DATA: {
+                  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
+                  int size = cmdIntArgs[0].get(index);
+                  int bufferIndex = cmdIntArgs[1].get(index);
+                  int instance = cmdIntArgs[2].get(index);
+                  int graphicsIndex = cmdIntArgs[3].get(index);
+
+                  graphicsBuffers[graphicsIndex].bufferDataImmediate(intBuffers[bufferIndex], size, instance);
+                  break;
+                }
+                case CMD_BUFFER_LONG_DATA: {
+                  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
+                  int size = cmdIntArgs[0].get(index);
+                  int bufferIndex = cmdIntArgs[1].get(index);
+                  int instance = cmdIntArgs[2].get(index);
+                  int graphicsIndex = cmdIntArgs[3].get(index);
+
+                  graphicsBuffers[graphicsIndex].bufferDataImmediate(longBuffers[bufferIndex], size, instance);
+                  break;
+                }
 	        		  }
 
 	        		  // ======================
@@ -974,39 +1062,119 @@ public class ThreadNode {
     }
 
 
-    public void bufferData(long srcBuffer, long dstBuffer, int size) {
-        int index = getNextCMDIndex();
-        setLongArg(0, index, srcBuffer);
-        setLongArg(1, index, dstBuffer);
-        setIntArg(0, index, size);
-        // Remember, last thing we should set is cmdID, set it before and
-        // our thread may begin executing drawArrays without all the commands
-        // being properly set.
-        cmdID.set(index, CMD_BUFFER_DATA);
-        wakeThread(index);
-    }
+//    public void bufferData(long srcBuffer, long dstBuffer, int size) {
+//        int index = getNextCMDIndex();
+//        setLongArg(0, index, srcBuffer);
+//        setLongArg(1, index, dstBuffer);
+//        setIntArg(0, index, size);
+//        // Remember, last thing we should set is cmdID, set it before and
+//        // our thread may begin executing drawArrays without all the commands
+//        // being properly set.
+//        cmdID.set(index, CMD_BUFFER_DATA);
+//        wakeThread(index);
+//    }
 
     public void bindPipeline(long pipeline) {
     	if (currentPipeline != pipeline) {
 	        int index = getNextCMDIndex();
-			println("call CMD_BIND_PIPELINE (index "+index+")");
-			currentPipeline = pipeline;
-			setLongArg(0, index, pipeline);
+    			println("call CMD_BIND_PIPELINE (index "+index+")");
+    			currentPipeline = pipeline;
+    			setLongArg(0, index, pipeline);
 	        cmdID.set(index, CMD_BIND_PIPELINE);
 	        wakeThread(index);
     	}
     }
 
 
-  	public void beginRecord(int currentFrame, int currentImage) {
-  		println("call begin record");
-          int index = getNextCMDIndex();
-          setIntArg(0, index, currentImage);
-          setIntArg(1, index, currentFrame);
-          cmdID.set(index, CMD_BEGIN_RECORD);
+    public void bufferData(GraphicsBuffer graphicsBuffer, int size, ByteBuffer buffer, int instance) {
+        int index = getNextCMDIndex();
+        setIntArg(0, index, size);
+        byteBuffers[byteBuffersIndex] = buffer;
+        graphicsBuffers[graphicsBufferIndex] = graphicsBuffer;
+        setIntArg(1, index, byteBuffersIndex++);
+        setIntArg(2, index, instance);
+        setIntArg(3, index, graphicsBufferIndex++);
 
-          wakeThread(index);
+        cmdID.set(index, CMD_BUFFER_BYTE_DATA);
+        wakeThread(index);
+    }
+
+
+    public void bufferData(GraphicsBuffer graphicsBuffer, int size, FloatBuffer buffer, int instance) {
+        int index = getNextCMDIndex();
+        setIntArg(0, index, size);
+        floatBuffers[floatBuffersIndex] = buffer;
+        graphicsBuffers[graphicsBufferIndex] = graphicsBuffer;
+        setIntArg(1, index, floatBuffersIndex++);
+        setIntArg(2, index, instance);
+        setIntArg(3, index, graphicsBufferIndex++);
+
+        cmdID.set(index, CMD_BUFFER_FLOAT_DATA);
+        wakeThread(index);
+    }
+
+
+    public void bufferData(GraphicsBuffer graphicsBuffer, int size, ShortBuffer buffer, int instance) {
+        int index = getNextCMDIndex();
+        setIntArg(0, index, size);
+        shortBuffers[shortBuffersIndex] = buffer;
+        graphicsBuffers[graphicsBufferIndex] = graphicsBuffer;
+        setIntArg(1, index, shortBuffersIndex++);
+        setIntArg(2, index, instance);
+        setIntArg(3, index, graphicsBufferIndex++);
+
+        cmdID.set(index, CMD_BUFFER_SHORT_DATA);
+        wakeThread(index);
+    }
+
+
+    public void bufferData(GraphicsBuffer graphicsBuffer, int size, LongBuffer buffer, int instance) {
+        int index = getNextCMDIndex();
+        setIntArg(0, index, size);
+        longBuffers[longBuffersIndex] = buffer;
+        graphicsBuffers[graphicsBufferIndex] = graphicsBuffer;
+        setIntArg(1, index, longBuffersIndex++);
+        setIntArg(2, index, instance);
+        setIntArg(3, index, graphicsBufferIndex++);
+
+        cmdID.set(index, CMD_BUFFER_LONG_DATA);
+        wakeThread(index);
+    }
+
+
+    public void bufferData(GraphicsBuffer graphicsBuffer, int size, IntBuffer buffer, int instance) {
+        int index = getNextCMDIndex();
+        setIntArg(0, index, size);
+        intBuffers[intBuffersIndex] = buffer;
+        graphicsBuffers[graphicsBufferIndex] = graphicsBuffer;
+        setIntArg(1, index, intBuffersIndex++);
+        setIntArg(2, index, instance);
+        setIntArg(3, index, graphicsBufferIndex++);
+
+        cmdID.set(index, CMD_BUFFER_INT_DATA);
+        wakeThread(index);
+    }
+
+
+  	public void beginRecord(int currentFrame, int currentImage) {
+  	  // Reset it here idk
+  	  byteBuffersIndex = 0;
+      shortBuffersIndex = 0;
+      longBuffersIndex = 0;
+      floatBuffersIndex = 0;
+      intBuffersIndex = 0;
+      graphicsBufferIndex = 0;
+
+
+	    println("call begin record");
+      int index = getNextCMDIndex();
+      setIntArg(0, index, currentImage);
+      setIntArg(1, index, currentFrame);
+      cmdID.set(index, CMD_BEGIN_RECORD);
+
+      wakeThread(index);
   	}
+
 
   	public void endRecord() {
           int index = getNextCMDIndex();

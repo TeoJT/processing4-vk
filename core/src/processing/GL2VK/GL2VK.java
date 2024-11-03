@@ -247,6 +247,8 @@ public class GL2VK {
 	private int boundBuffer = 0;
 	private int boundProgram = 0;
 	private boolean changeProgram = true;
+	private boolean bufferMultithreaded = true;
+	private int frameCount = 0;
 
 	// Used to convert shaders
 	// Is an instance because it keeps the state from the
@@ -272,6 +274,10 @@ public class GL2VK {
 		if (warningsEnabled) {
 			System.err.println("GL2VK WARNING  "+mssg);
 		}
+	}
+
+	public void bufferMultithreaded(boolean onoff) {
+	  bufferMultithreaded = onoff;
 	}
 
 	public void glGenBuffers(int count, IntBuffer out) {
@@ -349,11 +355,17 @@ public class GL2VK {
 		// Note: target is for specifying vertex_array, indicies_array
 		// which we'll likely need.
 
-
     // STATIC_DRAW used by immediate rendering
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
+      if (data != null) {
+        if (bufferMultithreaded) {
+          system.nodeBufferData(buffers[boundBuffer], size, data, buffers[boundBuffer].getInstance());
+        }
+        else {
+          buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
+        }
+      }
     }
     // And dynamic used for immediate.
     else if (usage == DYNAMIC_DRAW) {
@@ -361,7 +373,6 @@ public class GL2VK {
       if (data != null) buffers[boundBuffer].bufferDataRetained(data, size, buffers[boundBuffer].getInstance());
     }
     else warn("Unknown usage "+usage+".");
-
 
 //  ByteBuffer newData = null;
 //    System.out.println(boundBuffer+"VK BUFFER "+buffers[boundBuffer].bufferID);
@@ -395,7 +406,6 @@ public class GL2VK {
 	}
 
 	public void glBufferData(int target, int size, FloatBuffer data, int usage) {
-
     if (boundBuffer <= 0) {
       warn("glBufferData: no bound buffer.");
       return;
@@ -407,7 +417,14 @@ public class GL2VK {
 
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
+      if (data != null) {
+        if (bufferMultithreaded) {
+          system.nodeBufferData(buffers[boundBuffer], size, data, buffers[boundBuffer].getInstance());
+        }
+        else {
+          buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
+        }
+      }
     }
     else if (usage == DYNAMIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
@@ -415,7 +432,6 @@ public class GL2VK {
     }
     else warn("Unknown usage "+usage+".");
     buffers[boundBuffer].increaseInstance();
-
   }
 
 	public void glBufferData(int target, int size, ShortBuffer data, int usage) {
@@ -430,7 +446,14 @@ public class GL2VK {
 
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
+      if (data != null) {
+        if (bufferMultithreaded) {
+          system.nodeBufferData(buffers[boundBuffer], size, data, buffers[boundBuffer].getInstance());
+        }
+        else {
+          buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
+        }
+      }
     }
     else if (usage == DYNAMIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
@@ -452,7 +475,14 @@ public class GL2VK {
 
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
-      if (data != null) buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
+      if (data != null) {
+        if (bufferMultithreaded) {
+          system.nodeBufferData(buffers[boundBuffer], size, data, buffers[boundBuffer].getInstance());
+        }
+        else {
+          buffers[boundBuffer].bufferDataImmediate(data, size, buffers[boundBuffer].getInstance());
+        }
+      }
     }
     else if (usage == DYNAMIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), RETAINED_MODE);
@@ -983,6 +1013,14 @@ public class GL2VK {
 	  for (int i = 1; i < bufferIndex; i++) {
 	    buffers[i].reset();
 	  }
+	  if (frameCount < 5) {
+	    bufferMultithreaded = false;
+	  }
+	  else {
+	    bufferMultithreaded = true;
+	  }
+    frameCount++;
+
 		system.beginRecord();
 		changeProgram = true;
 	}

@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.util.*;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -544,10 +545,6 @@ public class VulkanSystem {
     	threadNodes[selectedNode].drawArrays(buffers, size, first);
     }
 
-    public void nodeBufferData(long srcBuffer, long dstBuffer, int size) {
-    	threadNodes[selectedNode].bufferData(srcBuffer, dstBuffer, size);
-    }
-
     public void nodeBindPipeline(long pipeline) {
     	threadNodes[selectedNode].bindPipeline(pipeline);
     }
@@ -597,6 +594,28 @@ public class VulkanSystem {
     public void nodePushConstants(long pipelineLayout, int vertexOfFragment, int offset, int val0, int val1, int val2, int val3) {
       threadNodes[selectedNode].pushConstant(pipelineLayout, vertexOfFragment, offset, val0, val1, val2, val3);
     }
+
+    public void nodeBufferData(GraphicsBuffer graphicsBuffer, int size, ByteBuffer buffer, int instance) {
+      threadNodes[selectedNode].bufferData(graphicsBuffer, size, buffer, instance);
+    }
+
+    public void nodeBufferData(GraphicsBuffer graphicsBuffer, int size, FloatBuffer buffer, int instance) {
+      threadNodes[selectedNode].bufferData(graphicsBuffer, size, buffer, instance);
+    }
+
+    public void nodeBufferData(GraphicsBuffer graphicsBuffer, int size, LongBuffer buffer, int instance) {
+      threadNodes[selectedNode].bufferData(graphicsBuffer, size, buffer, instance);
+    }
+
+    public void nodeBufferData(GraphicsBuffer graphicsBuffer, int size, ShortBuffer buffer, int instance) {
+      threadNodes[selectedNode].bufferData(graphicsBuffer, size, buffer, instance);
+    }
+
+    public void nodeBufferData(GraphicsBuffer graphicsBuffer, int size, IntBuffer buffer, int instance) {
+      threadNodes[selectedNode].bufferData(graphicsBuffer, size, buffer, instance);
+    }
+
+
 
 
 

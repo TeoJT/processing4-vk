@@ -20,6 +20,7 @@ import java.nio.FloatBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.Buffer;
 import java.nio.BufferOverflowException;
@@ -81,6 +82,11 @@ public class GraphicsBuffer {
 
     public long[] buffers = new long[MAX_INSTANCES];
     private volatile long[] bufferMemory = new long[MAX_INSTANCES];
+    // the bufferMemory list is at risk; if we createBufferAuto while a bufferData process is happening,
+    // this could cause bad things.
+    // So let's have a buncha booleans to specify if it's safe to use
+    private AtomicBoolean[] safeToUpdateBuffer = new AtomicBoolean[MAX_INSTANCES];
+
     public long[] stagingBuffers = new long[MAX_INSTANCES];
     private long[] stagingBufferMemory = new long[MAX_INSTANCES];
 
@@ -104,6 +110,7 @@ public class GraphicsBuffer {
         bufferMemory[i] = -1;
         stagingBuffers[i] = -1;
         stagingBufferMemory[i] = -1;
+        safeToUpdateBuffer[i] = new AtomicBoolean(true);
       }
     }
 
@@ -113,6 +120,25 @@ public class GraphicsBuffer {
     // - Buffer size != new size.
     // NOT THREAD SAFE HERE
     public void createBufferAuto(int size, int vertexIndexUsage, boolean retainedMode) {
+      // TO BE SAFE:
+      // bufferData is done in separate threads (for immediate mode).
+      // Specifically, bufferMemory is at risk here.
+      // Let's NOT do any operations until we know it's safe to do so.
+      // While this looks bad, this is only used in very very rare cases, and
+      // even when it does happen, it should only happen once per vkbuffer.
+      int count = 0;
+      while (safeToUpdateBuffer[globalInstance].get() == false) {
+        // busy wait
+        if (count > 9999999) {
+          System.err.println("BUG WARNING  createBufferAuto: looplock'd waiting for buffer instance "+globalInstance+" to be safe.");
+          System.exit(1);
+        }
+        count++;
+      }
+      if (count > 0) {
+        System.out.println("createBufferAuto: Stall for "+count);
+      }
+
 
     	if (buffers[globalInstance] == -1 || size > bufferSize[globalInstance]) {
     		// Delete old buffers
@@ -335,6 +361,20 @@ public class GraphicsBuffer {
       }
     }
 
+    public static LongBuffer mapLong(int size, long mem) {
+      try(MemoryStack stack = stackPush()) {
+          // alloc pointer for our data
+          PointerBuffer pointer = stack.mallocPointer(1);
+          vkMapMemory(system.device, mem, 0, size, 0, pointer);
+
+          // Here instead of some mem copy function we can just
+          // copy each and every byte of buffer.
+          LongBuffer datato = pointer.getLongBuffer(0, size/Integer.BYTES);
+
+          return datato;
+      }
+    }
+
     // TODO: Make multithreaded
     public static void unmap(long mem) {
       vkUnmapMemory(system.device, mem);
@@ -374,6 +414,8 @@ public class GraphicsBuffer {
       	// If debug mode enabled
       	if (system == null) return;
 
+      	safeToUpdateBuffer[instance].set(false);
+
       	long mem = bufferMemory[instance];
 
   	    ByteBuffer datato = mapByte(size, mem);
@@ -384,11 +426,14 @@ public class GraphicsBuffer {
     		}
     		datato.rewind();
     		unmap(mem);
+        safeToUpdateBuffer[instance].set(true);
     }
 
     public void bufferDataImmediate(FloatBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
+
+        safeToUpdateBuffer[instance].set(false);
 
         long mem = bufferMemory[instance];
 
@@ -402,11 +447,14 @@ public class GraphicsBuffer {
         datato.rewind();
 
         unmap(mem);
+        safeToUpdateBuffer[instance].set(true);
     }
 
     public void bufferDataImmediate(ShortBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
+
+        safeToUpdateBuffer[instance].set(false);
 
         long mem = bufferMemory[instance];
 
@@ -418,11 +466,14 @@ public class GraphicsBuffer {
         }
         datato.rewind();
         unmap(mem);
+        safeToUpdateBuffer[instance].set(true);
     }
 
     public void bufferDataImmediate(IntBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
+
+        safeToUpdateBuffer[instance].set(false);
 
         long mem = bufferMemory[instance];
 
@@ -434,8 +485,27 @@ public class GraphicsBuffer {
         }
         datato.rewind();
         unmap(mem);
+        safeToUpdateBuffer[instance].set(true);
     }
 
+    public void bufferDataImmediate(LongBuffer data, int size, int instance) {
+        // If debug mode enabled
+        if (system == null) return;
+
+        safeToUpdateBuffer[instance].set(false);
+
+        long mem = bufferMemory[instance];
+
+        LongBuffer datato = mapLong(size, mem);
+        datato.rewind();
+        data.rewind();
+        while (datato.hasRemaining()) {
+          datato.put(data.get());
+        }
+        datato.rewind();
+        unmap(mem);
+        safeToUpdateBuffer[instance].set(true);
+    }
 
 
 
