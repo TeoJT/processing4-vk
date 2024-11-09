@@ -118,6 +118,36 @@
   <path id="classpath.base">
     <pathelement location="library/jogl-all.jar" />
     <pathelement location="library/gluegen-rt.jar" />
+    <pathelement location="library/lwjgl-assimp-natives-linux.jar" />
+    <pathelement location="library/lwjgl-assimp-natives-windows.jar" />
+    <pathelement location="library/lwjgl-assimp-sources.jar" />
+    <pathelement location="library/lwjgl-assimp.jar" />
+    <pathelement location="library/lwjgl-glfw-natives-linux.jar" />
+    <pathelement location="library/lwjgl-glfw-natives-windows.jar" />
+    <pathelement location="library/lwjgl-glfw-sources.jar" />
+    <pathelement location="library/lwjgl-glfw.jar" />
+    <pathelement location="library/lwjgl-natives-linux.jar" />
+    <pathelement location="library/lwjgl-natives-windows.jar" />
+    <pathelement location="library/lwjgl-openal-natives-linux.jar" />
+    <pathelement location="library/lwjgl-openal-natives-windows.jar" />
+    <pathelement location="library/lwjgl-openal-sources.jar" />
+    <pathelement location="library/lwjgl-openal.jar" />
+    <pathelement location="library/lwjgl-shaderc-natives-linux.jar" />
+    <pathelement location="library/lwjgl-shaderc-natives-windows.jar" />
+    <pathelement location="library/lwjgl-shaderc-sources.jar" />
+    <pathelement location="library/lwjgl-shaderc.jar" />
+    <pathelement location="library/lwjgl-sources.jar" />
+    <pathelement location="library/lwjgl-stb-natives-linux.jar" />
+    <pathelement location="library/lwjgl-stb-natives-windows.jar" />
+    <pathelement location="library/lwjgl-stb-sources.jar" />
+    <pathelement location="library/lwjgl-stb.jar" />
+    <pathelement location="library/lwjgl-vma-natives-linux.jar" />
+    <pathelement location="library/lwjgl-vma-natives-windows.jar" />
+    <pathelement location="library/lwjgl-vma-sources.jar" />
+    <pathelement location="library/lwjgl-vma.jar" />
+    <pathelement location="library/lwjgl-vulkan-sources.jar" />
+    <pathelement location="library/lwjgl-vulkan.jar" />
+    <pathelement location="library/lwjgl.jar" />
   </path>
 
   <path id="classpath.test">

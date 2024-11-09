@@ -69,7 +69,7 @@ public class Sketch1 extends PApplet {
 
         float time = ((float)frameCount)*0.02f;
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 10; i++) {
           selectNode(i%7);
           fill((frameCount+i*289)%MAX, 255, 255);
           ellipseMode(CORNER);

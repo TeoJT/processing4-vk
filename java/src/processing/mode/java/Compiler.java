@@ -52,12 +52,16 @@ public class Compiler {
    */
   static public boolean compile(JavaBuild build) throws SketchException {
 
+	  
     // This will be filled in if anyone gets angry
     SketchException exception = null;
     boolean success;
 
     String classpath = build.getClassPath();
     String classpathEmptyRemoved = classpath.replace("::", ":");
+    
+    System.out.println(classpathEmptyRemoved);
+    
 
     String[] baseCommand = new String[] {
       "-g",

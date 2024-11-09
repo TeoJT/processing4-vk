@@ -237,14 +237,14 @@ public class VKSetup {
     public void destroyOtherThings() {
     	// Only need to destroy these "other things" (transfer stuff)
     	// if we're using the transfer queue.
-		if (useTransferQueue) {
-			try(MemoryStack stack = stackPush()) {
-				ArrayList<VkCommandBuffer> deleteList = new ArrayList<>();
-					deleteList.add(transferCommandBuffer);
-				vkFreeCommandBuffers(device, transferCommandPool, Util.asPointerBuffer(stack, deleteList));
-			}
-			vkDestroyCommandPool(device, transferCommandPool, null);
-		}
+  		if (useTransferQueue) {
+  			try(MemoryStack stack = stackPush()) {
+  				ArrayList<VkCommandBuffer> deleteList = new ArrayList<>();
+  					deleteList.add(transferCommandBuffer);
+  				vkFreeCommandBuffers(device, transferCommandPool, Util.asPointerBuffer(stack, deleteList));
+  			}
+  			vkDestroyCommandPool(device, transferCommandPool, null);
+  		}
     }
 
     public class QueueFamilyIndices {
