@@ -1,6 +1,7 @@
 package processing.vulkan;
 
 import java.nio.Buffer;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
@@ -384,6 +385,7 @@ public class PVK extends PGL implements PJOGLInterface {
 //    System.out.println(func);
   }
 
+
   private void prepareStrings() {
     // OpenGL strings only really have this
     // information being loaded into the
@@ -491,19 +493,40 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public void getBooleanv(int value, IntBuffer data) {
     // TODO Auto-generated method stub
-
+    System.out.println("getIntegerv UNKNOWN "+value);
   }
 
   @Override
+  // TODO: actual values instead of placeholder values.
+  // Have fun with that.
   public void getIntegerv(int value, IntBuffer data) {
-    // TODO Auto-generated method stub
+//    MAX_TEXTURE_SIZE 16384
+//    MAX_SAMPLES 16
+//    MAX_TEXTURE_MAX_ANISOTROPY 16.0
 
+    if (value == MAX_TEXTURE_SIZE) {
+      data.put(0, 16384);
+    }
+    else if (value == MAX_SAMPLES) {
+      data.put(0, 16);
+    }
+    else {
+      System.out.println("getIntegerv UNKNOWN "+value);
+    }
   }
 
   @Override
   public void getFloatv(int value, FloatBuffer data) {
-    // TODO Auto-generated method stub
+//    MAX_TEXTURE_SIZE 16384
+//    MAX_SAMPLES 16
+//    MAX_TEXTURE_MAX_ANISOTROPY 16.0
 
+    if (value == MAX_TEXTURE_MAX_ANISOTROPY) {
+      data.put(0, 16f);
+    }
+    else {
+      System.out.println("getFloatv UNKNOWN "+value);
+    }
   }
 
   @Override

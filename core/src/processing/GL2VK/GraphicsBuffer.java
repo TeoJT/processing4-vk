@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.Buffer;
 import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.IntBuffer;
 
 import org.lwjgl.PointerBuffer;
@@ -419,12 +420,22 @@ public class GraphicsBuffer {
       	long mem = bufferMemory[instance];
 
   	    ByteBuffer datato = mapByte(size, mem);
-    		datato.rewind();
-    		data.rewind();
-    		while (datato.hasRemaining()) {
-    			datato.put(data.get());
-    		}
-    		datato.rewind();
+
+  	    try {
+      		datato.rewind();
+      		data.rewind();
+      		while (datato.hasRemaining()) {
+      			datato.put(data.get());
+      		}
+      		datato.rewind();
+        }
+        catch (BufferOverflowException e) {
+          // Ignore and continue.
+        }
+        catch (BufferUnderflowException e) {
+          // Ignore and continue.
+        }
+
     		unmap(mem);
         safeToUpdateBuffer[instance].set(true);
     }
@@ -439,12 +450,20 @@ public class GraphicsBuffer {
 
         FloatBuffer datato = mapFloat(size, mem);
 
-        datato.rewind();
-        data.rewind();
-        while (datato.hasRemaining()) {
-          datato.put(data.get());
+        try {
+          datato.rewind();
+          data.rewind();
+          while (datato.hasRemaining()) {
+            datato.put(data.get());
+          }
+          datato.rewind();
         }
-        datato.rewind();
+        catch (BufferOverflowException e) {
+          // Ignore and continue.
+        }
+        catch (BufferUnderflowException e) {
+          // Ignore and continue.
+        }
 
         unmap(mem);
         safeToUpdateBuffer[instance].set(true);
@@ -459,12 +478,23 @@ public class GraphicsBuffer {
         long mem = bufferMemory[instance];
 
         ShortBuffer datato = mapShort(size, mem);
-        datato.rewind();
-        data.rewind();
-        while (datato.hasRemaining()) {
-          datato.put(data.get());
+
+        try {
+          datato.rewind();
+          data.rewind();
+          while (datato.hasRemaining()) {
+            datato.put(data.get());
+          }
+          datato.rewind();
         }
-        datato.rewind();
+        catch (BufferOverflowException e) {
+          // Ignore and continue.
+        }
+        catch (BufferUnderflowException e) {
+          // Ignore and continue.
+        }
+
+
         unmap(mem);
         safeToUpdateBuffer[instance].set(true);
     }
@@ -478,12 +508,22 @@ public class GraphicsBuffer {
         long mem = bufferMemory[instance];
 
         IntBuffer datato = mapInt(size, mem);
-        datato.rewind();
-        data.rewind();
-        while (datato.hasRemaining()) {
-          datato.put(data.get());
+
+        try {
+          datato.rewind();
+          data.rewind();
+          while (datato.hasRemaining()) {
+            datato.put(data.get());
+          }
+          datato.rewind();
         }
-        datato.rewind();
+        catch (BufferOverflowException e) {
+          // Ignore and continue.
+        }
+        catch (BufferUnderflowException e) {
+          // Ignore and continue.
+        }
+
         unmap(mem);
         safeToUpdateBuffer[instance].set(true);
     }
@@ -497,12 +537,23 @@ public class GraphicsBuffer {
         long mem = bufferMemory[instance];
 
         LongBuffer datato = mapLong(size, mem);
-        datato.rewind();
-        data.rewind();
-        while (datato.hasRemaining()) {
-          datato.put(data.get());
+
+        try {
+          datato.rewind();
+          data.rewind();
+          while (datato.hasRemaining()) {
+            datato.put(data.get());
+          }
+          datato.rewind();
         }
-        datato.rewind();
+        catch (BufferOverflowException e) {
+          // Ignore and continue.
+        }
+        catch (BufferUnderflowException e) {
+          // Ignore and continue.
+        }
+
+
         unmap(mem);
         safeToUpdateBuffer[instance].set(true);
     }

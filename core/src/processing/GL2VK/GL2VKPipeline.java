@@ -31,6 +31,12 @@ import static org.lwjgl.vulkan.VK10.vkCreateShaderModule;
 import static org.lwjgl.vulkan.VK10.vkDestroyPipeline;
 import static org.lwjgl.vulkan.VK10.vkDestroyPipelineLayout;
 import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
+import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_SRC_ALPHA;
+import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+import static org.lwjgl.vulkan.VK10.VK_BLEND_OP_ADD;
+import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_ONE;
+import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+import static org.lwjgl.vulkan.VK10.VK_BLEND_OP_ADD;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
@@ -260,14 +266,24 @@ public class GL2VKPipeline {
 
             VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
             colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-            colorBlendAttachment.blendEnable(false);
+            colorBlendAttachment.blendEnable(true);
+            colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA); // Source factor
+            colorBlendAttachment.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA); // Destination factor
+            colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD); // Blend operation for color
+            colorBlendAttachment.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE); // Source alpha factor
+            colorBlendAttachment.dstAlphaBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA); // Destination alpha factor
+            colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD); // Blend operation for alpha
+            colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT |
+                                                  VK_COLOR_COMPONENT_G_BIT |
+                                                  VK_COLOR_COMPONENT_B_BIT |
+                                                  VK_COLOR_COMPONENT_A_BIT); // Write mask
 
             VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.calloc(stack);
             colorBlending.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
             colorBlending.logicOpEnable(false);
-            colorBlending.logicOp(VK_LOGIC_OP_COPY);
+//            colorBlending.logicOp(VK_LOGIC_OP_COPY);
             colorBlending.pAttachments(colorBlendAttachment);
-            colorBlending.blendConstants(stack.floats(0.0f, 0.0f, 0.0f, 0.0f));
+//            colorBlending.blendConstants(stack.floats(0.0f, 0.0f, 0.0f, 0.0f));
 
             // ===> PIPELINE LAYOUT CREATION <===
 

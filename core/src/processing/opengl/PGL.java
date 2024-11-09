@@ -27,6 +27,8 @@ package processing.opengl;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.Buffer;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -2378,24 +2380,32 @@ public abstract class PGL {
 
   protected static ByteBuffer updateByteBuffer(ByteBuffer buf, byte[] arr,
                                                boolean wrap) {
-    if (USE_DIRECT_BUFFERS || (buf != null && buf.isDirect())) {
-      if (buf == null || buf.capacity() < arr.length) {
-        buf = allocateDirectByteBuffer(arr.length);
-      }
-      buf.position(0);
-      buf.put(arr);
-      buf.rewind();
-    } else {
-      if (wrap) {
-        buf = ByteBuffer.wrap(arr);
-      } else {
+    try {
+      if (USE_DIRECT_BUFFERS || (buf != null && buf.isDirect())) {
         if (buf == null || buf.capacity() < arr.length) {
-          buf = ByteBuffer.allocate(arr.length);
+          buf = allocateDirectByteBuffer(arr.length);
         }
         buf.position(0);
         buf.put(arr);
         buf.rewind();
+      } else {
+        if (wrap) {
+          buf = ByteBuffer.wrap(arr);
+        } else {
+          if (buf == null || buf.capacity() < arr.length) {
+            buf = ByteBuffer.allocate(arr.length);
+          }
+          buf.position(0);
+          buf.put(arr);
+          buf.rewind();
+        }
       }
+    }
+    catch (BufferOverflowException e) {
+      // Ignore and continue.
+    }
+    catch (BufferUnderflowException e) {
+      // Ignore and continue.
     }
     return buf;
   }
@@ -2403,10 +2413,18 @@ public abstract class PGL {
 
   protected static void updateByteBuffer(ByteBuffer buf, byte[] arr,
                                          int offset, int size) {
-    if (buf.isDirect() || (buf.hasArray() && buf.array() != arr)) {
-      buf.position(offset);
-      buf.put(arr, offset, size);
-      buf.rewind();
+    try {
+      if (buf.isDirect() || (buf.hasArray() && buf.array() != arr)) {
+        buf.position(offset);
+        buf.put(arr, offset, size);
+        buf.rewind();
+      }
+    }
+    catch (BufferOverflowException e) {
+      // Ignore and continue.
+    }
+    catch (BufferUnderflowException e) {
+      // Ignore and continue.
     }
   }
 
@@ -2470,24 +2488,32 @@ public abstract class PGL {
 
   protected static ShortBuffer updateShortBuffer(ShortBuffer buf, short[] arr,
                                                  boolean wrap) {
-    if (USE_DIRECT_BUFFERS || (buf != null && buf.isDirect())) {
-      if (buf == null || buf.capacity() < arr.length) {
-        buf = allocateDirectShortBuffer(arr.length);
-      }
-      buf.position(0);
-      buf.put(arr);
-      buf.rewind();
-    } else {
-      if (wrap) {
-        buf = ShortBuffer.wrap(arr);
-      } else {
+    try {
+      if (USE_DIRECT_BUFFERS || (buf != null && buf.isDirect())) {
         if (buf == null || buf.capacity() < arr.length) {
-          buf = ShortBuffer.allocate(arr.length);
+          buf = allocateDirectShortBuffer(arr.length);
         }
         buf.position(0);
         buf.put(arr);
         buf.rewind();
+      } else {
+        if (wrap) {
+          buf = ShortBuffer.wrap(arr);
+        } else {
+          if (buf == null || buf.capacity() < arr.length) {
+            buf = ShortBuffer.allocate(arr.length);
+          }
+          buf.position(0);
+          buf.put(arr);
+          buf.rewind();
+        }
       }
+    }
+    catch (BufferOverflowException e) {
+      // Ignore and continue.
+    }
+    catch (BufferUnderflowException e) {
+      // Ignore and continue.
     }
     return buf;
   }
@@ -2495,10 +2521,18 @@ public abstract class PGL {
 
   protected static void updateShortBuffer(ShortBuffer buf, short[] arr,
                                           int offset, int size) {
-    if (buf.isDirect() || (buf.hasArray() && buf.array() != arr)) {
-      buf.position(offset);
-      buf.put(arr, offset, size);
-      buf.rewind();
+    try {
+      if (buf.isDirect() || (buf.hasArray() && buf.array() != arr)) {
+        buf.position(offset);
+        buf.put(arr, offset, size);
+        buf.rewind();
+      }
+    }
+    catch (BufferOverflowException e) {
+      // Ignore and continue.
+    }
+    catch (BufferUnderflowException e) {
+      // Ignore and continue.
     }
   }
 
@@ -2562,24 +2596,32 @@ public abstract class PGL {
 
   protected static IntBuffer updateIntBuffer(IntBuffer buf, int[] arr,
                                              boolean wrap) {
-    if (USE_DIRECT_BUFFERS || (buf != null && buf.isDirect())) {
-      if (buf == null || buf.capacity() < arr.length) {
-        buf = allocateDirectIntBuffer(arr.length);
-      }
-      buf.position(0);
-      buf.put(arr);
-      buf.rewind();
-    } else {
-      if (wrap) {
-        buf = IntBuffer.wrap(arr);
-      } else {
+    try {
+      if (USE_DIRECT_BUFFERS || (buf != null && buf.isDirect())) {
         if (buf == null || buf.capacity() < arr.length) {
-          buf = IntBuffer.allocate(arr.length);
+          buf = allocateDirectIntBuffer(arr.length);
         }
         buf.position(0);
         buf.put(arr);
         buf.rewind();
+      } else {
+        if (wrap) {
+          buf = IntBuffer.wrap(arr);
+        } else {
+          if (buf == null || buf.capacity() < arr.length) {
+            buf = IntBuffer.allocate(arr.length);
+          }
+          buf.position(0);
+          buf.put(arr);
+          buf.rewind();
+        }
       }
+    }
+    catch (BufferOverflowException e) {
+      // Ignore and continue.
+    }
+    catch (BufferUnderflowException e) {
+      // Ignore and continue.
     }
     return buf;
   }
@@ -2587,11 +2629,19 @@ public abstract class PGL {
 
   protected static void updateIntBuffer(IntBuffer buf, int[] arr,
                                         int offset, int size) {
-     if (buf.isDirect() || (buf.hasArray() && buf.array() != arr)) {
-       buf.position(offset);
-       buf.put(arr, offset, size);
-       buf.rewind();
-     }
+      try {
+         if (buf.isDirect() || (buf.hasArray() && buf.array() != arr)) {
+           buf.position(offset);
+           buf.put(arr, offset, size);
+           buf.rewind();
+         }
+      }
+      catch (BufferOverflowException e) {
+        // Ignore and continue.
+      }
+      catch (BufferUnderflowException e) {
+        // Ignore and continue.
+      }
    }
 
 
@@ -2652,24 +2702,32 @@ public abstract class PGL {
 
   protected static FloatBuffer updateFloatBuffer(FloatBuffer buf, float[] arr,
                                                  boolean wrap) {
-    if (USE_DIRECT_BUFFERS || (buf != null && buf.isDirect())) {
-      if (buf == null || buf.capacity() < arr.length) {
-        buf = allocateDirectFloatBuffer(arr.length);
-      }
-      buf.position(0);
-      buf.put(arr);
-      buf.rewind();
-    } else {
-      if (wrap) {
-        buf = FloatBuffer.wrap(arr);
-      } else {
+    try {
+      if (USE_DIRECT_BUFFERS || (buf != null && buf.isDirect())) {
         if (buf == null || buf.capacity() < arr.length) {
-          buf = FloatBuffer.allocate(arr.length);
+          buf = allocateDirectFloatBuffer(arr.length);
         }
         buf.position(0);
         buf.put(arr);
         buf.rewind();
+      } else {
+        if (wrap) {
+          buf = FloatBuffer.wrap(arr);
+        } else {
+          if (buf == null || buf.capacity() < arr.length) {
+            buf = FloatBuffer.allocate(arr.length);
+          }
+          buf.position(0);
+          buf.put(arr);
+          buf.rewind();
+        }
       }
+    }
+    catch (BufferOverflowException e) {
+      // Ignore and continue.
+    }
+    catch (BufferUnderflowException e) {
+      // Ignore and continue.
     }
     return buf;
   }
@@ -2677,12 +2735,21 @@ public abstract class PGL {
 
   protected static void updateFloatBuffer(FloatBuffer buf, float[] arr,
                                         int offset, int size) {
-     if (buf.isDirect() || (buf.hasArray() && buf.array() != arr)) {
-       buf.position(offset);
-       buf.put(arr, offset, size);
-       buf.rewind();
-     }
-   }
+    try {
+       if (buf.isDirect() || (buf.hasArray() && buf.array() != arr)) {
+         buf.position(offset);
+         buf.put(arr, offset, size);
+         buf.rewind();
+       }
+
+    }
+    catch (BufferOverflowException e) {
+      // Ignore and continue.
+    }
+    catch (BufferUnderflowException e) {
+      // Ignore and continue.
+    }
+  }
 
 
   protected static void getFloatArray(FloatBuffer buf, float[] arr) {
