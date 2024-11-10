@@ -561,6 +561,10 @@ public class GL2VKPipeline {
         }
     }
 
+    public void addSamplers(ArrayList<Integer> bindings) {
+
+    }
+
     // Remember we start from 1, not 0.
     public GLUniform getUniform(int index) {
     	return uniforms.get(index-1);

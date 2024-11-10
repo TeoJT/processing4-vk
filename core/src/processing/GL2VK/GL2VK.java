@@ -69,6 +69,7 @@ public class GL2VK {
 		// Once the vert and frag shaders are linked it will
 		// be combined into one ArrayList
 		public ArrayList<GLUniform> uniforms = new ArrayList<>();
+		public ArrayList<Integer> samplerBindings = new ArrayList<>();
 
 		public GLShader(int type) {
 			this.type = type;
@@ -82,6 +83,10 @@ public class GL2VK {
 				// class but let's be real; it's an int with 2 different values.
 				u.vertexFragment = type;
 			}
+		}
+
+		public void setSamplerBindings(ArrayList<Integer> bindings) {
+		  this.samplerBindings = bindings;
 		}
 	}
 
@@ -698,6 +703,9 @@ public class GL2VK {
 
 			// Also let's parse the uniform shader too
 			sh.setUniforms(UniformParser.parseUniforms(sh.source));
+
+			// And the samplers
+			sh.setSamplerBindings(UniformParser.parseSamplers(sh.source));
 		}
 	}
 
@@ -740,7 +748,6 @@ public class GL2VK {
 			// We'll need gl attribs since
 			// gl attrib locations != vulkan attrib locations.
 			addGLAttribs(programs[program]);
-
 		}
 		else if (sh.type == GL_FRAGMENT_SHADER) {
 			programs[program].fragShaderSPIRV = shaders[shader].spirv;
@@ -748,6 +755,7 @@ public class GL2VK {
 
 		// And also add the uniform attribs to the GLPipeline
 		programs[program].addUniforms(sh.uniforms);
+		programs[program].addSamplers(sh.samplerBindings);
 
 //		System.out.println("PROGRAM "+program+" to "+sh.source);
 	}

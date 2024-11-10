@@ -11,6 +11,7 @@ public class GL2VKShaderConverter {
 	// Public so we can check them in tests sorry not sorry.
 	public HashMap<String, Integer> vertexVaryingLocations = new HashMap<>();
 	public int vertUniformSize = -1;
+	private int currBinding = 0;
 
 	// Unused
 //	private boolean fragmentBlocked = false;
@@ -19,6 +20,7 @@ public class GL2VKShaderConverter {
 	public void reset() {
 		vertexVaryingLocations.clear();
 		vertUniformSize = -1;
+		currBinding = 0;
 	}
 
 
@@ -416,6 +418,8 @@ public class GL2VKShaderConverter {
 
 		HashSet<String> uniformsSet = new HashSet<>();
 		ArrayList<String> uniforms = new ArrayList<>();
+		HashSet<String> descriptorUniformsSet = new HashSet<>();
+		ArrayList<String> descriptorUniforms = new ArrayList<>();
 		for (String line : lines) {
 
 			String reconstructedLine = "";
@@ -427,17 +431,35 @@ public class GL2VKShaderConverter {
 					if (elements[i].equals("uniform") && hasType(elements[i+1])) {
 						// Erase the line
 						reconstructedLine = "";
-						// Annnnd let's just slap on element[1 and 2] because that
-						// should be the type and name (with semicolon)
-						uniforms.add(elements[i+1]+" "+elements[i+2]);
 
-						// Keep track of size on vertex shader
-						if (type == VERTEX) vertUniformSize += UniformParser.typeToSize(elements[i+1]);
+						// Samplers of course use descriptor sets, not push constants.
+						// For that we put it into a different array.
+						if (elements[i+1].equals("sampler1D") || elements[i+1].equals("sampler2D") || elements[i+1].equals("sampler3D")) {
+							// Add element[2 and 3] with semicolon slapped on.
+							descriptorUniforms.add(elements[i+1]+" "+elements[i+2]);
 
-						// simultaneously populate the hashset
-						uniformsSet.add(removeSemicolon(elements[i+2]));
+							// rather than add it to lists to pass it to a later state, we
+							// can simply modify it now since samplers aren't in a block.
+							// Very easy, just append layout(binding = x)
+							reconstructedLine += "layout(binding = "+currBinding+") "+line;
+							currBinding++;
 
-						break;
+							// No more here.
+							break;
+						}
+						else {
+							// Annnnd let's just slap on element[1 and 2] because that
+							// should be the type and name (with semicolon)
+							uniforms.add(elements[i+1]+" "+elements[i+2]);
+
+							// Keep track of size on vertex shader
+							if (type == VERTEX) vertUniformSize += UniformParser.typeToSize(elements[i+1]);
+
+							// simultaneously populate the hashset
+							uniformsSet.add(removeSemicolon(elements[i+2]));
+
+							break;
+						}
 					}
 					else {
 						reconstructedLine += elements[i]+" ";
