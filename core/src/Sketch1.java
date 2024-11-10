@@ -59,7 +59,7 @@ public class Sketch1 extends PApplet {
     public void draw() {
       try {
         background(200);
-        bufferMultithreaded(true);
+        bufferMultithreaded(false);
 
 //        println();
 
@@ -70,7 +70,7 @@ public class Sketch1 extends PApplet {
         float time = ((float)frameCount)*0.02f;
 
         for (int i = 0; i < 10; i++) {
-          selectNode(i%7);
+          selectNode(0);
           fill((frameCount+i*289)%MAX, 255, 255);
           ellipseMode(CORNER);
           ellipse(sin((float)i+time)*noise(i*23)*700f+width/2,
@@ -79,7 +79,7 @@ public class Sketch1 extends PApplet {
         colorMode(RGB, 256);
         flush();
 
-        selectNode(1);
+        selectNode(0);
 
         // TODO: Uniform1i
         strokeCap(ROUND);
@@ -89,6 +89,7 @@ public class Sketch1 extends PApplet {
         rect(mouseX, mouseY, 256f, 256f);
         bufferMultithreaded(false);
         flush();
+//        background(200,0,0);
 
 //        printThreadNodeReport();
         println("fps: "+frameRate);

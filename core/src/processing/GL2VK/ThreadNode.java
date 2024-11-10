@@ -15,6 +15,7 @@ import static org.lwjgl.vulkan.VK10.VK_INDEX_TYPE_UINT16;
 import static org.lwjgl.vulkan.VK10.VK_INDEX_TYPE_UINT32;
 import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_VERTEX_BIT;
 import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_ASPECT_COLOR_BIT;
 import static org.lwjgl.vulkan.VkPhysicalDeviceIndexTypeUint8FeaturesKHR.INDEXTYPEUINT8;
 import static org.lwjgl.vulkan.VK10.vkCmdBindIndexBuffer;
 import static org.lwjgl.vulkan.VK10.vkAllocateCommandBuffers;
@@ -30,6 +31,7 @@ import static org.lwjgl.vulkan.VK10.vkFreeCommandBuffers;
 import static org.lwjgl.vulkan.VK10.vkResetCommandBuffer;
 import static org.lwjgl.vulkan.VK10.vkCmdPushConstants;
 import static org.lwjgl.vulkan.VK10.vkDestroyCommandPool;
+import static org.lwjgl.vulkan.VK10.vkCmdClearAttachments;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -52,6 +54,12 @@ import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
 import org.lwjgl.vulkan.VkCommandBufferBeginInfo;
 import org.lwjgl.vulkan.VkCommandBufferInheritanceInfo;
 import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
+import org.lwjgl.vulkan.VkOffset2D;
+import org.lwjgl.vulkan.VkPipelineColorBlendAttachmentState;
+import org.lwjgl.vulkan.VkRect2D;
+import org.lwjgl.vulkan.VkClearAttachment;
+import org.lwjgl.vulkan.VkClearValue;
+import org.lwjgl.vulkan.VkClearRect;
 
 //import helloVulkan.VKSetup.QueueFamilyIndices;
 
@@ -76,6 +84,7 @@ public class ThreadNode {
   public final static int CMD_BUFFER_SHORT_DATA = 11;
   public final static int CMD_BUFFER_LONG_DATA = 12;
   public final static int CMD_BUFFER_INT_DATA = 13;
+  public final static int CMD_CLEAR = 14;
 
 	// ThreadNode state statuses
 	public final static int STATE_INACTIVE = 0;
@@ -640,6 +649,38 @@ public class ThreadNode {
                   graphicsBuffers[graphicsIndex].bufferDataImmediate(longBuffers[bufferIndex], size, instance);
                   break;
                 }
+                case CMD_CLEAR: {
+                  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
+                  try(MemoryStack stack = stackPush()) {
+                    VkClearAttachment.Buffer attachments = VkClearAttachment.calloc(1, stack);
+                    attachments.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+
+                    float r = Float.intBitsToFloat(cmdIntArgs[0].get(index));
+                    float g = Float.intBitsToFloat(cmdIntArgs[1].get(index));
+                    float b = Float.intBitsToFloat(cmdIntArgs[2].get(index));
+                    float a = Float.intBitsToFloat(cmdIntArgs[3].get(index));
+
+                    VkClearValue clearValues = VkClearValue.calloc(stack);
+                    clearValues.color().float32(stack.floats(r,g,b,a));
+                    attachments.clearValue(clearValues);
+
+                    VkRect2D rect = VkRect2D.calloc(stack);
+                    rect.offset(VkOffset2D.calloc(stack).set(0, 0));
+                    rect.extent(vkbase.swapChainExtent);
+
+                    VkClearRect.Buffer clearRect = VkClearRect.calloc(1, stack);
+                    clearRect.rect(rect); // Size of the area to clear
+                    clearRect.baseArrayLayer(0); // For 2D images
+                    clearRect.layerCount(1); // Clear one layer
+
+                    vkCmdClearAttachments(cmdbuffer, attachments, clearRect);
+                  }
+                }
+
+
 	        		  }
 
 	        		  // ======================
@@ -1153,6 +1194,19 @@ public class ThreadNode {
 
         cmdID.set(index, CMD_BUFFER_INT_DATA);
         wakeThread(index);
+    }
+
+
+    public void clearColor(float r, float g, float b, float a) {
+      int index = getNextCMDIndex();
+
+      setIntArg(0, index, Float.floatToIntBits(r));
+      setIntArg(1, index, Float.floatToIntBits(g));
+      setIntArg(2, index, Float.floatToIntBits(b));
+      setIntArg(3, index, Float.floatToIntBits(a));
+
+      cmdID.set(index, CMD_CLEAR);
+      wakeThread(index);
     }
 
 

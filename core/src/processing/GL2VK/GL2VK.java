@@ -956,6 +956,10 @@ public class GL2VK {
     buffers[boundBuffer].increaseInstance();
   }
 
+  public void glClearColor(float r, float g, float b, float a) {
+    system.nodeClearColor(r, g, b, a);
+  }
+
 
 
 //	public void glUniform2f(int location, float value0, float value1) {

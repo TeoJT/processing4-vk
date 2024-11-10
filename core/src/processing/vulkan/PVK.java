@@ -348,6 +348,23 @@ public class PVK extends PGL implements PJOGLInterface {
 
   {
     prepareStrings();
+    if (glColorTex == null) {
+      glColorFbo = allocateIntBuffer(1);
+      glColorTex = allocateIntBuffer(2);
+      glDepthStencil = allocateIntBuffer(1);
+      glDepth = allocateIntBuffer(1);
+      glStencil = allocateIntBuffer(1);
+
+      glMultiFbo = allocateIntBuffer(1);
+      glMultiColor = allocateIntBuffer(1);
+      glMultiDepthStencil = allocateIntBuffer(1);
+      glMultiDepth = allocateIntBuffer(1);
+      glMultiStencil = allocateIntBuffer(1);
+    }
+
+    byteBuffer = allocateByteBuffer(1);
+    intBuffer = allocateIntBuffer(1);
+    viewBuffer = allocateIntBuffer(4);
   }
 
   public void setGL2VK(GL2VK gl2vk) {
@@ -493,7 +510,7 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public void getBooleanv(int value, IntBuffer data) {
     // TODO Auto-generated method stub
-    System.out.println("getIntegerv UNKNOWN "+value);
+    System.out.println("getBooleanv UNKNOWN "+value);
   }
 
   @Override
@@ -509,6 +526,9 @@ public class PVK extends PGL implements PJOGLInterface {
     }
     else if (value == MAX_SAMPLES) {
       data.put(0, 16);
+    }
+    else if (value == MAX_TEXTURE_IMAGE_UNITS) {
+      data.put(0, 24);
     }
     else {
       System.out.println("getIntegerv UNKNOWN "+value);
@@ -1457,7 +1477,7 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public void clearColor(float r, float g, float b, float a) {
     // TODO Auto-generated method stub
-
+    gl2vk.glClearColor(r, g, b, a);
   }
 
   @Override

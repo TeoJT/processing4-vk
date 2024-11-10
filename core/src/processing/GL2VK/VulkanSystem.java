@@ -47,6 +47,8 @@ public class VulkanSystem {
 
     public long renderPass;
 
+    public long colorAttachmentVal;
+
     private List<VkCommandBuffer> commandBuffers;
     public List<Long> swapChainFramebuffers;
 
@@ -147,7 +149,8 @@ public class VulkanSystem {
             colorAttachment.format(vkbase.swapChainImageFormat);
             colorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
 //            colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
-            colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+            colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+//            colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
             colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
             colorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
             colorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
@@ -246,6 +249,7 @@ public class VulkanSystem {
 
                 swapChainFramebuffers.add(pFramebuffer.get(0));
             }
+            colorAttachmentVal = attachments.get(0);
         }
     }
 
@@ -614,6 +618,10 @@ public class VulkanSystem {
 
     public void nodeBufferData(GraphicsBuffer graphicsBuffer, int size, IntBuffer buffer, int instance) {
       threadNodes[selectedNode].bufferData(graphicsBuffer, size, buffer, instance);
+    }
+
+    public void nodeClearColor(float r, float g, float b, float a) {
+      threadNodes[selectedNode].clearColor(r, g, b, a);
     }
 
 
