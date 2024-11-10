@@ -37,6 +37,7 @@ import static org.lwjgl.vulkan.VK10.VK_BLEND_OP_ADD;
 import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_ONE;
 import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 import static org.lwjgl.vulkan.VK10.VK_BLEND_OP_ADD;
+import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_NONE;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
@@ -251,8 +252,9 @@ public class GL2VKPipeline {
             rasterizer.rasterizerDiscardEnable(false);
             rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
             rasterizer.lineWidth(1.0f);
-            rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
-            rasterizer.frontFace(VK_FRONT_FACE_CLOCKWISE);
+//            rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
+            rasterizer.cullMode(VK_CULL_MODE_NONE);
+//            rasterizer.frontFace(VK_FRONT_FACE_CLOCKWISE);
             rasterizer.depthBiasEnable(false);
 
             // ===> MULTISAMPLING <===
