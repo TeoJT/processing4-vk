@@ -590,28 +590,35 @@ public class PVK extends PGL implements PJOGLInterface {
 
     ByteBuffer byteBuffer = null;
     if (outputBuffer instanceof ByteBuffer) {
+      System.out.println("ByteBuffer");
         byteBuffer = (ByteBuffer) outputBuffer;
     } else if (outputBuffer instanceof CharBuffer) {
+      System.out.println("CharBuffer");
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity());
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asCharBuffer().put((CharBuffer) outputBuffer);
     } else if (outputBuffer instanceof ShortBuffer) {
+      System.out.println("ShortBuffer");
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 2);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asShortBuffer().put((ShortBuffer) outputBuffer);
     } else if (outputBuffer instanceof IntBuffer) {
+      System.out.println("IntBuffer");
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 4);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asIntBuffer().put((IntBuffer) outputBuffer);
     } else if (outputBuffer instanceof LongBuffer) {
+      System.out.println("LongBuffer");
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 8);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asLongBuffer().put((LongBuffer) outputBuffer);
     } else if (outputBuffer instanceof FloatBuffer) {
+      System.out.println("FloatBuffer");
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 4);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asFloatBuffer().put((FloatBuffer) outputBuffer);
     } else if (outputBuffer instanceof DoubleBuffer) {
+      System.out.println("DoubleBuffer");
         byteBuffer = ByteBuffer.allocate(outputBuffer.capacity() * 8);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         byteBuffer.asDoubleBuffer().put((DoubleBuffer) outputBuffer);
@@ -929,7 +936,6 @@ public class PVK extends PGL implements PJOGLInterface {
   public void texImage2D(int target, int level, int internalFormat, int width,
                          int height, int border, int format, int type,
                          Buffer data) {
-    // TODO Auto-generated method stub
 
   }
 
@@ -946,6 +952,7 @@ public class PVK extends PGL implements PJOGLInterface {
                             Buffer data) {
     // TODO Auto-generated method stub
 
+    HERE HERE HERE
   }
 
   @Override
@@ -1004,6 +1011,7 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public void genTextures(int n, IntBuffer textures) {
     // TODO Auto-generated method stub
+    textures.put(0, 1);
 
   }
 

@@ -90,12 +90,14 @@ import static org.lwjgl.vulkan.VK10.vkAllocateMemory;
 import static org.lwjgl.vulkan.VK10.vkBindBufferMemory;
 import static org.lwjgl.vulkan.VK10.vkAllocateCommandBuffers;
 import static org.lwjgl.vulkan.VK10.vkResetCommandBuffer;
+import static org.lwjgl.vulkan.VK10.vkCmdCopyBufferToImage;
 import static org.lwjgl.vulkan.VK10.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 import static org.lwjgl.vulkan.VK10.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 import static org.lwjgl.vulkan.VK10.VK_QUEUE_TRANSFER_BIT;
 import static org.lwjgl.vulkan.VK10.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 
 import java.nio.IntBuffer;
@@ -113,6 +115,7 @@ import org.lwjgl.vulkan.VkAllocationCallbacks;
 import org.lwjgl.vulkan.VkApplicationInfo;
 import org.lwjgl.vulkan.VkBufferCopy;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
+import org.lwjgl.vulkan.VkBufferImageCopy;
 import org.lwjgl.vulkan.VkCommandBufferBeginInfo;
 import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
 import org.lwjgl.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
@@ -122,6 +125,7 @@ import org.lwjgl.vulkan.VkDeviceCreateInfo;
 import org.lwjgl.vulkan.VkDeviceQueueCreateInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
 import org.lwjgl.vulkan.VkExtent2D;
+import org.lwjgl.vulkan.VkExtent3D;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkInstanceCreateInfo;
@@ -161,6 +165,9 @@ public class VKSetup {
             VALIDATION_LAYERS = null;
         }
     }
+
+    private static final int OPERATION_BUFFER  = 1;
+    private static final int OPERATION_TEXTURE = 2;
 
 
     public VkInstance instance;
@@ -866,54 +873,9 @@ public class VKSetup {
     }
 
 
-    public void copyBufferTransfer(long srcBuffer, long dstBuffer, long size) {
-//
-        try(MemoryStack stack = stackPush()) {
-
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-            beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-            vkResetCommandBuffer(transferCommandBuffer, 0);
-            // Transfer command buffer implicitly reset
-            vkBeginCommandBuffer(transferCommandBuffer, beginInfo);
-            {
-                VkBufferCopy.Buffer copyRegion = VkBufferCopy.calloc(1, stack);
-                copyRegion.size(size);
-                vkCmdCopyBuffer(transferCommandBuffer, srcBuffer, dstBuffer, copyRegion);
-            }
-            vkEndCommandBuffer(transferCommandBuffer);
-
-            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
-            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-            submitInfo.pCommandBuffers(stack.pointers(transferCommandBuffer));
-
-            if(vkQueueSubmit(transferQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to submit copy command buffer");
-            }
-
-        }
-    }
 
 
-
-    public void copyBufferAndWait(long srcBuffer, long dstBuffer, long size) {
-    	// Too lazy to combine it into one function
-    	if (useTransferQueue) {
-    		copyBufferTransfer(srcBuffer, dstBuffer, size);
-            vkQueueWaitIdle(transferQueue);
-    	}
-    	else {
-    		copyBufferDefault(srcBuffer, dstBuffer, size);
-            vkQueueWaitIdle(graphicsQueue);
-    	}
-
-    }
-
-
-
-
-    private void copyBufferDefault(long srcBuffer, long dstBuffer, long size) {
+    private void copyBufferDefault(long srcBuffer, long dstBuffer, int widthsize, int height, int operation) {
 
         try(MemoryStack stack = stackPush()) {
 
@@ -932,11 +894,7 @@ public class VKSetup {
             beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
             vkBeginCommandBuffer(commandBuffer, beginInfo);
-            {
-                VkBufferCopy.Buffer copyRegion = VkBufferCopy.calloc(1, stack);
-                copyRegion.size(size);
-                vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, copyRegion);
-            }
+            copyCommandOperation(srcBuffer, dstBuffer, widthsize, height, transferCommandBuffer, operation);
             vkEndCommandBuffer(commandBuffer);
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -954,7 +912,91 @@ public class VKSetup {
     }
 
 
-    private int findMemoryType(MemoryStack stack, int typeFilter, int properties) {
+
+    public void copyBufferTransfer(long srcBuffer, long dstBuffer, int widthsize, int height, int operation) {
+//
+        try(MemoryStack stack = stackPush()) {
+
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+            vkResetCommandBuffer(transferCommandBuffer, 0);
+            // Transfer command buffer implicitly reset
+            vkBeginCommandBuffer(transferCommandBuffer, beginInfo);
+            copyCommandOperation(srcBuffer, dstBuffer, widthsize, height, transferCommandBuffer, operation);
+            vkEndCommandBuffer(transferCommandBuffer);
+
+            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.pCommandBuffers(stack.pointers(transferCommandBuffer));
+
+            if(vkQueueSubmit(transferQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to submit copy command buffer");
+            }
+            vkQueueWaitIdle(transferQueue);
+
+        }
+    }
+
+
+    public void copyBufferAndWait(long srcBuffer, long dstBuffer, int size) {
+      // Too lazy to combine it into one function
+      if (useTransferQueue) {
+        copyBufferTransfer(srcBuffer, dstBuffer, size, 0, OPERATION_BUFFER);
+      }
+      else {
+        copyBufferDefault(srcBuffer, dstBuffer, size, 0, OPERATION_BUFFER);
+      }
+      // The 0 here in both these functions is for height for textures.
+      // But obviously, we're buffering buffers, not textures.
+    }
+
+
+    public void copyTextureAndWait(long srcTexture, long dstTexture, int width, int height) {
+      if (useTransferQueue) {
+        copyBufferTransfer(srcTexture, dstTexture, width, height, OPERATION_TEXTURE);
+      }
+      else {
+        copyBufferDefault(srcTexture, dstTexture, width, height, OPERATION_TEXTURE);
+      }
+    }
+
+
+
+    // To be used after starting a singletime command buffer.
+    private void copyCommandOperation(long srcBuffer, long dstBuffer,
+                                      int widthsize, int height,
+                                      VkCommandBuffer cmdBuffer,
+                                      int operation) {
+      try(MemoryStack stack = stackPush()) {
+        switch (operation) {
+        case OPERATION_BUFFER:
+        {
+            VkBufferCopy.Buffer copyRegion = VkBufferCopy.calloc(1, stack);
+            copyRegion.size(widthsize);
+            vkCmdCopyBuffer(cmdBuffer, srcBuffer, dstBuffer, copyRegion);
+        }
+        break;
+        case OPERATION_TEXTURE:
+          VkBufferImageCopy.Buffer region = VkBufferImageCopy.calloc(1, stack);
+          region.bufferOffset(0);
+          region.bufferRowLength(0);   // Tightly packed
+          region.bufferImageHeight(0);  // Tightly packed
+          region.imageSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+          region.imageSubresource().mipLevel(0);
+          region.imageSubresource().baseArrayLayer(0);
+          region.imageSubresource().layerCount(1);
+          region.imageOffset().set(0, 0, 0);
+          region.imageExtent(VkExtent3D.calloc(stack).set(widthsize, height, 1));
+
+          vkCmdCopyBufferToImage(cmdBuffer, srcBuffer, dstBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, region);
+        }
+      }
+    }
+
+
+    public int findMemoryType(MemoryStack stack, int typeFilter, int properties) {
 
         VkPhysicalDeviceMemoryProperties memProperties = VkPhysicalDeviceMemoryProperties.malloc(stack);
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, memProperties);

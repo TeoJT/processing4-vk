@@ -24,7 +24,7 @@ public class ImageTest extends PApplet {
     @Override
     public void settings() {
       try {
-        size(1024, 1024, PV2D);
+        size(1024, 1024, P2D);
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -60,7 +60,7 @@ public class ImageTest extends PApplet {
     @Override
     public void draw() {
       try {
-        background(200);
+        background(20, 15, 60);
         bufferMultithreaded(false);
         image(img, 0, 0);
 

@@ -63,6 +63,7 @@ import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PMatrix3D;
 import processing.core.PSurface;
+import processing.vulkan.PVK;
 
 
 public class PJOGL extends PGL {
@@ -1568,12 +1569,14 @@ public class PJOGL extends PGL {
   public void texImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, Buffer data) {
         report("texImage2D");
     gl.glTexImage2D(target, level, internalFormat, width, height, border, format, type, data);
+
   }
 
   @Override
   public void copyTexImage2D(int target, int level, int internalFormat, int x, int y, int width, int height, int border) {
         report("copyTexImage2D");
     gl.glCopyTexImage2D(target, level, internalFormat, x, y, width, height, border);
+
   }
 
   @Override

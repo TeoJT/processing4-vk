@@ -536,7 +536,7 @@ public class GL2VKPipeline {
 
 
     // Magical method which will be used to update our image.
-    public void writeDescriptorSets(int frame) {
+    public void writeDescriptorSets(int frame, int imgBinding) {
       try(MemoryStack stack = stackPush()) {
 
         // Only need 1 info.
@@ -548,7 +548,7 @@ public class GL2VKPipeline {
 
         VkWriteDescriptorSet.Buffer samplerDescriptorWrite = VkWriteDescriptorSet.calloc(1, stack);
         samplerDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-        samplerDescriptorWrite.dstBinding(1);
+        samplerDescriptorWrite.dstBinding(imgBinding);
         samplerDescriptorWrite.dstArrayElement(0);
         samplerDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         samplerDescriptorWrite.descriptorCount(1);

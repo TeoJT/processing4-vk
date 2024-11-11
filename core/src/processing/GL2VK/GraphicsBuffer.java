@@ -78,23 +78,23 @@ import org.lwjgl.vulkan.VkBufferCopy;
 public class GraphicsBuffer {
 
 
-    private int globalInstance = 0;
-    private final static int MAX_INSTANCES = 128;
+    protected int globalInstance = 0;
+    protected final static int MAX_INSTANCES = 128;
 
     public long[] buffers = new long[MAX_INSTANCES];
-    private volatile long[] bufferMemory = new long[MAX_INSTANCES];
+    protected volatile long[] bufferMemory = new long[MAX_INSTANCES];
     // the bufferMemory list is at risk; if we createBufferAuto while a bufferData process is happening,
     // this could cause bad things.
     // So let's have a buncha booleans to specify if it's safe to use
-    private AtomicBoolean[] safeToUpdateBuffer = new AtomicBoolean[MAX_INSTANCES];
+    protected AtomicBoolean[] safeToUpdateBuffer = new AtomicBoolean[MAX_INSTANCES];
 
     public long[] stagingBuffers = new long[MAX_INSTANCES];
-    private long[] stagingBufferMemory = new long[MAX_INSTANCES];
+    protected long[] stagingBufferMemory = new long[MAX_INSTANCES];
 
-    private int[] bufferSize = new int[128];
+    protected int[] bufferSize = new int[128];
 
-    private static VulkanSystem system;
-    private static VKSetup vkbase;
+    protected static VulkanSystem system;
+    protected static VKSetup vkbase;
 
     public GraphicsBuffer(VulkanSystem s) {
     	system = s;
