@@ -6868,18 +6868,15 @@ public class PGraphicsOpenGL extends PGraphics {
 
     pgl.getIntegerv(PGL.MAX_TEXTURE_SIZE, intBuffer);
     maxTextureSize = intBuffer.get(0);
-    System.out.println("MAX_TEXTURE_SIZE "+maxTextureSize);
 
     // work around runtime exceptions in Broadcom's VC IV driver
     if (false == OPENGL_RENDERER.equals("VideoCore IV HW")) {
       pgl.getIntegerv(PGL.MAX_SAMPLES, intBuffer);
       maxSamples = intBuffer.get(0);
-      System.out.println("MAX_SAMPLES "+maxSamples);
     }
 
     if (anisoSamplingSupported) {
       pgl.getFloatv(PGL.MAX_TEXTURE_MAX_ANISOTROPY, floatBuffer);
-      System.out.println("MAX_TEXTURE_MAX_ANISOTROPY "+floatBuffer.get(0));
       maxAnisoAmount = floatBuffer.get(0);
     }
 

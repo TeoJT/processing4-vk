@@ -25,12 +25,18 @@ import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STAT
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
+import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 import static org.lwjgl.vulkan.VK10.vkCreateGraphicsPipelines;
 import static org.lwjgl.vulkan.VK10.vkCreatePipelineLayout;
 import static org.lwjgl.vulkan.VK10.vkCreateShaderModule;
 import static org.lwjgl.vulkan.VK10.vkDestroyPipeline;
 import static org.lwjgl.vulkan.VK10.vkDestroyPipelineLayout;
 import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
+import static org.lwjgl.vulkan.VK10.vkCreateDescriptorSetLayout;
+import static org.lwjgl.vulkan.VK10.vkDestroyDescriptorSetLayout;
+import static org.lwjgl.vulkan.VK10.vkCreateDescriptorPool;
+import static org.lwjgl.vulkan.VK10.vkAllocateDescriptorSets;
+import static org.lwjgl.vulkan.VK10.vkUpdateDescriptorSets;
 import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_SRC_ALPHA;
 import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 import static org.lwjgl.vulkan.VK10.VK_BLEND_OP_ADD;
@@ -38,14 +44,27 @@ import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_ONE;
 import static org.lwjgl.vulkan.VK10.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 import static org.lwjgl.vulkan.VK10.VK_BLEND_OP_ADD;
 import static org.lwjgl.vulkan.VK10.VK_CULL_MODE_NONE;
+import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkDescriptorImageInfo;
+import org.lwjgl.vulkan.VkDescriptorPoolCreateInfo;
+import org.lwjgl.vulkan.VkDescriptorPoolSize;
+import org.lwjgl.vulkan.VkDescriptorSetAllocateInfo;
+import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding;
+import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo;
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
 import org.lwjgl.vulkan.VkOffset2D;
@@ -64,6 +83,7 @@ import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
 import org.lwjgl.vulkan.VkVertexInputAttributeDescription;
 import org.lwjgl.vulkan.VkVertexInputBindingDescription;
 import org.lwjgl.vulkan.VkViewport;
+import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 import processing.GL2VK.ShaderSPIRVUtils.SPIRV;
 
@@ -119,12 +139,17 @@ public class GL2VKPipeline {
 	public SPIRV fragShaderSPIRV = null;
 
 	// Public for use with push constants.
-    public long pipelineLayout = -1;
-    public long graphicsPipeline = -1;
+  public long pipelineLayout = -1;
+  public long graphicsPipeline = -1;
 
-    // We assign the offsets when we add the uniforms to the pipeline,
-    // NOT during source code parsing (check notes in the ShaderAttribInfo.parseUniforms() method)
-    private int currUniformOffset = 0;
+  // For the descriptor sets
+  private long descriptorSetLayout = -1;
+  private long descriptorPool = -1;
+
+
+  // We assign the offsets when we add the uniforms to the pipeline,
+  // NOT during source code parsing (check notes in the ShaderAttribInfo.parseUniforms() method)
+  private int currUniformOffset = 0;
 
 	public ShaderAttribInfo attribInfo = null;
 
@@ -133,6 +158,7 @@ public class GL2VKPipeline {
 	private int[] GLLocationToVKLocation = new int[1024];
 	private HashMap<String, Integer> name2UniformLocation = new HashMap<>();
 	public ArrayList<GLUniform> uniforms = new ArrayList<>();
+	private ArrayList<Integer> samplerBindings = new ArrayList<>();
 
 	private int boundBinding = 0;
 	private int totalVertexAttribsBindings = 0;
@@ -184,9 +210,12 @@ public class GL2VKPipeline {
         		throw new RuntimeException("Shaders must be compiled before calling createGraphicsPipeline()");
         	}
 
-        	// Completely unnecessary code
-    		long vertShaderModule = createShaderModule(vertShaderSPIRV.bytecode());
-    		long fragShaderModule = createShaderModule(fragShaderSPIRV.bytecode());
+        	// Do the descriptorset stuff
+        	createDescriptors();
+
+          	// Completely unnecessary code
+      		long vertShaderModule = createShaderModule(vertShaderSPIRV.bytecode());
+      		long fragShaderModule = createShaderModule(fragShaderSPIRV.bytecode());
 
 
 //            long vertShaderModule = createShaderModule(vertShaderSPIRV.bytecode());
@@ -292,20 +321,24 @@ public class GL2VKPipeline {
             // PUSH CONSTANTS
             int vertexSize = 0;
             int fragmentSize = 0;
+            int totalSize = 0;
 
             // Need these just in case the offset is set to something stupidly high
             int maxOffsettedSizeVertex = 0;
             int maxOffsettedSizeFragment = 0;
+            int maxOffsettedSizeTotal = 0;
             // Now we must compile our uniforms list into this pushConstants thing
             // All we really need to do is set the size.
             for (GLUniform uni : uniforms) {
             	if (uni.vertexFragment == GLUniform.VERTEX) {
             		vertexSize += uni.size;
+            		totalSize += uni.size;
             		if (uni.offset+uni.size > maxOffsettedSizeVertex)
             			maxOffsettedSizeVertex = uni.offset+uni.size;
             	}
             	if (uni.vertexFragment == GLUniform.FRAGMENT) {
             		fragmentSize += uni.size;
+                totalSize += uni.size;
             		if (uni.offset+uni.size > maxOffsettedSizeFragment)
             			maxOffsettedSizeFragment = uni.offset+uni.size;
             	}
@@ -313,18 +346,18 @@ public class GL2VKPipeline {
 
             if (maxOffsettedSizeVertex > vertexSize) vertexSize = maxOffsettedSizeVertex;
             if (maxOffsettedSizeFragment > fragmentSize) fragmentSize = maxOffsettedSizeFragment;
+            if (maxOffsettedSizeFragment > totalSize) totalSize = maxOffsettedSizeFragment;
 
 
 //            vertexSize = Util.roundToMultiple8(vertexSize);
-//            System.out.println("VERTEX PUSHCONSTANT SIZE "+vertexSize);
 
 
-            if (vertexSize+fragmentSize > system.getPushConstantsSizeLimit()) {
-            	int size = system.getPushConstantsSizeLimit();
+            int limit = system.getPushConstantsSizeLimit();
+            if (totalSize > limit) {
             	Util.emergencyExit(
-            			"Uniform variables totals up to a size greater than the push constant limit of "+size+" bytes",
+            			"Uniform variables totals up to "+totalSize+" bytes, greater than the push constant limit of "+limit+" bytes",
             			"on this gpu.",
-            			"Unfortunately, uniform sizes greater than "+size+" bytes is not supported yet.",
+            			"Unfortunately, uniform sizes greater than "+limit+" bytes is not supported yet.",
             			"The only solution for now is to remove some of the uniforms in your shader",
             			"(both vertex and fragment) to reduce uniform size, I'm sorry :("
     			);
@@ -352,24 +385,12 @@ public class GL2VKPipeline {
 	            pushConstants.get(1).stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
             }
 
-
-            // TODO: Remove
-//            for (int i = 0; i < uniforms.size(); i++) {
-//            	GLUniform uni = uniforms.get(i);
-//                pushConstants.get(i).offset(uni.offset);
-//                pushConstants.get(i).size(uni.size);
-//                pushConstants.get(i).stageFlags(uni.getVkType());
-//
-//                System.out.println("Offset: "+uni.offset);
-//                System.out.println("Size: "+uni.size);
-//                System.out.println("Type: "+uni.getVkType());
-//            }
-
-
-
             // Now pipeline layout info (only 1)
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
+            if (samplerBindings.size() > 0) {
+              pipelineLayoutInfo.pSetLayouts(stack.longs(descriptorSetLayout));
+            }
 
             if (numBlocks > 0) {
             	pipelineLayoutInfo.pPushConstantRanges(pushConstants);
@@ -425,6 +446,132 @@ public class GL2VKPipeline {
             initiated = true;
         }
     }
+
+
+    // Hoohoohooo let's have some fun with descriptors.
+    // TODO: at some point, normal descriptors and not just samplers.
+    private void createDescriptors() {
+        try(MemoryStack stack = stackPush()) {
+
+            int index = 0;
+            int layoutBindingsSize = samplerBindings.size();
+            VkDescriptorSetLayoutBinding.Buffer layoutBindings = VkDescriptorSetLayoutBinding.calloc(layoutBindingsSize, stack);
+            VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.calloc(layoutBindingsSize, stack);
+
+
+            // First, the samplers.
+            for (Integer binding : samplerBindings) {
+                layoutBindings.get(index).binding(binding);
+                layoutBindings.get(index).descriptorCount(1);
+                layoutBindings.get(index).descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                layoutBindings.get(index).pImmutableSamplers(null);
+                layoutBindings.get(index).stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
+
+                poolSize.get(index).type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                poolSize.get(index).descriptorCount(vkbase.swapChainImages.size());
+
+            }
+
+
+            // Actually, there is no next, it's just samplers for now.
+
+            // Now let's create our thing !
+
+            // Create descriptor layout
+            VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack);
+            layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
+            // Set to our layout bindings from above.
+            layoutInfo.pBindings(layoutBindings);
+
+            LongBuffer pDescriptorSetLayout = stack.mallocLong(1);
+            if(vkCreateDescriptorSetLayout(system.device, layoutInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create descriptor set layout");
+            }
+            descriptorSetLayout = pDescriptorSetLayout.get(0);
+
+
+
+            // Create descriptor pool
+            // Based on size of swapchain and poolsize = the thing we did earlier.
+            VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
+            poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
+            poolInfo.pPoolSizes(poolSize);
+            poolInfo.maxSets(vkbase.swapChainImages.size());
+            LongBuffer pDescriptorPool = stack.mallocLong(1);
+
+            if(vkCreateDescriptorPool(system.device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create descriptor pool");
+            }
+            descriptorPool = pDescriptorPool.get(0);
+
+
+
+            // Create descriptor sets
+            LongBuffer layouts = stack.mallocLong(vkbase.swapChainImages.size());
+            for(int i = 0;i < layouts.capacity();i++) {
+                layouts.put(i, descriptorSetLayout);
+            }
+
+            VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.calloc(stack);
+            allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
+            allocInfo.descriptorPool(descriptorPool);
+            allocInfo.pSetLayouts(layouts);
+
+            LongBuffer pDescriptorSets = stack.mallocLong(vkbase.swapChainImages.size());
+
+            if(vkAllocateDescriptorSets(vkbase.device, allocInfo, pDescriptorSets) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to allocate descriptor sets");
+            }
+
+            descriptorsets = new long[pDescriptorSets.capacity()];
+            for (int i = 0; i < pDescriptorSets.capacity(); i++) {
+              descriptorsets[i] = pDescriptorSets.get(i);
+            }
+
+            // Done! For now.
+        }
+    }
+
+    long[] descriptorsets = null;
+
+
+    // Magical method which will be used to update our image.
+    public void writeDescriptorSets(int frame) {
+      try(MemoryStack stack = stackPush()) {
+
+        // Only need 1 info.
+        // We don't need multiple because we don't have an array of images.
+        VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.calloc(1, stack);
+        imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+//        imageInfo.imageView(textureImageView);
+//        imageInfo.sampler(textureSampler);
+
+        VkWriteDescriptorSet.Buffer samplerDescriptorWrite = VkWriteDescriptorSet.calloc(1, stack);
+        samplerDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+        samplerDescriptorWrite.dstBinding(1);
+        samplerDescriptorWrite.dstArrayElement(0);
+        samplerDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        samplerDescriptorWrite.descriptorCount(1);
+        samplerDescriptorWrite.pImageInfo(imageInfo);
+
+
+//        for(int i = 0;i < descriptorsets.length;i++) {
+//
+//            long descriptorSet = descriptorsets[i];
+//
+//            samplerDescriptorWrite.dstSet(descriptorSet);
+//
+//            vkUpdateDescriptorSets(system.device, samplerDescriptorWrite, null);
+//        }
+
+        long descriptorSet = descriptorsets[frame];
+
+        samplerDescriptorWrite.dstSet(descriptorSet);
+
+        vkUpdateDescriptorSets(system.device, samplerDescriptorWrite, null);
+      }
+    }
+
 
     public VkVertexInputBindingDescription.Buffer getBindingDescriptions() {
 		VkVertexInputBindingDescription.Buffer bindingDescriptions =
@@ -562,7 +709,9 @@ public class GL2VKPipeline {
     }
 
     public void addSamplers(ArrayList<Integer> bindings) {
-
+        for (Integer binding : bindings) {
+            samplerBindings.add(binding);
+        }
     }
 
     // Remember we start from 1, not 0.
@@ -589,5 +738,6 @@ public class GL2VKPipeline {
     public void clean() {
         vkDestroyPipeline(system.device, graphicsPipeline, null);
         vkDestroyPipelineLayout(system.device, pipelineLayout, null);
+        vkDestroyDescriptorSetLayout(system.device, descriptorSetLayout, null);
     }
 }

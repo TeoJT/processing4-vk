@@ -723,6 +723,7 @@ public class GL2VK {
 
 
 	public void glAttachShader(int program, int shader) {
+	  // Some error checking.
 		GLShader sh = shaders[shader];
 		if (sh == null) {
 			warn("glGetShaderiv: shader "+shader+" doesn't exist.");
@@ -736,6 +737,11 @@ public class GL2VK {
 			warn("glAttachShader: program "+program+" doesn't exist.");
 			return;
 		}
+    if (programs[program].initiated) {
+      warn("glAttachShader: program "+program+" is already up and running! You can't change programs once they're created.");
+      return;
+    }
+
 		if (sh.type == GL_VERTEX_SHADER) {
 			programs[program].vertShaderSPIRV = shaders[shader].spirv;
 			// Of course we'll need the attrib info to our pipeline.

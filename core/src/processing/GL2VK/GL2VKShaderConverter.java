@@ -59,6 +59,7 @@ public class GL2VKShaderConverter {
 	// Also, remember to ignore comments, and switch on ignoremode if we're in a comment block /* */
 	public String convert(String source, int type) throws RuntimeException {
 
+
 		// C1: remove comments
 		source = removeComments(source);
 
@@ -75,13 +76,16 @@ public class GL2VKShaderConverter {
 		// C5: convert uniforms (put into block, replace instances, add offset to fragment)
 		source = convertUniforms(source, type);
 
-		// C6: convert gl_FragColor to gl2vk_FragColor and add out variable.
+		// C6: replace texture2D to texture.
+		source = textureXDToTexture(source);
+
+		// C7: convert gl_FragColor to gl2vk_FragColor and add out variable.
 		if (type == FRAGMENT) source = replaceFragOut(source);
 
-		// C7: append "gl_Position.y *= -1.0;" at the end of the main body
+		// C8: append "gl_Position.y *= -1.0;" at the end of the main body
     if (type == VERTEX) source = invertY(source);
 
-		// C8: Finally, append the version
+		// C9: Finally, append the version
 		source = appendVersion(source);
 
 		// Print converted source (debug)
@@ -138,8 +142,8 @@ public class GL2VKShaderConverter {
 		line = line.replaceAll("-(?!=)", " - ");
 		line = line.replaceAll("\\*(?!=)", " * ");
 		line = line.replaceAll("\\/(?!=)", " / ");
-		line = line.replace("(", "( ");
-		line = line.replace(")", " )");
+		line = line.replace("(", " ( ");
+		line = line.replace(")", " ) ");
     line = line.replace("{", "{ ");
     line = line.replace("}", " }");
     line = line.replace(";", " ;");
@@ -418,8 +422,6 @@ public class GL2VKShaderConverter {
 
 		HashSet<String> uniformsSet = new HashSet<>();
 		ArrayList<String> uniforms = new ArrayList<>();
-		HashSet<String> descriptorUniformsSet = new HashSet<>();
-		ArrayList<String> descriptorUniforms = new ArrayList<>();
 		for (String line : lines) {
 
 			String reconstructedLine = "";
@@ -435,13 +437,19 @@ public class GL2VKShaderConverter {
 						// Samplers of course use descriptor sets, not push constants.
 						// For that we put it into a different array.
 						if (elements[i+1].equals("sampler1D") || elements[i+1].equals("sampler2D") || elements[i+1].equals("sampler3D")) {
-							// Add element[2 and 3] with semicolon slapped on.
-							descriptorUniforms.add(elements[i+1]+" "+elements[i+2]);
+							// FIX: texture is now a keyword and can't be a variable name.
+						  // Rename the texture keyword. We'll rename the usage of that variable later in the program too.
+						  if (elements[i+2].equals("texture")) {
+						    reconstructedLine = "layout(binding = "+currBinding+") uniform "+elements[i+1]+" texturegl2vk";
+	              // Of course, we should really check to avoid duplicate texturegl2vk variables but its whatever.
+						  }
+						  else {
+	              // rather than add it to lists to pass it to a later state, we
+	              // can simply modify it now since samplers aren't in a block.
+	              // Very easy, just append layout(binding = x)
+	              reconstructedLine += "layout(binding = "+currBinding+") "+line;
+						  }
 
-							// rather than add it to lists to pass it to a later state, we
-							// can simply modify it now since samplers aren't in a block.
-							// Very easy, just append layout(binding = x)
-							reconstructedLine += "layout(binding = "+currBinding+") "+line;
 							currBinding++;
 
 							// No more here.
@@ -534,9 +542,14 @@ public class GL2VKShaderConverter {
 						// Replace with gltovkuniforms.[varname]
 						reconstructedLine += "gltovkuniforms."+elements[i];
 					}
+          // FIX: rename texture uniforms to texturegl2vk
+					else if (elements[i].equals("texture")) {
+					  reconstructedLine += "texturegl2vk";
+					}
 					else {
 						reconstructedLine += elements[i]+" ";
 					}
+
 				}
 				catch (RuntimeException e) {
 					// Just continue with original line
@@ -646,7 +659,7 @@ public class GL2VKShaderConverter {
 
 
 	// IMPORTANT: fragment only
-	public String replaceFragOut(String source) {
+	public String textureXDToTexture(String source) {
 
 		String[] lines = source.split("\n");
 		String reconstructed = "";
@@ -659,10 +672,8 @@ public class GL2VKShaderConverter {
 			String reconstructedLine = "";
 			for (int i = 0; i < elements.length; i++) {
 				// No try/catch block this time because no exceptions should happen there
-
-				// This time just one condition
-				if (elements[i].equals("gl_FragColor")) {
-					reconstructedLine += "gl2vk_FragColor ";
+				if (elements[i].equals("texture1D") || elements[i].equals("texture2D") || elements[i].equals("texture3D")) {
+					reconstructedLine += "texture ";
 				}
 				else {
 					reconstructedLine += elements[i]+" ";
@@ -673,14 +684,46 @@ public class GL2VKShaderConverter {
 			reconstructed += "\n";
 		}
 
-		// Then, we need to add
-		// layout(location = 0) out vec4 gl2vk_FragColor;
-		// Let's just add it at the top
-		if (!reconstructed.contains("layout(location = 0) out vec4 gl2vk_FragColor;")) {
-			reconstructed = "layout(location = 0) out vec4 gl2vk_FragColor;\n"+reconstructed;
-		}
-
 		return reconstructed;
 	}
+
+
+
+	public String replaceFragOut(String source) {
+
+    String[] lines = source.split("\n");
+    String reconstructed = "";
+
+    for (String line : lines) {
+
+      line = spaceOutSymbols(line);
+
+      String[] elements = line.replaceAll("\t", "").trim().split(" ");
+      String reconstructedLine = "";
+      for (int i = 0; i < elements.length; i++) {
+        // No try/catch block this time because no exceptions should happen there
+
+        // This time just one condition
+        if (elements[i].equals("gl_FragColor")) {
+          reconstructedLine += "gl2vk_FragColor ";
+        }
+        else {
+          reconstructedLine += elements[i]+" ";
+        }
+      }
+      reconstructed += reconstructedLine;
+
+      reconstructed += "\n";
+    }
+
+    // Then, we need to add
+    // layout(location = 0) out vec4 gl2vk_FragColor;
+    // Let's just add it at the top
+    if (!reconstructed.contains("layout(location = 0) out vec4 gl2vk_FragColor;")) {
+      reconstructed = "layout(location = 0) out vec4 gl2vk_FragColor;\n"+reconstructed;
+    }
+
+    return reconstructed;
+  }
 
 }

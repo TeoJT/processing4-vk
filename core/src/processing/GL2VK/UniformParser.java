@@ -1,4 +1,4 @@
-package gl2vk4p;
+package processing.GL2VK;
 
 import java.util.ArrayList;
 
