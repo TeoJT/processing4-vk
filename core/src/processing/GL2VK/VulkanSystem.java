@@ -453,9 +453,9 @@ public class VulkanSystem {
     	selectedNode = node;
     }
 
-    public void updateNodePipeline(long pipeline) {
+    public void updateNodePipeline(long pipeline, long pipelineLayout, long descriptorSets) {
     	if (pipeline != threadNodes[selectedNode].currentPipeline) {
-        	threadNodes[selectedNode].bindPipeline(pipeline);
+        	threadNodes[selectedNode].bindPipeline(pipeline, pipelineLayout, descriptorSets);
     	}
     }
 
@@ -528,6 +528,10 @@ public class VulkanSystem {
         }
     }
 
+    public int getFrame() {
+      return currentFrame;
+    }
+
 
 
     public void cleanupSwapChain() {
@@ -550,8 +554,8 @@ public class VulkanSystem {
     	threadNodes[selectedNode].drawArrays(buffers, size, first);
     }
 
-    public void nodeBindPipeline(long pipeline) {
-    	threadNodes[selectedNode].bindPipeline(pipeline);
+    public void nodeBindPipeline(long pipeline, long pipelineLayout, long descriptorSets) {
+      threadNodes[selectedNode].bindPipeline(pipeline, pipelineLayout, descriptorSets);
     }
 
     public void nodeDrawIndexed(int indiciesSize, long indiciesBuffer, ArrayList<Long> vertexBuffers, int offset, int type) {

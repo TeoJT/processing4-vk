@@ -468,7 +468,6 @@ public class GL2VKPipeline {
 
                 poolSize.get(index).type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 poolSize.get(index).descriptorCount(vkbase.swapChainImages.size());
-
             }
 
 
@@ -535,35 +534,26 @@ public class GL2VKPipeline {
 
 
     // Magical method which will be used to update our image.
-    public void writeDescriptorSets(int frame, int imgBinding) {
+    public void updateImage(TextureBuffer img) {
       try(MemoryStack stack = stackPush()) {
 
         // Only need 1 info.
         // We don't need multiple because we don't have an array of images.
         VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.calloc(1, stack);
         imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-//        imageInfo.imageView(textureImageView);
-//        imageInfo.sampler(textureSampler);
+        imageInfo.imageView(img.imageView);
+        imageInfo.sampler(img.sampler);
 
         VkWriteDescriptorSet.Buffer samplerDescriptorWrite = VkWriteDescriptorSet.calloc(1, stack);
         samplerDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-        samplerDescriptorWrite.dstBinding(imgBinding);
+        samplerDescriptorWrite.dstBinding(img.binding);
         samplerDescriptorWrite.dstArrayElement(0);
         samplerDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         samplerDescriptorWrite.descriptorCount(1);
         samplerDescriptorWrite.pImageInfo(imageInfo);
 
 
-//        for(int i = 0;i < descriptorsets.length;i++) {
-//
-//            long descriptorSet = descriptorsets[i];
-//
-//            samplerDescriptorWrite.dstSet(descriptorSet);
-//
-//            vkUpdateDescriptorSets(system.device, samplerDescriptorWrite, null);
-//        }
-
-        long descriptorSet = descriptorsets[frame];
+        long descriptorSet = descriptorsets[system.getFrame()];
 
         samplerDescriptorWrite.dstSet(descriptorSet);
 

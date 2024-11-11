@@ -32,6 +32,7 @@ import static org.lwjgl.vulkan.VK10.vkResetCommandBuffer;
 import static org.lwjgl.vulkan.VK10.vkCmdPushConstants;
 import static org.lwjgl.vulkan.VK10.vkDestroyCommandPool;
 import static org.lwjgl.vulkan.VK10.vkCmdClearAttachments;
+import static org.lwjgl.vulkan.VK10.vkCmdBindDescriptorSets;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -436,14 +437,24 @@ public class ThreadNode {
 //	        			  vkCmdBeginRenderPass(system.currentCommandBuffer, system.renderPassInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 	        			  break;
 
-	        		  case CMD_BIND_PIPELINE:
+	        		  case CMD_BIND_PIPELINE: {
 	        			  threadState.set(STATE_RUNNING);
                   lingerTimer = 0L;
                   lingerTimestampBefore = System.nanoTime();
 
 	        			  println("CMD_BIND_PIPELINE (index "+index+")");
-      	          vkCmdBindPipeline(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, cmdLongArgs[0].get(index));
+
+	        			  long pipeline = cmdLongArgs[0].get(index);
+	        			  long pipelineLayout = cmdLongArgs[1].get(index);
+	        			  long descriptorSet = cmdLongArgs[2].get(index);
+
+                  try(MemoryStack stack = stackPush()) {
+  	        			  vkCmdBindDescriptorSets(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  	        			                          pipelineLayout, 0, stack.longs(descriptorSet), null);
+        	          vkCmdBindPipeline(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+                  }
 	        			  break;
+	        		  }
 
 	        		  case CMD_DRAW_INDEXED: {
 	        			  threadState.set(STATE_RUNNING);
@@ -1115,12 +1126,14 @@ public class ThreadNode {
 //        wakeThread(index);
 //    }
 
-    public void bindPipeline(long pipeline) {
+    public void bindPipeline(long pipeline, long pipelineLayout, long descriptorSet) {
     	if (currentPipeline != pipeline) {
 	        int index = getNextCMDIndex();
     			println("call CMD_BIND_PIPELINE (index "+index+")");
     			currentPipeline = pipeline;
     			setLongArg(0, index, pipeline);
+          setLongArg(1, index, pipelineLayout);
+          setLongArg(2, index, descriptorSet);
 	        cmdID.set(index, CMD_BIND_PIPELINE);
 	        wakeThread(index);
     	}

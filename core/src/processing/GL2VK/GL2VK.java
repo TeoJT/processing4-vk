@@ -519,7 +519,10 @@ public class GL2VK {
 
 		if (!pipelineInitiated()) {
 			programs[boundProgram].createGraphicsPipeline();
-      system.updateNodePipeline(programs[boundProgram].graphicsPipeline);
+      programs[boundProgram].updateImage(testTexBuffer);
+      system.updateNodePipeline(programs[boundProgram].graphicsPipeline,
+                                programs[boundProgram].pipelineLayout,
+                                programs[boundProgram].descriptorsets[system.getFrame()]);
 
 			// Call our pending uniforms
 			for (TempUniformState u : tempUniformStates) {
@@ -528,7 +531,10 @@ public class GL2VK {
 			tempUniformStates.clear();
 		}
 		else {
-		  system.updateNodePipeline(programs[boundProgram].graphicsPipeline);
+      programs[boundProgram].updateImage(testTexBuffer);
+		  system.updateNodePipeline(programs[boundProgram].graphicsPipeline,
+                                programs[boundProgram].pipelineLayout,
+                                programs[boundProgram].descriptorsets[system.getFrame()]);
 		}
 
 		if (changeProgram) {
@@ -983,9 +989,8 @@ public class GL2VK {
                             int width, int height, int format, int type,
                             Buffer data) {
 
-    testTexBuffer.createTextureBuffer(width, height);
-
     if (data instanceof IntBuffer) {
+      testTexBuffer.createTextureBuffer(width, height);
       testTexBuffer.bufferData((IntBuffer)data, width*height*4);
     }
     else {

@@ -18,7 +18,7 @@ import java.io.IOException;
 
 public class ImageTest extends PApplet {
 
-  PShape particle = null;
+    PShape particle = null;
     PImage img;
 
     @Override
@@ -64,6 +64,7 @@ public class ImageTest extends PApplet {
         bufferMultithreaded(false);
         image(img, 0, 0);
 
+        println(frameRate);
       }
       catch (RuntimeException e) {
         e.printStackTrace();

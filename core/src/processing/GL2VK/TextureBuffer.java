@@ -7,6 +7,11 @@ import static org.lwjgl.vulkan.VK10.vkMapMemory;
 import static org.lwjgl.vulkan.VK10.vkUnmapMemory;
 import static org.lwjgl.vulkan.VK10.vkAllocateMemory;
 import static org.lwjgl.vulkan.VK10.vkBindImageMemory;
+import static org.lwjgl.vulkan.VK10.vkDestroyImageView;
+import static org.lwjgl.vulkan.VK10.vkDestroyImage;
+import static org.lwjgl.vulkan.VK10.vkFreeMemory;
+import static org.lwjgl.vulkan.VK10.vkCreateSampler;
+import static org.lwjgl.vulkan.VK10.vkDestroySampler;
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 import static org.lwjgl.vulkan.VK10.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT;
@@ -26,6 +31,12 @@ import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_SAMPLED_BIT;
 import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+import static org.lwjgl.vulkan.VK10.VK_FILTER_LINEAR;
+import static org.lwjgl.vulkan.VK10.VK_SAMPLER_ADDRESS_MODE_REPEAT;
+import static org.lwjgl.vulkan.VK10.VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+import static org.lwjgl.vulkan.VK10.VK_COMPARE_OP_ALWAYS;
+import static org.lwjgl.vulkan.VK10.VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -35,6 +46,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkImageCreateInfo;
 import org.lwjgl.vulkan.VkMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;
+import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
 public class TextureBuffer {
 
@@ -49,10 +61,15 @@ public class TextureBuffer {
   private long stagingBuffer = -1;
   private long stagingBufferMemory = -1;
 
+  public long imageView = -1;
+  public long sampler = -1;
+
   boolean initialized = false;
 
   private int width = 0;
   private int height = 0;
+
+  int binding = 0;
 
 
   public TextureBuffer(VulkanSystem s) {
@@ -146,17 +163,47 @@ public class TextureBuffer {
 
       this.stagingBuffer = pBuffer.get(0);
       this.stagingBufferMemory = pBufferMemory.get(0);
-      System.out.println("STAGING BUFFER CREATION "+stagingBuffer);
     }
     bufferCount++;
     initialized = true;
     this.width = width;
     this.height = height;
+    imageView = vkbase.createImageView(texture, VK_FORMAT_R8G8B8A8_SRGB);
+    createTextureSampler();
+  }
+
+
+  private void createTextureSampler() {
+
+    try(MemoryStack stack = stackPush()) {
+
+        VkSamplerCreateInfo samplerInfo = VkSamplerCreateInfo.calloc(stack);
+        samplerInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
+        samplerInfo.magFilter(VK_FILTER_LINEAR);
+        samplerInfo.minFilter(VK_FILTER_LINEAR);
+        samplerInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+        samplerInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+        samplerInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+        samplerInfo.anisotropyEnable(true);
+        samplerInfo.maxAnisotropy(16.0f);
+        samplerInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
+        samplerInfo.unnormalizedCoordinates(false);
+        samplerInfo.compareEnable(false);
+        samplerInfo.compareOp(VK_COMPARE_OP_ALWAYS);
+        samplerInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
+
+        LongBuffer pTextureSampler = stack.mallocLong(1);
+
+        if(vkCreateSampler(system.device, samplerInfo, null, pTextureSampler) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to create texture sampler");
+        }
+
+        sampler = pTextureSampler.get(0);
+    }
   }
 
 
   public void bufferData(IntBuffer data, int size) {
-    System.out.println("BUFFER DATA");
     if (system == null) return;
 
     IntBuffer datato = mapInt(size, stagingBufferMemory);
@@ -179,8 +226,13 @@ public class TextureBuffer {
                           VK_FORMAT_R8G8B8A8_SRGB,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  }
 
-    System.out.println("SUCCESS");
+  public void cleanup() {
+    vkDestroyImageView(system.device, imageView, null);
+    vkDestroyImage(system.device, texture, null);
+    vkDestroySampler(system.device, sampler, null);
+    vkFreeMemory(system.device, textureMemory, null);
   }
 }
 
