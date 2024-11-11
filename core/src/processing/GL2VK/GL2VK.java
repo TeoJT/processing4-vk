@@ -14,7 +14,7 @@ import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 import static processing.GL2VK.ShaderSPIRVUtils.compileShader;
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 
-
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -52,6 +52,9 @@ public class GL2VK {
   public static final boolean IMMEDIATE_MODE = false;
 
 	public static final int DEBUG_MODE = 42;
+
+  public TextureBuffer testTexBuffer = null;
+
 
 	// Shaders aren't actually anything significant, they're really temporary data structures
 	// to create a vulkan pipeline.
@@ -266,6 +269,8 @@ public class GL2VK {
 	public GL2VK(int width, int height) {
 		system = new VulkanSystem();
 		system.initVulkan(width, height);
+
+		testTexBuffer = new TextureBuffer(system);
 	}
 
 	public GL2VK(int debugNumber) {
@@ -972,6 +977,21 @@ public class GL2VK {
 
   public void glClearColor(float r, float g, float b, float a) {
     system.nodeClearColor(r, g, b, a);
+  }
+
+  public void glTexSubImage2D(int target, int level, int xOffset, int yOffset,
+                            int width, int height, int format, int type,
+                            Buffer data) {
+
+    testTexBuffer.createTextureBuffer(width, height);
+
+    if (data instanceof IntBuffer) {
+      testTexBuffer.bufferData((IntBuffer)data, width*height*4);
+    }
+    else {
+      System.out.println("have fun playing the guessing game");
+    }
+
   }
 
 

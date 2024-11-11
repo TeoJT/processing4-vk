@@ -24,7 +24,7 @@ public class ImageTest extends PApplet {
     @Override
     public void settings() {
       try {
-        size(1024, 1024, P2D);
+        size(1024, 1024, PV2D);
       }
       catch (RuntimeException e) {
         e.printStackTrace();

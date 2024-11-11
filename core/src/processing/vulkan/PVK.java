@@ -25,6 +25,7 @@ import com.jogamp.opengl.glu.GLUtessellator;
 import com.jogamp.opengl.glu.GLUtessellatorCallbackAdapter;
 
 import processing.GL2VK.GL2VK;
+import processing.GL2VK.TextureBuffer;
 import processing.GL2VK.Util;
 import processing.opengl.PGL;
 import processing.opengl.PGraphicsOpenGL;
@@ -329,6 +330,7 @@ public class PVK extends PGL implements PJOGLInterface {
   private HashMap<Integer, String> glEnumToStrings = new HashMap<>();
 
   private GL2VK gl2vk;
+
 
   /** GLU interface **/
   // For backward compatibility idk
@@ -952,7 +954,9 @@ public class PVK extends PGL implements PJOGLInterface {
                             Buffer data) {
     // TODO Auto-generated method stub
 
-    HERE HERE HERE
+    if (width > 16 && height > 16) {
+      gl2vk.glTexSubImage2D(target, level, xOffset, yOffset, width, height, format, type, data);
+    }
   }
 
   @Override

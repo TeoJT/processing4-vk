@@ -31,73 +31,7 @@ import static org.lwjgl.vulkan.KHRSwapchain.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_I
 import static org.lwjgl.vulkan.KHRSwapchain.vkCreateSwapchainKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.vkDestroySwapchainKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
-import static org.lwjgl.vulkan.VK10.VK_API_VERSION_1_0;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_COMPONENT_SWIZZLE_IDENTITY;
-import static org.lwjgl.vulkan.VK10.VK_ERROR_EXTENSION_NOT_PRESENT;
-import static org.lwjgl.vulkan.VK10.VK_FALSE;
-import static org.lwjgl.vulkan.VK10.VK_FORMAT_B8G8R8_UNORM;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_ASPECT_COLOR_BIT;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_VIEW_TYPE_2D;
-import static org.lwjgl.vulkan.VK10.VK_MAKE_VERSION;
-import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
-import static org.lwjgl.vulkan.VK10.VK_QUEUE_GRAPHICS_BIT;
-import static org.lwjgl.vulkan.VK10.VK_SHARING_MODE_CONCURRENT;
-import static org.lwjgl.vulkan.VK10.VK_SHARING_MODE_EXCLUSIVE;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_APPLICATION_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_SUBMIT_INFO;
-import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
-import static org.lwjgl.vulkan.VK10.VK_TRUE;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-import static org.lwjgl.vulkan.VK10.vkBeginCommandBuffer;
-import static org.lwjgl.vulkan.VK10.vkCmdCopyBuffer;
-import static org.lwjgl.vulkan.VK10.vkCreateDevice;
-import static org.lwjgl.vulkan.VK10.vkCreateImageView;
-import static org.lwjgl.vulkan.VK10.vkCreateInstance;
-import static org.lwjgl.vulkan.VK10.vkDestroyCommandPool;
-import static org.lwjgl.vulkan.VK10.vkDestroyFramebuffer;
-import static org.lwjgl.vulkan.VK10.vkDestroyImageView;
-import static org.lwjgl.vulkan.VK10.vkDestroyPipeline;
-import static org.lwjgl.vulkan.VK10.vkDestroyPipelineLayout;
-import static org.lwjgl.vulkan.VK10.vkDestroyRenderPass;
-import static org.lwjgl.vulkan.VK10.vkDeviceWaitIdle;
-import static org.lwjgl.vulkan.VK10.vkEndCommandBuffer;
-import static org.lwjgl.vulkan.VK10.vkEnumerateDeviceExtensionProperties;
-import static org.lwjgl.vulkan.VK10.vkEnumerateInstanceLayerProperties;
-import static org.lwjgl.vulkan.VK10.vkEnumeratePhysicalDevices;
-import static org.lwjgl.vulkan.VK10.vkFreeCommandBuffers;
-import static org.lwjgl.vulkan.VK10.vkGetDeviceQueue;
-import static org.lwjgl.vulkan.VK10.vkGetInstanceProcAddr;
-import static org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceQueueFamilyProperties;
-import static org.lwjgl.vulkan.VK10.vkQueueSubmit;
-import static org.lwjgl.vulkan.VK10.vkQueueWaitIdle;
-import static org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceProperties;
-import static org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceFeatures;
-import static org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceMemoryProperties;
-import static org.lwjgl.vulkan.VK10.vkCreateBuffer;
-import static org.lwjgl.vulkan.VK10.vkCreateCommandPool;
-import static org.lwjgl.vulkan.VK10.vkGetBufferMemoryRequirements;
-import static org.lwjgl.vulkan.VK10.vkAllocateMemory;
-import static org.lwjgl.vulkan.VK10.vkBindBufferMemory;
-import static org.lwjgl.vulkan.VK10.vkAllocateCommandBuffers;
-import static org.lwjgl.vulkan.VK10.vkResetCommandBuffer;
-import static org.lwjgl.vulkan.VK10.vkCmdCopyBufferToImage;
-import static org.lwjgl.vulkan.VK10.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-import static org.lwjgl.vulkan.VK10.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-import static org.lwjgl.vulkan.VK10.VK_QUEUE_TRANSFER_BIT;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+import static org.lwjgl.vulkan.VK10.*;
 
 
 import java.nio.IntBuffer;
@@ -126,6 +60,7 @@ import org.lwjgl.vulkan.VkDeviceQueueCreateInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkExtent3D;
+import org.lwjgl.vulkan.VkImageMemoryBarrier;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkInstanceCreateInfo;
@@ -894,7 +829,7 @@ public class VKSetup {
             beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
             vkBeginCommandBuffer(commandBuffer, beginInfo);
-            copyCommandOperation(srcBuffer, dstBuffer, widthsize, height, transferCommandBuffer, operation);
+            copyCommandOperation(srcBuffer, dstBuffer, widthsize, height, commandBuffer, operation);
             vkEndCommandBuffer(commandBuffer);
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -910,6 +845,115 @@ public class VKSetup {
             vkFreeCommandBuffers(device, commandPool, pCommandBuffer);
         }
     }
+
+    public void transitionImageLayout(long image, int format, int oldLayout, int newLayout) {
+
+      try(MemoryStack stack = stackPush()) {
+
+          VkImageMemoryBarrier.Buffer barrier = VkImageMemoryBarrier.calloc(1, stack);
+          barrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
+          barrier.oldLayout(oldLayout);
+          barrier.newLayout(newLayout);
+          barrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+          barrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+          barrier.image(image);
+          barrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+          barrier.subresourceRange().baseMipLevel(0);
+          barrier.subresourceRange().levelCount(1);
+          barrier.subresourceRange().baseArrayLayer(0);
+          barrier.subresourceRange().layerCount(1);
+
+          int sourceStage;
+          int destinationStage;
+
+          if(oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+
+              barrier.srcAccessMask(0);
+              barrier.dstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
+
+              sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+              destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+          } else if(oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+
+              barrier.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
+              barrier.dstAccessMask(VK_ACCESS_SHADER_READ_BIT);
+
+              sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+              destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+          } else {
+              throw new IllegalArgumentException("Unsupported layout transition");
+          }
+
+
+          if (useTransferQueue) {
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+            vkResetCommandBuffer(transferCommandBuffer, 0);
+            // Transfer command buffer implicitly reset
+            vkBeginCommandBuffer(transferCommandBuffer, beginInfo);
+
+            vkCmdPipelineBarrier(transferCommandBuffer,
+                    sourceStage, destinationStage,
+                    0,
+                    null,
+                    null,
+                    barrier);
+
+            vkEndCommandBuffer(transferCommandBuffer);
+
+            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.pCommandBuffers(stack.pointers(transferCommandBuffer));
+            if(vkQueueSubmit(transferQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to submit copy command buffer");
+            }
+            vkQueueWaitIdle(transferQueue);
+          }
+          else {
+            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+            allocInfo.commandPool(commandPool);
+            allocInfo.commandBufferCount(1);
+
+            PointerBuffer pCommandBuffer = stack.mallocPointer(1);
+            vkAllocateCommandBuffers(device, allocInfo, pCommandBuffer);
+            VkCommandBuffer commandBuffer = new VkCommandBuffer(pCommandBuffer.get(0), device);
+
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+            vkBeginCommandBuffer(commandBuffer, beginInfo);
+
+            vkCmdPipelineBarrier(commandBuffer,
+                    sourceStage, destinationStage,
+                    0,
+                    null,
+                    null,
+                    barrier);
+
+            vkEndCommandBuffer(commandBuffer);
+
+            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.pCommandBuffers(pCommandBuffer);
+
+            if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to submit copy command buffer");
+            }
+
+            vkQueueWaitIdle(graphicsQueue);
+
+            vkFreeCommandBuffers(device, commandPool, pCommandBuffer);
+          }
+
+      }
+  }
 
 
 

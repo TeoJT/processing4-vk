@@ -376,7 +376,6 @@ public class GraphicsBuffer {
       }
     }
 
-    // TODO: Make multithreaded
     public static void unmap(long mem) {
       vkUnmapMemory(system.device, mem);
     }

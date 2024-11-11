@@ -3,6 +3,8 @@ package processing.GL2VK;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.vkCreateImage;
 import static org.lwjgl.vulkan.VK10.vkGetImageMemoryRequirements;
+import static org.lwjgl.vulkan.VK10.vkMapMemory;
+import static org.lwjgl.vulkan.VK10.vkUnmapMemory;
 import static org.lwjgl.vulkan.VK10.vkAllocateMemory;
 import static org.lwjgl.vulkan.VK10.vkBindImageMemory;
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -22,9 +24,13 @@ import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_SRGB;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_SAMPLED_BIT;
 import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkImageCreateInfo;
 import org.lwjgl.vulkan.VkMemoryAllocateInfo;
@@ -32,18 +38,21 @@ import org.lwjgl.vulkan.VkMemoryRequirements;
 
 public class TextureBuffer {
 
-  protected static VulkanSystem system;
-  protected static VKSetup vkbase;
+  private static VulkanSystem system;
+  private static VKSetup vkbase;
 
   private int bufferCount = 0;
 
-  public long texture = -1;
-  protected volatile long textureMemory = -1;
+  private long texture = -1;
+  private volatile long textureMemory = -1;
 
-  public long stagingBuffer = -1;
-  public long stagingBufferMemory = -1;
+  private long stagingBuffer = -1;
+  private long stagingBufferMemory = -1;
 
   boolean initialized = false;
+
+  private int width = 0;
+  private int height = 0;
 
 
   public TextureBuffer(VulkanSystem s) {
@@ -54,6 +63,24 @@ public class TextureBuffer {
   // Debug mode constructor
   public TextureBuffer() {
 
+  }
+
+  public static IntBuffer mapInt(int size, long mem) {
+    try(MemoryStack stack = stackPush()) {
+        // alloc pointer for our data
+        PointerBuffer pointer = stack.mallocPointer(1);
+        vkMapMemory(system.device, mem, 0, size, 0, pointer);
+
+        // Here instead of some mem copy function we can just
+        // copy each and every byte of buffer.
+        IntBuffer datato = pointer.getIntBuffer(0, size/Integer.BYTES);
+
+        return datato;
+    }
+  }
+
+  public static void unmap(long mem) {
+    vkUnmapMemory(system.device, mem);
   }
 
   public void createTextureBuffer(int width, int height) {
@@ -119,13 +146,41 @@ public class TextureBuffer {
 
       this.stagingBuffer = pBuffer.get(0);
       this.stagingBufferMemory = pBufferMemory.get(0);
+      System.out.println("STAGING BUFFER CREATION "+stagingBuffer);
     }
     bufferCount++;
     initialized = true;
+    this.width = width;
+    this.height = height;
   }
 
-  public void bufferData() {
 
+  public void bufferData(IntBuffer data, int size) {
+    System.out.println("BUFFER DATA");
+    if (system == null) return;
+
+    IntBuffer datato = mapInt(size, stagingBufferMemory);
+    datato.rewind();
+    data.rewind();
+    while (datato.hasRemaining()) {
+      datato.put(data.get());
+    }
+    datato.rewind();
+    unmap(stagingBufferMemory);
+
+    vkbase.transitionImageLayout(texture,
+                                 VK_FORMAT_R8G8B8A8_SRGB,
+                                 VK_IMAGE_LAYOUT_UNDEFINED,
+                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    vkbase.copyTextureAndWait(stagingBuffer, texture, width, height);
+
+    vkbase.transitionImageLayout(texture,
+                          VK_FORMAT_R8G8B8A8_SRGB,
+                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    System.out.println("SUCCESS");
   }
 }
 

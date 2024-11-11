@@ -326,7 +326,6 @@ public class GL2VKPipeline {
             // Need these just in case the offset is set to something stupidly high
             int maxOffsettedSizeVertex = 0;
             int maxOffsettedSizeFragment = 0;
-            int maxOffsettedSizeTotal = 0;
             // Now we must compile our uniforms list into this pushConstants thing
             // All we really need to do is set the size.
             for (GLUniform uni : uniforms) {
@@ -345,7 +344,7 @@ public class GL2VKPipeline {
             }
 
             if (maxOffsettedSizeVertex > vertexSize) vertexSize = maxOffsettedSizeVertex;
-            if (maxOffsettedSizeFragment > fragmentSize) fragmentSize = maxOffsettedSizeFragment;
+//            if (maxOffsettedSizeFragment > fragmentSize) fragmentSize = maxOffsettedSizeFragment;
             if (maxOffsettedSizeFragment > totalSize) totalSize = maxOffsettedSizeFragment;
 
 
