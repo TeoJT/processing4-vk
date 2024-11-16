@@ -132,6 +132,113 @@ import processing.GL2VK.ShaderSPIRVUtils.SPIRV;
 
 public class GL2VKPipeline {
 
+  // In order to change textures, we need to bind different descriptorsets;
+  // this class handles the creation of these descriptor sets and binds the particular image to it.
+  private class TextureDescriptor {
+    // For the descriptor sets
+    private long descriptorPool = -1;
+    // Need several, one for each frame.
+    private long[] descriptorSets = null;
+
+
+    public TextureDescriptor(TextureBuffer img) {
+      // Must only be called when the pipeline is initiated
+      if (!initiated) {
+        throw new RuntimeException("TextureDescriptor must be called after pipeline has been initiated");
+      }
+      initDescritpors(samplerBindings.size());
+      updateImage(img);
+    }
+
+    public long get() {
+      return descriptorSets[system.getFrame()];
+    }
+
+    private void initDescritpors(int layoutBindingsSize) {
+      try(MemoryStack stack = stackPush()) {
+        // Create descriptor pool
+        // First, we need poolsize
+        VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.calloc(layoutBindingsSize, stack);
+
+        // First, the samplers.
+        for (int index = 0; index < layoutBindingsSize; index++) {
+            poolSize.get(index).type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            poolSize.get(index).descriptorCount(vkbase.swapChainImages.size());
+            index++;
+        }
+
+        // Actually create the pool
+        VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
+        poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
+        poolInfo.pPoolSizes(poolSize);
+        poolInfo.maxSets(vkbase.swapChainImages.size());
+        LongBuffer pDescriptorPool = stack.mallocLong(1);
+
+        if(vkCreateDescriptorPool(system.device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to create descriptor pool");
+        }
+        descriptorPool = pDescriptorPool.get(0);
+
+        // Ok, time to create the set
+        // Remember there's a separate descriptorset for each frame.
+        // Use the pipeline's layout. Copy for each frame.
+        LongBuffer layouts = stack.mallocLong(vkbase.swapChainImages.size());
+        for(int i = 0;i < layouts.capacity();i++) {
+            layouts.put(i, descriptorSetLayout);
+        }
+
+        // Allocation info
+        VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.calloc(stack);
+        allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
+        allocInfo.descriptorPool(descriptorPool);
+        allocInfo.pSetLayouts(layouts);
+
+
+        LongBuffer pDescriptorSets = stack.mallocLong(vkbase.swapChainImages.size());
+
+        if(vkAllocateDescriptorSets(vkbase.device, allocInfo, pDescriptorSets) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to allocate descriptor sets");
+        }
+
+        // Cool! We got our descriptor sets. Put it into our cool array.
+        descriptorSets = new long[pDescriptorSets.capacity()];
+        for (int i = 0; i < pDescriptorSets.capacity(); i++) {
+          descriptorSets[i] = pDescriptorSets.get(i);
+        }
+
+      }
+    }
+
+    private void updateImage(TextureBuffer imgBuffer) {
+      try(MemoryStack stack = stackPush()) {
+
+        // Only need 1 info.
+        // We don't need multiple because we don't have an array of images.
+        VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.calloc(1, stack);
+        imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        imageInfo.imageView(imgBuffer.imageView);
+        imageInfo.sampler(imgBuffer.sampler);
+
+        VkWriteDescriptorSet.Buffer samplerDescriptorWrite = VkWriteDescriptorSet.calloc(1, stack);
+        samplerDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+        // TODO: Multiple samplers and binding the right texture to the right binding
+        samplerDescriptorWrite.dstBinding(0);
+        samplerDescriptorWrite.dstArrayElement(0);
+        samplerDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        samplerDescriptorWrite.descriptorCount(1);
+        samplerDescriptorWrite.pImageInfo(imageInfo);
+
+        // Remember, multiple descriptor sets.
+        // Update all of them.
+        for (int i = 0; i < descriptorSets.length; i++) {
+          samplerDescriptorWrite.dstSet(descriptorSets[i]);
+
+          vkUpdateDescriptorSets(system.device, samplerDescriptorWrite, null);
+        }
+      }
+    }
+  }
+
 	private VulkanSystem system;
 	private VKSetup vkbase;
 
@@ -142,9 +249,7 @@ public class GL2VKPipeline {
   public long pipelineLayout = -1;
   public long graphicsPipeline = -1;
 
-  // For the descriptor sets
   private long descriptorSetLayout = -1;
-  private long descriptorPool = -1;
 
 
   // We assign the offsets when we add the uniforms to the pipeline,
@@ -159,6 +264,9 @@ public class GL2VKPipeline {
 	private HashMap<String, Integer> name2UniformLocation = new HashMap<>();
 	public ArrayList<GLUniform> uniforms = new ArrayList<>();
 	private ArrayList<Integer> samplerBindings = new ArrayList<>();
+
+	// Textures are based on the OpenGL bindings, so use a standard array
+	private TextureDescriptor[] textures = new TextureDescriptor[4096];
 
 	private int boundBinding = 0;
 	private int totalVertexAttribsBindings = 0;
@@ -211,7 +319,7 @@ public class GL2VKPipeline {
         	}
 
         	// Do the descriptorset stuff
-        	createDescriptors();
+        	createDescriptorLayout();
 
           	// Completely unnecessary code
       		long vertShaderModule = createShaderModule(vertShaderSPIRV.bytecode());
@@ -436,8 +544,8 @@ public class GL2VKPipeline {
             vertShaderSPIRV.free();
             fragShaderSPIRV.free();
 
-    		vkDestroyShaderModule(vkbase.device, vertShaderModule, null);
-    		vkDestroyShaderModule(vkbase.device, fragShaderModule, null);
+        		vkDestroyShaderModule(vkbase.device, vertShaderModule, null);
+        		vkDestroyShaderModule(vkbase.device, fragShaderModule, null);
 
             vertShaderModule = -1;
             fragShaderModule = -1;
@@ -449,14 +557,12 @@ public class GL2VKPipeline {
 
     // Hoohoohooo let's have some fun with descriptors.
     // TODO: at some point, normal descriptors and not just samplers.
-    private void createDescriptors() {
+    private void createDescriptorLayout() {
         try(MemoryStack stack = stackPush()) {
 
             int index = 0;
             int layoutBindingsSize = samplerBindings.size();
             VkDescriptorSetLayoutBinding.Buffer layoutBindings = VkDescriptorSetLayoutBinding.calloc(layoutBindingsSize, stack);
-            VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.calloc(layoutBindingsSize, stack);
-
 
             // First, the samplers.
             for (Integer binding : samplerBindings) {
@@ -465,11 +571,7 @@ public class GL2VKPipeline {
                 layoutBindings.get(index).descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 layoutBindings.get(index).pImmutableSamplers(null);
                 layoutBindings.get(index).stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
-
-                poolSize.get(index).type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                poolSize.get(index).descriptorCount(vkbase.swapChainImages.size());
             }
-
 
             // Actually, there is no next, it's just samplers for now.
 
@@ -487,86 +589,32 @@ public class GL2VKPipeline {
             }
             descriptorSetLayout = pDescriptorSetLayout.get(0);
 
-
-
-            // Create descriptor pool
-            // Based on size of swapchain and poolsize = the thing we did earlier.
-            VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
-            poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
-            poolInfo.pPoolSizes(poolSize);
-            poolInfo.maxSets(vkbase.swapChainImages.size());
-            LongBuffer pDescriptorPool = stack.mallocLong(1);
-
-            if(vkCreateDescriptorPool(system.device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create descriptor pool");
-            }
-            descriptorPool = pDescriptorPool.get(0);
-
-
-
-            // Create descriptor sets
-            LongBuffer layouts = stack.mallocLong(vkbase.swapChainImages.size());
-            for(int i = 0;i < layouts.capacity();i++) {
-                layouts.put(i, descriptorSetLayout);
-            }
-
-            VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.calloc(stack);
-            allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
-            allocInfo.descriptorPool(descriptorPool);
-            allocInfo.pSetLayouts(layouts);
-
-            LongBuffer pDescriptorSets = stack.mallocLong(vkbase.swapChainImages.size());
-
-            if(vkAllocateDescriptorSets(vkbase.device, allocInfo, pDescriptorSets) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate descriptor sets");
-            }
-
-            descriptorsets = new long[pDescriptorSets.capacity()];
-            for (int i = 0; i < pDescriptorSets.capacity(); i++) {
-              descriptorsets[i] = pDescriptorSets.get(i);
-            }
-
             // Done! For now.
         }
     }
 
-    long[] descriptorsets = null;
 
+    // Remember, everytime you create a new pipeline, you should add the currently bound texture.
+    public void addTextureIfAbsent(int binding, TextureBuffer img) {
+      if (!initiated) return;
 
-    // Magical method which will be used to update our image.
-    public void updateImage(TextureBuffer img) {
-      try(MemoryStack stack = stackPush()) {
-
-        // Only need 1 info.
-        // We don't need multiple because we don't have an array of images.
-        VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.calloc(1, stack);
-        imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        imageInfo.imageView(img.imageView);
-        imageInfo.sampler(img.sampler);
-
-        VkWriteDescriptorSet.Buffer samplerDescriptorWrite = VkWriteDescriptorSet.calloc(1, stack);
-        samplerDescriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-        samplerDescriptorWrite.dstBinding(img.binding);
-        samplerDescriptorWrite.dstArrayElement(0);
-        samplerDescriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-        samplerDescriptorWrite.descriptorCount(1);
-        samplerDescriptorWrite.pImageInfo(imageInfo);
-
-
-        long descriptorSet = descriptorsets[system.getFrame()];
-
-        samplerDescriptorWrite.dstSet(descriptorSet);
-
-        vkUpdateDescriptorSets(system.device, samplerDescriptorWrite, null);
+      // Don't add if it already exists
+      if (textures[binding] == null) {
+        textures[binding] = new TextureDescriptor(img);
       }
     }
 
 
-    public VkVertexInputBindingDescription.Buffer getBindingDescriptions() {
-		VkVertexInputBindingDescription.Buffer bindingDescriptions =
-		VkVertexInputBindingDescription.calloc(gl2vkBinding.size());
+    public long getCurrentTextureDescriptor(int texBinding) {
+      return textures[texBinding].get();
+    }
 
-		int i = 0;
+
+    public VkVertexInputBindingDescription.Buffer getBindingDescriptions() {
+  		VkVertexInputBindingDescription.Buffer bindingDescriptions =
+  		VkVertexInputBindingDescription.calloc(gl2vkBinding.size());
+
+  		int i = 0;
     	for (VertexAttribsBinding vab : gl2vkBinding.values()) {
     		vab.updateBindingDescription(bindingDescriptions.get(i++));
     	}

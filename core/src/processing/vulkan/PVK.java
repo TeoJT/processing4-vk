@@ -1,5 +1,8 @@
 package processing.vulkan;
 
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Toolkit;
 import java.nio.Buffer;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -557,6 +560,24 @@ public class PVK extends PGL implements PJOGLInterface {
     return false;
   }
 
+  @SuppressWarnings("deprecation")
+  private FontMetrics getFontMetrics(Font font) {  // ignore
+        report("getFontMetrics");
+    return Toolkit.getDefaultToolkit().getFontMetrics(font);
+  }
+
+
+  @Override
+  protected int getTextWidth(Object font, char[] buffer, int start, int stop) {
+        report("getTextWidth");
+    // maybe should use one of the newer/fancier functions for this?
+    int length = stop - start;
+    FontMetrics metrics = getFontMetrics((Font) font);
+    return metrics.charsWidth(buffer, start, length);
+  }
+
+
+
   @Override
   public int getError() {
     // TODO Auto-generated method stub
@@ -938,6 +959,7 @@ public class PVK extends PGL implements PJOGLInterface {
   public void texImage2D(int target, int level, int internalFormat, int width,
                          int height, int border, int format, int type,
                          Buffer data) {
+    System.out.println("TEXIMAGE2D "+width+" "+height);
 
   }
 
@@ -952,9 +974,12 @@ public class PVK extends PGL implements PJOGLInterface {
   public void texSubImage2D(int target, int level, int xOffset, int yOffset,
                             int width, int height, int format, int type,
                             Buffer data) {
-    // TODO Auto-generated method stub
+    report("texSubImage2D");
 
-    if (width > 16 && height > 16) {
+    // Don't buffer the white 16x16 memory-saver slow-af clear texture.
+    // TODO: automatically detect incoming wave of clear textures, and then
+    // submit vkCmdClearImage command.
+    if (!(width == 16 && height == 16)) {
       gl2vk.glTexSubImage2D(target, level, xOffset, yOffset, width, height, format, type, data);
     }
   }
@@ -1014,9 +1039,8 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void genTextures(int n, IntBuffer textures) {
-    // TODO Auto-generated method stub
-    textures.put(0, 1);
-
+    report("genTextures");
+    gl2vk.glGenTextures(n, textures);
   }
 
   @Override
@@ -1114,6 +1138,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void useProgram(int program) {
+    report("useProgram");
     gl2vk.glUseProgram(program);
   }
 
@@ -1143,7 +1168,7 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   public int getUniformLocation(int program, String name) {
     report("getUniformLocation");
-    return gl2vk.getUniformLocation(program, name);
+    return gl2vk.glGetUniformLocation(program, name);
   }
 
   @Override
@@ -1709,16 +1734,11 @@ public class PVK extends PGL implements PJOGLInterface {
     return null;
   }
 
-  @Override
-  protected int getTextWidth(Object font, char[] buffer, int start, int stop) {
-    // TODO Auto-generated method stub
-    return 0;
-  }
 
   @Override
   protected Object getDerivedFont(Object font, float size) {
-    // TODO Auto-generated method stub
-    return null;
+        report("getDerivedFont");
+    return ((Font) font).deriveFont(size);
   }
 
 //Tessellator
@@ -1860,13 +1880,12 @@ public class PVK extends PGL implements PJOGLInterface {
   @Override
   protected void activeTextureImpl(int texture) {
     // TODO Auto-generated method stub
-
   }
 
   @Override
   protected void bindTextureImpl(int target, int texture) {
-    // TODO Auto-generated method stub
-
+    report("bindTextureImpl");
+    gl2vk.glBindTexture(texture);
   }
 
   @Override

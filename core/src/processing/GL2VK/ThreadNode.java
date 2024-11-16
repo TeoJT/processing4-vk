@@ -86,6 +86,7 @@ public class ThreadNode {
   public final static int CMD_BUFFER_LONG_DATA = 12;
   public final static int CMD_BUFFER_INT_DATA = 13;
   public final static int CMD_CLEAR = 14;
+  public final static int CMD_BIND_DESCRIPTOR = 15;
 
 	// ThreadNode state statuses
 	public final static int STATE_INACTIVE = 0;
@@ -448,13 +449,27 @@ public class ThreadNode {
 	        			  long pipelineLayout = cmdLongArgs[1].get(index);
 	        			  long descriptorSet = cmdLongArgs[2].get(index);
 
-                  try(MemoryStack stack = stackPush()) {
-  	        			  vkCmdBindDescriptorSets(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-  	        			                          pipelineLayout, 0, stack.longs(descriptorSet), null);
-        	          vkCmdBindPipeline(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-                  }
+      	          vkCmdBindPipeline(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	        			  break;
 	        		  }
+
+	        		  case CMD_BIND_DESCRIPTOR: {
+                  threadState.set(STATE_RUNNING);
+                  lingerTimer = 0L;
+                  lingerTimestampBefore = System.nanoTime();
+
+                  println("CMD_BIND_DESCRIPTOR (index "+index+")");
+
+                  long pipelineLayout = cmdLongArgs[0].get(index);
+                  long descriptorSet = cmdLongArgs[1].get(index);
+
+                  try(MemoryStack stack = stackPush()) {
+                    vkCmdBindDescriptorSets(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                            pipelineLayout, 0, stack.longs(descriptorSet), null);
+                  }
+	        		    break;
+	        		  }
+
 
 	        		  case CMD_DRAW_INDEXED: {
 	        			  threadState.set(STATE_RUNNING);
@@ -470,30 +485,12 @@ public class ThreadNode {
 
 	        			  int indiciesSize = cmdIntArgs[0].get(index);
 	        			  int numBuffers = cmdIntArgs[1].get(index);
-	        			  int offsettype = cmdIntArgs[2].get(index);
 	        			  long indicesBuffer = cmdLongArgs[0].get(index);
 
-	        			  int offset = offsettype & 0x3FFFFFFF;
-	        			  int type   = offsettype & 0xC0000000;
+	        			  int type   = cmdIntArgs[2].get(index);
+                  int offset = cmdIntArgs[3].get(index);
 
-	        			  int vkType = 0;
-	        			  switch (type) {
-	        			  // Unsigned byte
-	        			  case 0x40000000:
-	        				  // TODO: Test this to see if vulkan accepts it.
-	        				  vkType = INDEXTYPEUINT8;
-	        				  break;
 
-	        		      // Unsigned int
-	        			  case 0x80000000:
-	        				  vkType = VK_INDEX_TYPE_UINT32;
-	        				  break;
-
-	        			  // Unsigned short
-	        			  case 0xC0000000:
-	        				  vkType = VK_INDEX_TYPE_UINT16;
-	        				  break;
-	        			  }
 
 //                  System.out.println("expected type: "+VK_INDEX_TYPE_UINT16+"  type: "+vkType+"  offset: "+offset+"  indicesSize: "+indiciesSize+"  numBuffers: "+numBuffers+"  indicesBuffer: "+indicesBuffer);
 
@@ -506,15 +503,15 @@ public class ThreadNode {
 	        			      // Longargs 1-x are buffers.
 	        			      for (int i = 0; i < numBuffers; i++) {
 	        			    	  vertexBuffers.put(i, cmdLongArgs[i+1].get(index));
-		        			      offsets.put(i, offset);
+		        			      offsets.put(i, 0);
 	        			      }
 	        			      vertexBuffers.rewind();
 	        			      offsets.rewind();
 
 	        			      vkCmdBindVertexBuffers(cmdbuffer, 0, vertexBuffers, offsets);
 
-	        			      vkCmdBindIndexBuffer(cmdbuffer, indicesBuffer, offset, vkType);
-	        			      vkCmdDrawIndexed(cmdbuffer, indiciesSize, 1, offset, 0, 0);
+	        			      vkCmdBindIndexBuffer(cmdbuffer, indicesBuffer, offset, type);
+	        			      vkCmdDrawIndexed(cmdbuffer, indiciesSize, 1, 0, 0, 0);
 	        			  }
 
 	        			  break;
@@ -904,6 +901,7 @@ public class ThreadNode {
         int index = getNextCMDIndex();
         println("call CMD_DRAW_INDEXED (index "+index+")");
 
+
 		  // Int0: indiciesSize
 		  // Long0: indiciesBuffer
 		  // Int1: numBuffers
@@ -914,25 +912,24 @@ public class ThreadNode {
         setLongArg(0, index, indiciesBuffer);
         setIntArg(1, index, vertexBuffers.size());
 
-        int offsettype = offset & 0x3FFFFFFF | 0xC0000000;
         // Replace last 2 bits with type
-
         switch (type) {
         case GL2VK.GL_UNSIGNED_BYTE:
-        	// 1
-        	offsettype &= 0x40000000;
-        	break;
+          // 1
+          setIntArg(2, index, INDEXTYPEUINT8);
+          break;
         case GL2VK.GL_UNSIGNED_INT:
-        	// 2
-        	offsettype &= 0x80000000;
-        	break;
+          // 2
+          setIntArg(2, index, VK_INDEX_TYPE_UINT32);
+          break;
         case GL2VK.GL_UNSIGNED_SHORT:
-        	// 3
-        	offsettype &= 0xC0000000;
-        	break;
+          // 3
+          setIntArg(2, index, VK_INDEX_TYPE_UINT16);
+          break;
         }
 
-        setIntArg(2, index, offsettype);
+
+        setIntArg(3, index, offset);
         for (int i = 0; i < vertexBuffers.size(); i++) {
         	setLongArg(i+1, index, vertexBuffers.get(i));
         }
@@ -1126,17 +1123,24 @@ public class ThreadNode {
 //        wakeThread(index);
 //    }
 
-    public void bindPipeline(long pipeline, long pipelineLayout, long descriptorSet) {
+    public void bindPipeline(long pipeline) {
     	if (currentPipeline != pipeline) {
 	        int index = getNextCMDIndex();
     			println("call CMD_BIND_PIPELINE (index "+index+")");
     			currentPipeline = pipeline;
     			setLongArg(0, index, pipeline);
-          setLongArg(1, index, pipelineLayout);
-          setLongArg(2, index, descriptorSet);
 	        cmdID.set(index, CMD_BIND_PIPELINE);
 	        wakeThread(index);
     	}
+    }
+
+    public void bindDescriptorSet(long pipelineLayout, long descriptorSet) {
+      int index = getNextCMDIndex();
+      println("call CMD_BIND_PIPELINE (index "+index+")");
+      setLongArg(0, index, pipelineLayout);
+      setLongArg(1, index, descriptorSet);
+      cmdID.set(index, CMD_BIND_DESCRIPTOR);
+      wakeThread(index);
     }
 
 

@@ -53,7 +53,6 @@ public class GL2VK {
 
 	public static final int DEBUG_MODE = 42;
 
-  public TextureBuffer testTexBuffer = null;
 
 
 	// Shaders aren't actually anything significant, they're really temporary data structures
@@ -224,10 +223,12 @@ public class GL2VK {
 
 	private VulkanSystem system = null;
 
-	// TODO: Change these to arrayLists?
 	private GraphicsBuffer[] buffers = new GraphicsBuffer[4096];
 	private GL2VKPipeline[] programs = new GL2VKPipeline[1024];
 	private GLShader[] shaders = new GLShader[1024];
+	// Here contains the buffers, GL2VKPipeline contains the binding descriptors
+	private TextureBuffer[] textures = new TextureBuffer[4096];
+
 	private ArrayList<TempUniformState> tempUniformStates = new ArrayList<>();
 
 	// Vulkan locations != OpenGL attrib locations
@@ -237,23 +238,18 @@ public class GL2VK {
 	// (Program 1 has 1 2 3, Program 2 has 1 2 3 4)
 	// Because of
 	private GLAttribPointer[] glAttribs = new GLAttribPointer[4096];
-
-	// Buffering with secondary command buffers (in high-performance threadnodes) results
-	// in the validation layers giving an error related to not being allowed to call vkCmdCopyData
-	// while the renderpass is enabled (and disabling it temporarily is not really an option).
-	// But, it still seems to perform as normal. Remember validations guarentees that your application
-	// will run without error on all hardware. So... what if we were to ignore the warnings for the
-	// sake of performance? That's what dangerMode does.
-	private boolean dangerMode = false;
 	private boolean warningsEnabled = true;
 
 	private int bufferIndex = 1;
 	private int programIndex = 1;
 	private int shaderIndex = 1;
 	private int attribIndex = 1;
+	private int textureIndex = 1;
 
 	private int boundBuffer = 0;
 	private int boundProgram = 0;
+	private int boundTexture = 0;
+
 	private boolean changeProgram = true;
 	private boolean bufferMultithreaded = true;
 	private int frameCount = 0;
@@ -269,8 +265,6 @@ public class GL2VK {
 	public GL2VK(int width, int height) {
 		system = new VulkanSystem();
 		system.initVulkan(width, height);
-
-		testTexBuffer = new TextureBuffer(system);
 	}
 
 	public GL2VK(int debugNumber) {
@@ -519,10 +513,11 @@ public class GL2VK {
 
 		if (!pipelineInitiated()) {
 			programs[boundProgram].createGraphicsPipeline();
-      programs[boundProgram].updateImage(testTexBuffer);
-      system.updateNodePipeline(programs[boundProgram].graphicsPipeline,
-                                programs[boundProgram].pipelineLayout,
-                                programs[boundProgram].descriptorsets[system.getFrame()]);
+      system.updateNodePipeline(programs[boundProgram].graphicsPipeline);
+
+
+//      programs[boundProgram].pipelineLayout,
+//      programs[boundProgram].getCurrentTextureDescriptor(boundTexture)
 
 			// Call our pending uniforms
 			for (TempUniformState u : tempUniformStates) {
@@ -531,16 +526,18 @@ public class GL2VK {
 			tempUniformStates.clear();
 		}
 		else {
-      programs[boundProgram].updateImage(testTexBuffer);
-		  system.updateNodePipeline(programs[boundProgram].graphicsPipeline,
-                                programs[boundProgram].pipelineLayout,
-                                programs[boundProgram].descriptorsets[system.getFrame()]);
+		  system.updateNodePipeline(programs[boundProgram].graphicsPipeline);
 		}
+		// Remember, this function we're in right now gets called with every draw command.
+		// First we need to make sure our texture is prepared in our pipeline.
+		if (boundTexture != 0) {
+		  programs[boundProgram].addTextureIfAbsent(boundTexture, textures[boundTexture]);
 
-		if (changeProgram) {
-//			system.bindPipelineAllNodes(programs[boundProgram].graphicsPipeline);
-
-			changeProgram = false;
+	    // Next call the bind descriptor command
+	    system.nodeBindDescriptorSet(
+	                             programs[boundProgram].pipelineLayout,
+	                             programs[boundProgram].getCurrentTextureDescriptor(boundTexture)
+	                           );
 		}
 
 		return true;
@@ -817,10 +814,15 @@ public class GL2VK {
 			changeProgram = true;
 		}
 		boundProgram = program;
-//		System.out.println("USEPROGRAM "+program);
 	}
 
-	public int getUniformLocation(int program, String name) {
+	public int glGetUniformLocation(int program, String name) {
+	  // Remember, we renamed "texture" to "texturegl2vk" since "texture" is a keyword
+	  // in vulkan glsl
+	  if (name.equals("texture")) {
+	    name = "texturegl2vk";
+	  }
+
 		if (programs[program] == null) {
 			warn("getUniformLocation: program "+program+" doesn't exist.");
 			return -1;
@@ -832,6 +834,9 @@ public class GL2VK {
 
 	public void glUniform1f(int location, float value0) {
 		GLUniform uniform = programs[boundProgram].getUniform(location);
+
+		// Don't bother for now.
+		if (uniform.isSampler) return;
 
 		if (pipelineInitiated()) {
 		  system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0);
@@ -845,6 +850,9 @@ public class GL2VK {
 	public void glUniform2f(int location, float value0, float value1) {
 		GLUniform uniform = programs[boundProgram].getUniform(location);
 
+    // Don't bother for now.
+    if (uniform.isSampler) return;
+
 		if (pipelineInitiated()) {
 	    system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1);
     }
@@ -856,6 +864,9 @@ public class GL2VK {
 	public void glUniform3f(int location, float value0, float value1, float value2) {
 		GLUniform uniform = programs[boundProgram].getUniform(location);
 
+    // Don't bother for now.
+    if (uniform.isSampler) return;
+
 		if (pipelineInitiated()) {
 	    system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2);
     }
@@ -866,8 +877,10 @@ public class GL2VK {
 
 
 	public void glUniform4f(int location, float value0, float value1, float value2, float value3) {
-
 		GLUniform uniform = programs[boundProgram].getUniform(location);
+
+    // Don't bother for now.
+    if (uniform.isSampler) return;
 
 
     if (pipelineInitiated()) {
@@ -887,6 +900,9 @@ public class GL2VK {
 
 		GLUniform uniform = programs[boundProgram].getUniform(location);
 
+    // Don't bother for now.
+    if (uniform.isSampler) return;
+
 		// Not actually used by processing so ok to comment this out
 //    if (pipelineInitiated()) {
       system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, mat);
@@ -900,6 +916,9 @@ public class GL2VK {
 
     GLUniform uniform = programs[boundProgram].getUniform(location);
 
+    // Don't bother for now.
+    if (uniform.isSampler) return;
+
     if (pipelineInitiated()) {
       system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0);
     }
@@ -909,8 +928,10 @@ public class GL2VK {
   }
 
   public void glUniform2i(int location, int value0, int value1) {
-
     GLUniform uniform = programs[boundProgram].getUniform(location);
+
+    // Don't bother for now.
+    if (uniform.isSampler) return;
 
     if (pipelineInitiated()) {
       system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1);
@@ -921,8 +942,10 @@ public class GL2VK {
   }
 
   public void glUniform3i(int location, int value0, int value1, int value2) {
-
     GLUniform uniform = programs[boundProgram].getUniform(location);
+
+    // Don't bother for now.
+    if (uniform.isSampler) return;
 
     if (pipelineInitiated()) {
       system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2);
@@ -933,8 +956,10 @@ public class GL2VK {
   }
 
   public void glUniform4i(int location, int value0, int value1, int value2, int vulue3) {
-
     GLUniform uniform = programs[boundProgram].getUniform(location);
+
+    // Don't bother for now.
+    if (uniform.isSampler) return;
 
     if (pipelineInitiated()) {
       system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2, vulue3);
@@ -963,6 +988,9 @@ public class GL2VK {
 
     GLUniform uniform = programs[boundProgram].getUniform(location);
 
+    // Don't bother for now.
+    if (uniform.isSampler) return;
+
     if (pipelineInitiated()) {
       system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, mat);
     }
@@ -989,16 +1017,35 @@ public class GL2VK {
                             int width, int height, int format, int type,
                             Buffer data) {
 
+    if (textures[boundTexture] == null) {
+      warn("glTexSubImage2D: texture "+boundTexture+" doesn't exist.");
+    }
+
     if (data instanceof IntBuffer) {
-      testTexBuffer.createTextureBuffer(width, height);
-      testTexBuffer.bufferData((IntBuffer)data, width*height*4);
+      textures[boundTexture].bufferDataAuto((IntBuffer)data, xOffset, yOffset, width, height);
     }
     else {
-      System.out.println("have fun playing the guessing game");
+      System.out.println("have fun playing the types guessing game");
     }
-
   }
 
+  // Processing only uses 1 texture unit.
+  // We can worry about texture unit emulation later.
+  public void glBindTexture(int tex) {
+    boundTexture = tex;
+  }
+
+  public void glGenTextures(int count, IntBuffer out) {
+    for (int i = 0; i < count; i++) {
+      // Create new buffer object
+      textures[textureIndex] = new TextureBuffer(system);
+
+      // Put it into the int array so we get back our
+      // ids to our allocated buffers.
+      out.put(i, textureIndex++);
+    }
+    out.rewind();
+  }
 
 
 //	public void glUniform2f(int location, float value0, float value1) {
@@ -1039,6 +1086,13 @@ public class GL2VK {
 			}
 		}
 
+		// Clean up textures
+		for (int i = 0; i < textures.length; i++) {
+      if (textures[i] != null) {
+        textures[i].clean();
+      }
+    }
+
 		system.cleanupRest();
 	}
 
@@ -1078,10 +1132,6 @@ public class GL2VK {
 
 	public int getNodesCount() {
 		return system.getNodesCount();
-	}
-
-	public void setDangerMode(boolean mode) {
-		dangerMode = mode;
 	}
 
 	public GL2VKPipeline getPipeline(int program) {

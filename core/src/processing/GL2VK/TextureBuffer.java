@@ -25,7 +25,7 @@ import static org.lwjgl.vulkan.VK10.VK_SAMPLE_COUNT_1_BIT;
 import static org.lwjgl.vulkan.VK10.VK_SHARING_MODE_EXCLUSIVE;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
-import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_SRGB;
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_UNORM;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_SAMPLED_BIT;
 import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -69,7 +69,9 @@ public class TextureBuffer {
   private int width = 0;
   private int height = 0;
 
-  int binding = 0;
+  public static int textureCount = 1;
+
+  public int myTextureID = 0;
 
 
   public TextureBuffer(VulkanSystem s) {
@@ -80,6 +82,10 @@ public class TextureBuffer {
   // Debug mode constructor
   public TextureBuffer() {
 
+  }
+
+  {
+    myTextureID = textureCount++;
   }
 
   public static IntBuffer mapInt(int size, long mem) {
@@ -100,6 +106,23 @@ public class TextureBuffer {
     vkUnmapMemory(system.device, mem);
   }
 
+  public void bufferDataAuto(IntBuffer data, int xOffset, int yOffset, int width, int height) {
+    int offset = yOffset*height + xOffset;
+    int size = width*height;
+
+    // Don't bother with fancy optimisations, just destroy and reinitialise
+    if (initialized) {
+      System.out.println("REINITIALISE");
+      clean();
+    }
+
+    createTextureBuffer(width, height);
+
+    bufferData(data, size, offset);
+  }
+
+
+
   public void createTextureBuffer(int width, int height) {
     // TODO: For testing purposes.
     if (initialized) return;
@@ -114,7 +137,7 @@ public class TextureBuffer {
         imageInfo.extent().depth(1);
         imageInfo.mipLevels(1);
         imageInfo.arrayLayers(1);
-        imageInfo.format(VK_FORMAT_R8G8B8A8_SRGB);
+        imageInfo.format(VK_FORMAT_R8G8B8A8_UNORM );
         imageInfo.tiling(VK_IMAGE_TILING_OPTIMAL);
         imageInfo.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
         imageInfo.usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -168,7 +191,7 @@ public class TextureBuffer {
     initialized = true;
     this.width = width;
     this.height = height;
-    imageView = vkbase.createImageView(texture, VK_FORMAT_R8G8B8A8_SRGB);
+    imageView = vkbase.createImageView(texture, VK_FORMAT_R8G8B8A8_UNORM );
     createTextureSampler();
   }
 
@@ -203,36 +226,49 @@ public class TextureBuffer {
   }
 
 
-  public void bufferData(IntBuffer data, int size) {
+  public void bufferData(IntBuffer data, int size, int offset) {
+    int asize = width*height;
+    System.out.println("Size "+asize+"  buffersize: "+size);
+
     if (system == null) return;
 
     IntBuffer datato = mapInt(size, stagingBufferMemory);
     datato.rewind();
     data.rewind();
-    while (datato.hasRemaining()) {
-      datato.put(data.get());
+
+    int i = offset;
+    while (datato.hasRemaining() && i < data.capacity()) {
+      datato.put(data.get(i));
     }
     datato.rewind();
     unmap(stagingBufferMemory);
 
     vkbase.transitionImageLayout(texture,
-                                 VK_FORMAT_R8G8B8A8_SRGB,
+                                 VK_FORMAT_R8G8B8A8_UNORM,
                                  VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     vkbase.copyTextureAndWait(stagingBuffer, texture, width, height);
 
     vkbase.transitionImageLayout(texture,
-                          VK_FORMAT_R8G8B8A8_SRGB,
+                          VK_FORMAT_R8G8B8A8_UNORM ,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
   }
 
-  public void cleanup() {
+  public void clean() {
     vkDestroyImageView(system.device, imageView, null);
     vkDestroyImage(system.device, texture, null);
     vkDestroySampler(system.device, sampler, null);
     vkFreeMemory(system.device, textureMemory, null);
+
+    texture = -1;
+    textureMemory = -1;
+    stagingBuffer = -1;
+    stagingBufferMemory = -1;
+    imageView = -1;
+    sampler = -1;
+    initialized = false;
   }
 }
 

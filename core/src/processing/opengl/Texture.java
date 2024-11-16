@@ -676,6 +676,7 @@ public class Texture implements PConstants {
     // Binding a texture automatically enables texturing for the
     // texture target from that moment onwards. Unbinding the texture
     // won't disable texturing.
+
     if (!pgl.texturingIsEnabled(glTarget)) {
       pgl.enableTexturing(glTarget);
     }
@@ -824,7 +825,7 @@ public class Texture implements PConstants {
       // The buffer cache reached the maximum size, so we just dispose
       // the new buffer by adding it to the list of used buffers.
       if (usedBuffers == null) {
-        usedBuffers = new LinkedList<BufferData>();
+        usedBuffers = new LinkedList<>();
       }
       usedBuffers.add(new BufferData(natRef, byteBuf.asIntBuffer(), w, h));
     }

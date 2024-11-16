@@ -165,13 +165,31 @@ public class UniformParser {
         }
       }
     }
+
+    // One more thing before we return the uniforms;
+    // We are going to do something absolutely unhinged.
+    // We need the samplers as GLUniforms too.
+    // So let's call our other function and parse the whole thing again just to get samplers.
+    // Yeah, not the best approach, but easiest to implement for now.
+    parseSamplers(shaderSource);
+
+    for (String name : tempSamplerNames) {
+      GLUniform u = new GLUniform(name, 0, 0);
+      u.isSampler = true;
+      uniforms.add(u);
+    }
+
     return uniforms;
   }
+
+  // Unhinged code
+  private static ArrayList<String> tempSamplerNames = new ArrayList<>();
 
   // Returns bindings
   public static ArrayList<Integer> parseSamplers(String shaderSource) {
     ArrayList<Integer> list = new ArrayList<>();
     String[] lines = shaderSource.split("\n");
+    tempSamplerNames.clear();
 
     for (String line : lines) {
       line = filterComments(line);
@@ -222,8 +240,9 @@ public class UniformParser {
             for (int i = 0; i < elements.length; i++) {
               if (elements[i].equals("uniform") && (elements[i+1].equals("sampler1D") || elements[i+1].equals("sampler2D") || elements[i+1].equals("sampler3D"))) {
                 // The element after that should be the struct name.
-                name = elements[i+2];
+                name = removeSemicolon(elements[i+2]);
                 list.add(binding);
+                tempSamplerNames.add(name);
 
                 break;
               }

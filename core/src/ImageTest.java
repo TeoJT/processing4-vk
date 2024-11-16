@@ -19,7 +19,9 @@ import java.io.IOException;
 public class ImageTest extends PApplet {
 
     PShape particle = null;
-    PImage img;
+    PImage img1;
+    PImage img2;
+    PImage img3;
 
     @Override
     public void settings() {
@@ -47,7 +49,9 @@ public class ImageTest extends PApplet {
 //        particle.vertex(50f, 50f);
 //        particle.vertex(0f, 50f);
 //        particle.endShape();
-        img = loadImage("C:/mydata/temp/hh.jpg");
+        img1 = loadImage("C:/mydata/temp/hh.jpg");
+        img2 = loadImage("C:/mydata/temp/mm.png");
+        img3 = loadImage("C:/mydata/temp/ee.png");
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -59,12 +63,25 @@ public class ImageTest extends PApplet {
 
     @Override
     public void draw() {
+//      println("-----------------------");
       try {
+
         background(20, 15, 60);
         bufferMultithreaded(false);
-        image(img, 0, 0);
+        selectNode(0);
 
-        println(frameRate);
+//        image(img1, 0, 0, 512, 512);
+//
+//        image(img2, 100, 100, 512, 512);
+//
+//        image(img3, 200, 200, 512, 512);
+
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(60);
+        text("Hello world!", width/2, height/2);
+
+//        println(frameRate);
       }
       catch (RuntimeException e) {
         e.printStackTrace();
