@@ -49,9 +49,9 @@ public class ImageTest extends PApplet {
 //        particle.vertex(50f, 50f);
 //        particle.vertex(0f, 50f);
 //        particle.endShape();
-        img1 = loadImage("C:/mydata/temp/hh.jpg");
-        img2 = loadImage("C:/mydata/temp/mm.png");
-        img3 = loadImage("C:/mydata/temp/ee.png");
+//        img1 = loadImage("C:/mydata/temp/hh.jpg");
+//        img2 = loadImage("C:/mydata/temp/mm.png");
+//        img3 = loadImage("C:/mydata/temp/ee.png");
       }
       catch (RuntimeException e) {
         e.printStackTrace();
@@ -59,7 +59,7 @@ public class ImageTest extends PApplet {
       }
     }
 
-
+    String text = "Hello world. This is an example of some text working. I hope. Yeah, vulkan can be a lil unstable lol";
 
     @Override
     public void draw() {
@@ -79,7 +79,9 @@ public class ImageTest extends PApplet {
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(60);
-        text("Hello world!", width/2, height/2);
+
+        int i = min(frameCount/3, text.length());
+        text(text.substring(0, i), 0, 0, width, height);
 
 //        println(frameRate);
       }

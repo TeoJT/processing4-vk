@@ -55,6 +55,8 @@ public class TextureBuffer {
 
   private int bufferCount = 0;
 
+  private int[][] data;
+
   private long texture = -1;
   private volatile long textureMemory = -1;
 
@@ -72,6 +74,8 @@ public class TextureBuffer {
   public static int textureCount = 1;
 
   public int myTextureID = 0;
+
+
 
 
   public TextureBuffer(VulkanSystem s) {
@@ -106,27 +110,48 @@ public class TextureBuffer {
     vkUnmapMemory(system.device, mem);
   }
 
-  public void bufferDataAuto(IntBuffer data, int xOffset, int yOffset, int width, int height) {
-    int offset = yOffset*height + xOffset;
-    int size = width*height;
+  private void writeData(IntBuffer pdata, int xOffset, int yOffset, int width, int height) {
+    System.out.println(xOffset+" "+yOffset);
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        data[y+yOffset][x+xOffset] = pdata.get(y*width+x);
+      }
+    }
+  }
 
-    // Don't bother with fancy optimisations, just destroy and reinitialise
+  public void bufferData(IntBuffer data, int xOffset, int yOffset, int width, int height) {
+//    int offset = yOffset*height + xOffset;
+//    int newsize = width*height;
+//
+//    int currentSize = this.width*this.height;
+    writeData(data, xOffset, yOffset, width, height);
+    updateBuffer();
+
+//    if (!initialized) {
+//      createTextureBuffer(width, height);
+//      bufferData(data, newsize, offset);
+//    }
+//    else {
+//      // Just do a warning for now.
+//      if (newsize > currentSize) {
+//        System.err.println("bufferDataAuto: newsize ("+newsize+") > currentSize ("+currentSize+"); can't buffer bigger size when buffer has already been created.");
+//        return;
+//      }
+//      bufferData(data, newsize, offset);
+//    }
+  }
+
+  public void createBuffer(int width, int height) {
     if (initialized) {
-      System.out.println("REINITIALISE");
-      clean();
+      return;
     }
 
     createTextureBuffer(width, height);
-
-    bufferData(data, size, offset);
   }
 
 
 
   public void createTextureBuffer(int width, int height) {
-    // TODO: For testing purposes.
-    if (initialized) return;
-
     try(MemoryStack stack = stackPush()) {
         // Info
         VkImageCreateInfo imageInfo = VkImageCreateInfo.calloc(stack);
@@ -191,6 +216,7 @@ public class TextureBuffer {
     initialized = true;
     this.width = width;
     this.height = height;
+    data = new int[height][width];
     imageView = vkbase.createImageView(texture, VK_FORMAT_R8G8B8A8_UNORM );
     createTextureSampler();
   }
@@ -225,28 +251,57 @@ public class TextureBuffer {
     }
   }
 
+  private boolean undefinedLayout = true;
 
-  public void bufferData(IntBuffer data, int size, int offset) {
-    int asize = width*height;
-    System.out.println("Size "+asize+"  buffersize: "+size);
+  // Buffer the whole data
+  public void updateBuffer() {
+    // Null data? Skip buffering. Null means "just create the buffer".
+    if (data == null) return;
+
+    int size = width*height;
 
     if (system == null) return;
 
     IntBuffer datato = mapInt(size, stagingBufferMemory);
     datato.rewind();
-    data.rewind();
 
-    int i = offset;
-    while (datato.hasRemaining() && i < data.capacity()) {
-      datato.put(data.get(i));
+
+    int x = 0;
+    int y = 0;
+
+
+//    try {
+    while (datato.hasRemaining()) {
+//      System.out.println(data[y][x]);
+      datato.put(data[y][x]);
+      x++;
+      if (x >= width) {
+        x = 0;
+        y++;
+      }
     }
+//    }
+//    catch (IndexOutOfBoundsException e) {
+//
+//    }
+
     datato.rewind();
     unmap(stagingBufferMemory);
 
-    vkbase.transitionImageLayout(texture,
-                                 VK_FORMAT_R8G8B8A8_UNORM,
-                                 VK_IMAGE_LAYOUT_UNDEFINED,
-                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    if (undefinedLayout) {
+      vkbase.transitionImageLayout(texture,
+                                   VK_FORMAT_R8G8B8A8_UNORM,
+                                   VK_IMAGE_LAYOUT_UNDEFINED,
+                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+      undefinedLayout = false;
+    }
+    else {
+      vkbase.transitionImageLayout(texture,
+                                   VK_FORMAT_R8G8B8A8_UNORM,
+                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    }
 
     vkbase.copyTextureAndWait(stagingBuffer, texture, width, height);
 

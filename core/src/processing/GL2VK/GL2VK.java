@@ -1013,6 +1013,7 @@ public class GL2VK {
     system.nodeClearColor(r, g, b, a);
   }
 
+  // Modifies data in the TextureBuffer.
   public void glTexSubImage2D(int target, int level, int xOffset, int yOffset,
                             int width, int height, int format, int type,
                             Buffer data) {
@@ -1021,11 +1022,31 @@ public class GL2VK {
       warn("glTexSubImage2D: texture "+boundTexture+" doesn't exist.");
     }
 
-    if (data instanceof IntBuffer) {
-      textures[boundTexture].bufferDataAuto((IntBuffer)data, xOffset, yOffset, width, height);
+    if (data == null) {
+
+    }
+    else if (data instanceof IntBuffer) {
+      textures[boundTexture].bufferData((IntBuffer)data, xOffset, yOffset, width, height);
     }
     else {
-      System.out.println("have fun playing the types guessing game");
+      System.err.println("have fun playing the types guessing game");
+    }
+  }
+
+  // Actually creates the TextureBuffer
+  public void glTexImage2D(int target, int level, int internalFormat, int width,
+                         int height, int border, int format, int type,
+                         Buffer data) {
+
+    textures[boundTexture].createBuffer(width, height);
+
+    if (data == null) {
+    }
+    else if (data instanceof IntBuffer) {
+      textures[boundTexture].bufferData((IntBuffer)data, 0, 0, width, height);
+    }
+    else {
+      System.err.println("have fun playing the types guessing game");
     }
   }
 

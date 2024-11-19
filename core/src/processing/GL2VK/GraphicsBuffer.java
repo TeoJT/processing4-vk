@@ -93,6 +93,11 @@ public class GraphicsBuffer {
 
     protected int[] bufferSize = new int[128];
 
+    // Buffers may be in use by GPU mid-frame.
+    // queue for deletion next frame.
+    private ArrayList<Long> deleteBufferQueue = new ArrayList<>();
+    private ArrayList<Long> deleteMemQueue = new ArrayList<>();
+
     protected static VulkanSystem system;
     protected static VKSetup vkbase;
 
@@ -121,6 +126,9 @@ public class GraphicsBuffer {
     // - Buffer size != new size.
     // NOT THREAD SAFE HERE
     public void createBufferAuto(int size, int vertexIndexUsage, boolean retainedMode) {
+      // Clear scheduled-for-deletion buffers first.
+      destroyScheduledBuffers();
+
       // TO BE SAFE:
       // bufferData is done in separate threads (for immediate mode).
       // Specifically, bufferMemory is at risk here.
@@ -143,7 +151,8 @@ public class GraphicsBuffer {
 
     	if (buffers[globalInstance] == -1 || size > bufferSize[globalInstance]) {
     		// Delete old buffers
-    		destroy(globalInstance);
+//    		destroy(globalInstance);
+    	  scheduleDestroy(globalInstance);
 
     		// Create new one
     		if (retainedMode) {
@@ -154,6 +163,22 @@ public class GraphicsBuffer {
     		}
     	}
     }
+
+    private void destroyScheduledBuffers() {
+      for (long buf : deleteBufferQueue) {
+        if (buf != -1) {
+          vkDestroyBuffer(system.device, buf, null);
+        }
+      }
+      deleteBufferQueue.clear();
+      for (long mem : deleteMemQueue) {
+        if (mem != -1) {
+          vkFreeMemory(system.device, mem, null);
+        }
+      }
+      deleteMemQueue.clear();
+    }
+
 
     public static int bufferCount = 0;
 
@@ -287,6 +312,11 @@ public class GraphicsBuffer {
           vkFreeMemory(system.device, bufferMemory[i], null);
         }
       }
+    }
+
+    public void scheduleDestroy(int instance) {
+      deleteBufferQueue.add(buffers[instance]);
+      deleteMemQueue.add(bufferMemory[instance]);
     }
 
 
