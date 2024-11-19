@@ -38,6 +38,7 @@ import static org.lwjgl.vulkan.VK10.VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 import static org.lwjgl.vulkan.VK10.VK_COMPARE_OP_ALWAYS;
 import static org.lwjgl.vulkan.VK10.VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
+import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
@@ -54,8 +55,6 @@ public class TextureBuffer {
   private static VKSetup vkbase;
 
   private int bufferCount = 0;
-
-  private int[][] data;
 
   private long texture = -1;
   private volatile long textureMemory = -1;
@@ -74,6 +73,8 @@ public class TextureBuffer {
   public static int textureCount = 1;
 
   public int myTextureID = 0;
+
+  IntBuffer testt;
 
 
 
@@ -110,35 +111,15 @@ public class TextureBuffer {
     vkUnmapMemory(system.device, mem);
   }
 
-  private void writeData(IntBuffer pdata, int xOffset, int yOffset, int width, int height) {
-    System.out.println(xOffset+" "+yOffset);
+  private void writeData(IntBuffer frodata, IntBuffer todata, int xOffset, int yOffset, int width, int height) {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        data[y+yOffset][x+xOffset] = pdata.get(y*width+x);
+        int froii = y*width+x;
+        int toii = (y+yOffset)*this.width + (x+xOffset);
+        todata.put(toii, frodata.get(froii));
+        testt.put(toii, frodata.get(froii));
       }
     }
-  }
-
-  public void bufferData(IntBuffer data, int xOffset, int yOffset, int width, int height) {
-//    int offset = yOffset*height + xOffset;
-//    int newsize = width*height;
-//
-//    int currentSize = this.width*this.height;
-    writeData(data, xOffset, yOffset, width, height);
-    updateBuffer();
-
-//    if (!initialized) {
-//      createTextureBuffer(width, height);
-//      bufferData(data, newsize, offset);
-//    }
-//    else {
-//      // Just do a warning for now.
-//      if (newsize > currentSize) {
-//        System.err.println("bufferDataAuto: newsize ("+newsize+") > currentSize ("+currentSize+"); can't buffer bigger size when buffer has already been created.");
-//        return;
-//      }
-//      bufferData(data, newsize, offset);
-//    }
   }
 
   public void createBuffer(int width, int height) {
@@ -216,7 +197,6 @@ public class TextureBuffer {
     initialized = true;
     this.width = width;
     this.height = height;
-    data = new int[height][width];
     imageView = vkbase.createImageView(texture, VK_FORMAT_R8G8B8A8_UNORM );
     createTextureSampler();
   }
@@ -253,37 +233,25 @@ public class TextureBuffer {
 
   private boolean undefinedLayout = true;
 
+  int sajdkfh = 0;
+
   // Buffer the whole data
-  public void updateBuffer() {
+  public void bufferData(IntBuffer data, int xOffset, int yOffset, int width, int height) {
     // Null data? Skip buffering. Null means "just create the buffer".
     if (data == null) return;
 
-    int size = width*height;
+    int size = this.width*this.height;
 
     if (system == null) return;
 
     IntBuffer datato = mapInt(size, stagingBufferMemory);
+    testt = IntBuffer.allocate(size);
     datato.rewind();
+    data.rewind();
 
-
-    int x = 0;
-    int y = 0;
-
-
-//    try {
-    while (datato.hasRemaining()) {
-//      System.out.println(data[y][x]);
-      datato.put(data[y][x]);
-      x++;
-      if (x >= width) {
-        x = 0;
-        y++;
-      }
-    }
-//    }
-//    catch (IndexOutOfBoundsException e) {
-//
-//    }
+    writeData(data, datato, xOffset, yOffset, width, height);
+//    Util.saveArrayAsPNG(datato, this.width, this.height, "C:/mydata/temp/bmps/"+sajdkfh+".png");
+    sajdkfh++;
 
     datato.rewind();
     unmap(stagingBufferMemory);
@@ -300,7 +268,6 @@ public class TextureBuffer {
                                    VK_FORMAT_R8G8B8A8_UNORM,
                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
     }
 
     vkbase.copyTextureAndWait(stagingBuffer, texture, width, height);
