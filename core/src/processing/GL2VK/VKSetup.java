@@ -60,6 +60,8 @@ import org.lwjgl.vulkan.VkDeviceQueueCreateInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkExtent3D;
+import org.lwjgl.vulkan.VkFormatProperties;
+import org.lwjgl.vulkan.VkImageCreateInfo;
 import org.lwjgl.vulkan.VkImageMemoryBarrier;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 import org.lwjgl.vulkan.VkInstance;
@@ -741,12 +743,57 @@ public class VKSetup {
       swapChainImageViews = new ArrayList<>(swapChainImages.size());
 
       for(long swapChainImage : swapChainImages) {
-          swapChainImageViews.add(createImageView(swapChainImage, swapChainImageFormat));
+          swapChainImageViews.add(createImageView(swapChainImage, swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT));
       }
     }
 
 
     public long createImageView(long image, int format) {
+      return createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
+
+    public void createImage(int width, int height, int format, int tiling, int usage, int memProperties,
+                             LongBuffer pTextureImage, LongBuffer pTextureImageMemory) {
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkImageCreateInfo imageInfo = VkImageCreateInfo.calloc(stack);
+            imageInfo.sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
+            imageInfo.imageType(VK_IMAGE_TYPE_2D);
+            imageInfo.extent().width(width);
+            imageInfo.extent().height(height);
+            imageInfo.extent().depth(1);
+            imageInfo.mipLevels(1);
+            imageInfo.arrayLayers(1);
+            imageInfo.format(format);
+            imageInfo.tiling(tiling);
+            imageInfo.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+            imageInfo.usage(usage);
+            imageInfo.samples(VK_SAMPLE_COUNT_1_BIT);
+            imageInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
+
+            if(vkCreateImage(device, imageInfo, null, pTextureImage) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create image");
+            }
+
+            VkMemoryRequirements memRequirements = VkMemoryRequirements.malloc(stack);
+            vkGetImageMemoryRequirements(device, pTextureImage.get(0), memRequirements);
+
+            VkMemoryAllocateInfo allocInfo = VkMemoryAllocateInfo.calloc(stack);
+            allocInfo.sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
+            allocInfo.allocationSize(memRequirements.size());
+            allocInfo.memoryTypeIndex(findMemoryType(stack, memRequirements.memoryTypeBits(), memProperties));
+
+            if(vkAllocateMemory(device, allocInfo, null, pTextureImageMemory) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to allocate image memory");
+            }
+
+            vkBindImageMemory(device, pTextureImage.get(0), pTextureImageMemory.get(0), 0);
+        }
+    }
+
+
+    public long createImageView(long image, int format, int aspectFlags) {
       try(MemoryStack stack = stackPush()) {
 
           VkImageViewCreateInfo viewInfo = VkImageViewCreateInfo.calloc(stack);
@@ -760,7 +807,7 @@ public class VKSetup {
           viewInfo.components().b(VK_COMPONENT_SWIZZLE_IDENTITY);
           viewInfo.components().a(VK_COMPONENT_SWIZZLE_IDENTITY);
 
-          viewInfo.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+          viewInfo.subresourceRange().aspectMask(aspectFlags);
           viewInfo.subresourceRange().baseMipLevel(0);
           viewInfo.subresourceRange().levelCount(1);
           viewInfo.subresourceRange().baseArrayLayer(0);
@@ -872,6 +919,19 @@ public class VKSetup {
           barrier.subresourceRange().baseArrayLayer(0);
           barrier.subresourceRange().layerCount(1);
 
+          if(newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+
+            barrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT);
+
+            if(hasStencilComponent(format)) {
+                barrier.subresourceRange().aspectMask(
+                        barrier.subresourceRange().aspectMask() | VK_IMAGE_ASPECT_STENCIL_BIT);
+            }
+
+          } else {
+              barrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+          }
+
           int sourceStage;
           int destinationStage;
 
@@ -890,6 +950,13 @@ public class VKSetup {
 
               sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
               destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+          } else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+              barrier.srcAccessMask(0);
+              barrier.dstAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+
+              sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+              destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 
           } else if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
               barrier.srcAccessMask(VK_ACCESS_SHADER_READ_BIT);
@@ -1086,6 +1153,42 @@ public class VKSetup {
         }
 
         return glfwExtensions;
+    }
+
+
+    public int findSupportedFormat(IntBuffer formatCandidates, int tiling, int features) {
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkFormatProperties props = VkFormatProperties.calloc(stack);
+
+            for(int i = 0; i < formatCandidates.capacity(); ++i) {
+
+                int format = formatCandidates.get(i);
+
+                vkGetPhysicalDeviceFormatProperties(physicalDevice, format, props);
+
+                if(tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures() & features) == features) {
+                    return format;
+                } else if(tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures() & features) == features) {
+                    return format;
+                }
+
+            }
+        }
+
+        throw new RuntimeException("Failed to find supported format");
+    }
+
+    public int findDepthFormat() {
+        return findSupportedFormat(
+                stackGet().ints(VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT),
+                VK_IMAGE_TILING_OPTIMAL,
+                VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    }
+
+    public boolean hasStencilComponent(int format) {
+        return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
 
 

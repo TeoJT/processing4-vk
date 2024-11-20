@@ -60,8 +60,12 @@ public class VulkanSystem {
 
     public VKSetup vkbase;
 
-	private int selectedNode = 0;
-	private ThreadNode[] threadNodes = new ThreadNode[8];
+  	private int selectedNode = 0;
+  	private ThreadNode[] threadNodes = new ThreadNode[8];
+
+    public long depthImage;
+    public long depthImageMemory;
+    public long depthImageView;
 
 
     // ======= METHODS ======= //
@@ -77,10 +81,11 @@ public class VulkanSystem {
     	vkbase.initBase(width, height);
     	device = vkbase.device;
 
+        createCommandPool();
         createRenderPass();
 //        createGraphicsPipeline();
+        createDepthBuffer();
         createFramebuffers();
-        createCommandPool();
         createCommandBuffers();
         createSyncObjects();
         createThreadNodes();
@@ -145,7 +150,12 @@ public class VulkanSystem {
 
         try(MemoryStack stack = stackPush()) {
 
-            VkAttachmentDescription.Buffer colorAttachment = VkAttachmentDescription.calloc(1, stack);
+            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(2, stack);
+            VkAttachmentReference.Buffer attachmentRefs = VkAttachmentReference.calloc(2, stack);
+
+            // Color attachments
+
+            VkAttachmentDescription colorAttachment = attachments.get(0);
             colorAttachment.format(vkbase.swapChainImageFormat);
             colorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
 //            colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_LOAD);
@@ -157,14 +167,33 @@ public class VulkanSystem {
             colorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
             colorAttachment.finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-            VkAttachmentReference.Buffer colorAttachmentRef = VkAttachmentReference.calloc(1, stack);
+            int y = attachments.get(0).samples();
+            VkAttachmentReference colorAttachmentRef = attachmentRefs.get(0);
             colorAttachmentRef.attachment(0);
             colorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+         // Depth-Stencil attachments
+
+            VkAttachmentDescription depthAttachment = attachments.get(1);
+            depthAttachment.format(vkbase.findDepthFormat());
+            depthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
+            depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+            depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            depthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+            depthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            depthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+            depthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+            VkAttachmentReference depthAttachmentRef = attachmentRefs.get(1);
+            depthAttachmentRef.attachment(1);
+            depthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
             VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
             subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
             subpass.colorAttachmentCount(1);
-            subpass.pColorAttachments(colorAttachmentRef);
+            subpass.pColorAttachments(VkAttachmentReference.calloc(1, stack).put(0, colorAttachmentRef));
+            subpass.pDepthStencilAttachment(depthAttachmentRef);
+
 
             VkSubpassDependency.Buffer dependency = VkSubpassDependency.calloc(1, stack);
             dependency.srcSubpass(VK_SUBPASS_EXTERNAL);
@@ -176,7 +205,7 @@ public class VulkanSystem {
 
             VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.calloc(stack);
             renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
-            renderPassInfo.pAttachments(colorAttachment);
+            renderPassInfo.pAttachments(attachments);
             renderPassInfo.pSubpasses(subpass);
             renderPassInfo.pDependencies(dependency);
 
@@ -226,7 +255,7 @@ public class VulkanSystem {
 
         try(MemoryStack stack = stackPush()) {
 
-            LongBuffer attachments = stack.mallocLong(1);
+            LongBuffer attachments = stack.longs(VK_NULL_HANDLE, depthImageView);
             LongBuffer pFramebuffer = stack.mallocLong(1);
 
             // Lets allocate the create info struct once and just update the pAttachments field each iteration
@@ -251,6 +280,35 @@ public class VulkanSystem {
             }
             colorAttachmentVal = attachments.get(0);
         }
+    }
+
+
+    private void createDepthBuffer() {
+      try(MemoryStack stack = stackPush()) {
+          int depthFormat = vkbase.findDepthFormat();
+
+          LongBuffer pDepthImage = stack.mallocLong(1);
+          LongBuffer pDepthImageMemory = stack.mallocLong(1);
+
+          vkbase.createImage(
+                  vkbase.swapChainExtent.width(), vkbase.swapChainExtent.height(),
+                  depthFormat,
+                  VK_IMAGE_TILING_OPTIMAL,
+                  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                  pDepthImage,
+                  pDepthImageMemory);
+
+          depthImage = pDepthImage.get(0);
+          depthImageMemory = pDepthImageMemory.get(0);
+
+          depthImageView = vkbase.createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+          // Explicitly transitioning the depth image
+          vkbase.transitionImageLayout(depthImage, depthFormat,
+                  VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+      }
     }
 
 
@@ -392,8 +450,9 @@ public class VulkanSystem {
 	        renderArea.extent(vkbase.swapChainExtent);
 	        renderPassInfo.renderArea(renderArea);
 
-	        VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-	        clearValues.color().float32(stack.floats(0.8f, 0.8f, 0.8f, 1.0f));
+	        VkClearValue.Buffer clearValues = VkClearValue.calloc(2, stack);
+	        clearValues.get(0).color().float32(stack.floats(0.8f, 0.8f, 0.8f, 1.0f));
+          clearValues.get(1).depthStencil().set(1.0f, 0);
 	        renderPassInfo.pClearValues(clearValues);
 
             if(vkBeginCommandBuffer(currentCommandBuffer, beginInfo) != VK_SUCCESS) {
@@ -543,6 +602,10 @@ public class VulkanSystem {
         vkbase.swapChainImageViews.forEach(imageView -> vkDestroyImageView(device, imageView, null));
 
         vkDestroySwapchainKHR(device, vkbase.swapChain, null);
+
+        vkDestroyImageView(device, depthImageView, null);
+        vkDestroyImage(device, depthImage, null);
+        vkFreeMemory(device, depthImageMemory, null);
     }
 
 
