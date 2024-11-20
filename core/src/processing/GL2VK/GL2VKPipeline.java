@@ -26,6 +26,7 @@ import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CR
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+import static org.lwjgl.vulkan.VK10.VK_COMPARE_OP_LESS_OR_EQUAL;
 import static org.lwjgl.vulkan.VK10.vkCreateGraphicsPipelines;
 import static org.lwjgl.vulkan.VK10.vkCreatePipelineLayout;
 import static org.lwjgl.vulkan.VK10.vkCreateShaderModule;
@@ -142,6 +143,17 @@ public class GL2VKPipeline {
     private long descriptorPool = -1;
     // Need several, one for each frame.
     private long[] descriptorSets = null;
+
+
+    // Pipeline's state
+    public boolean depthTestEnable = false;
+    public boolean depthWriteEnable = false;
+
+    public long getHash() {
+      return
+          pow(depthTestEnable ? 1 : 0, 2) *
+          pow(depthWriteEnable ? 1 : 0, 3);
+    }
 
 
     public TextureDescriptor(TextureBuffer img) {
@@ -307,7 +319,9 @@ public class GL2VKPipeline {
         }
     }
 
-
+    private long pow(int input, int exp) {
+      return (long)Math.pow(input, exp);
+    }
 
 
 
@@ -408,7 +422,7 @@ public class GL2VKPipeline {
             depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
             depthStencil.depthTestEnable(true);
             depthStencil.depthWriteEnable(true);
-            depthStencil.depthCompareOp(VK_COMPARE_OP_LESS);
+            depthStencil.depthCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
             depthStencil.depthBoundsTestEnable(false);
             depthStencil.minDepthBounds(0.0f); // Optional
             depthStencil.maxDepthBounds(1.0f); // Optional
@@ -650,14 +664,6 @@ public class GL2VKPipeline {
   		return attributeDescriptions;
     }
 
-    public int getHashState() {
-    	int hash = 0;
-    	// TODO: Hash vertex and fragment shader code.
-    	for (VertexAttribsBinding vab : gl2vkBinding.values()) {
-    		hash += vab.getHashState();
-    	}
-    	return hash;
-    }
 
     // Used when glBindBuffer is called, so that we know to create a new binding
     // for our vertexattribs vulkan pipeline. This should be called in glVertexAttribPointer

@@ -1410,6 +1410,7 @@ public class PJOGL extends PGL {
   public void depthRangef(float n, float f) {
         report("depthRangef");
     gl.glDepthRangef(n, f);
+    System.out.println("depthRange "+n+" "+f);
   }
 
   @Override

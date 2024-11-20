@@ -511,14 +511,42 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void enable(int value) {
-    // TODO Auto-generated method stub
+    if (value == DEPTH_TEST) {
 
+    }
+    else if (value == BLEND) {
+
+    }
+    else if (value == MULTISAMPLE) {
+
+    }
+    else if (value == POLYGON_SMOOTH) {
+
+    }
+    else if (value == CULL_FACE) {
+
+    }
+//    gl2vk.glEnable(value);
   }
 
   @Override
   public void disable(int value) {
-    // TODO Auto-generated method stub
+    if (value == DEPTH_TEST) {
 
+    }
+    else if (value == BLEND) {
+
+    }
+    else if (value == MULTISAMPLE) {
+
+    }
+    else if (value == POLYGON_SMOOTH) {
+
+    }
+    else if (value == CULL_FACE) {
+
+    }
+//    gl2vk.glDisable(value);
   }
 
   @Override
@@ -1503,7 +1531,7 @@ public class PVK extends PGL implements PJOGLInterface {
 
   @Override
   public void depthMask(boolean mask) {
-    // TODO Auto-generated method stub
+    System.out.println("depthMask "+mask);
 
   }
 

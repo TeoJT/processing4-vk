@@ -1093,6 +1093,16 @@ public class GL2VK {
     out.rewind();
   }
 
+  public void glEnable(int value) {
+
+  }
+
+
+  public void glDisable(int value) {
+
+
+  }
+
 
 //	public void glUniform2f(int location, float value0, float value1) {
 //		if (programs[boundProgram] == null) {
@@ -1142,7 +1152,6 @@ public class GL2VK {
 		system.cleanupRest();
 	}
 
-	//     Placeholders for testing
 	public boolean shouldClose() {
 		return system.shouldClose();
 	}

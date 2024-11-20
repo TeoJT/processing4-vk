@@ -40,7 +40,7 @@ public class PShapeTest extends PApplet {
         particle.stroke(255);
         particle.strokeWeight(3f);
 //        particle.noStroke();
-        particle.fill(50f, 50f, 255f);
+        particle.fill(50f, 50f, 255f, 50f);
         particle.vertex(0f, 0f);
         particle.vertex(50f, 0f);
         particle.vertex(50f, 50f);
