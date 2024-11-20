@@ -257,17 +257,15 @@ public class TextureBuffer {
     // Null data? Skip buffering. Null means "just create the buffer".
     if (data == null) return;
 
-    int size = width*height;
+    int size = width*height*Integer.BYTES;
 
     if (system == null) return;
 
     IntBuffer datato = mapInt(size, stagingBufferMemory);
     datato.rewind();
 
-
     int x = 0;
     int y = 0;
-
 
 //    try {
     while (datato.hasRemaining()) {

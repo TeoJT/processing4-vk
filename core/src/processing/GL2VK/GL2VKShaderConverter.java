@@ -63,6 +63,7 @@ public class GL2VKShaderConverter {
 		// C1: remove comments
 		source = removeComments(source);
 
+
 		// C2: convert "attrib" to "in" VERTEX ONLY
 		if (type == VERTEX) source = attribute2In(source);
 
@@ -72,6 +73,8 @@ public class GL2VKShaderConverter {
 		// C4: convert "varying" to in FRAGMENT ONLY
 		// May throw exception if a vertex shader hasn't been compiled.
 		if (type == FRAGMENT) source = varying2In(source);
+
+    source = spaceOutSymbols(source);
 
 		// C5: convert uniforms (put into block, replace instances, add offset to fragment)
 		source = convertUniforms(source, type);
@@ -88,6 +91,8 @@ public class GL2VKShaderConverter {
 		// C9: Finally, append the version
 		source = appendVersion(source);
 
+		source = despaceSemicolons(source);
+
 		// Print converted source (debug)
 		if (false) {
   		String[] sourceLines = source.split("\n");
@@ -96,7 +101,6 @@ public class GL2VKShaderConverter {
 
   		}
 		}
-
 
 		return source;
 	}
@@ -122,9 +126,14 @@ public class GL2VKShaderConverter {
 		return line;
 	}
 
+	public static String despaceSemicolons(String line) {
+    line = line.replace(" ;", ";");
+    return line;
+	}
+
 
 	public static String spaceOutSymbols(String line) {
-		line = line.replaceAll("\\+(?!=)", " + ");
+//		line = line.replaceAll("\\+(?!=)", " + ");
 		line = line.replace(",", " , ");
 		line = line.replace("==", " == ");
 		line = line.replace("+=", " += ");
@@ -134,8 +143,10 @@ public class GL2VKShaderConverter {
 		line = line.replace(">=", " >= ");
 		line = line.replace("<=", " <= ");
 		line = line.replace("!=", " != ");
-		line = line.replaceAll(">(?!=)", " > "); // Detect > but not >=
-		line = line.replaceAll("<(?!=)", " < "); // Detect < but not <=
+    line = line.replace("++", " ++ ");
+    line = line.replace("--", " -- ");
+//		line = line.replaceAll(">(?!=)", " > "); // Detect > but not >=
+//		line = line.replaceAll("<(?!=)", " < "); // Detect < but not <=
 		line = line.replaceAll("!(?!=)", " ! "); // Detect > but not >=
 		line = line.replaceAll("&(?!=)", " & ");  // single &
 		line = line.replaceAll("\\|(?!=)", " | ");  // single |
@@ -161,11 +172,31 @@ public class GL2VKShaderConverter {
 						&& arr[i-1] != '/'
 						&& arr[i-1] != '&'
 						&& arr[i-1] != '|'
+            && arr[i-1] != '<'
+            && arr[i-1] != '>'
 
 						&& arr[i] == '='
 						&& arr[i+1] != '=') {
 					nline += " = ";
 				}
+				// ++
+				else if (arr[i-1] != '+'
+
+            && arr[i] == '+'
+            && arr[i+1] != '='
+            && arr[i+1] != '+'
+            ) {
+				  nline += " + ";
+				}
+        // --
+        else if (arr[i-1] != '-'
+
+            && arr[i] == '-'
+            && arr[i+1] != '='
+            && arr[i+1] != '-'
+            ) {
+          nline += " - ";
+        }
 
         // space out dot (we want it for uniform.xyz but not for 0.0)
 				else if (  (arr[i-1] < '0'
@@ -231,6 +262,7 @@ public class GL2VKShaderConverter {
 		if (!source.contains("#version 450")) {
 			source = "#version 450\n"+source;
 		}
+		source = source.replace("#version 0null", "");
 		return source;
 	}
 
@@ -440,7 +472,7 @@ public class GL2VKShaderConverter {
 							// FIX: texture is now a keyword and can't be a variable name.
 						  // Rename the texture keyword. We'll rename the usage of that variable later in the program too.
 						  if (elements[i+2].equals("texture")) {
-						    reconstructedLine = "layout(binding = "+currBinding+") uniform "+elements[i+1]+" texturegl2vk";
+						    reconstructedLine = "layout(binding = "+currBinding+") uniform "+elements[i+1]+" texturegl2vk;";
 	              // Of course, we should really check to avoid duplicate texturegl2vk variables but its whatever.
 						  }
 						  else {
@@ -458,7 +490,7 @@ public class GL2VKShaderConverter {
 						else {
 							// Annnnd let's just slap on element[1 and 2] because that
 							// should be the type and name (with semicolon)
-							uniforms.add(elements[i+1]+" "+elements[i+2]);
+							uniforms.add(elements[i+1]+" "+elements[i+2]+";");
 
 							// Keep track of size on vertex shader
 							if (type == VERTEX) vertUniformSize += UniformParser.typeToSize(elements[i+1]);
@@ -520,6 +552,7 @@ public class GL2VKShaderConverter {
 		// TODO: variable arrays
 		// Skip the uniform block.
 		int index = 0;
+		int bracketDepth = 0;
 		for (String line : lines) {
 		  // If we're in the block, continue.
 		  if (index < blockLines) {
@@ -530,7 +563,8 @@ public class GL2VKShaderConverter {
 
 			String reconstructedLine = "";
 
-			line = spaceOutSymbols(line);
+//			line = spaceOutSymbols(line);
+
 
 			String[] elements = line.replaceAll("\t", "").trim().split(" ");
 
@@ -594,9 +628,9 @@ public class GL2VKShaderConverter {
 	  // Step 1: find main.
     for (String originalLine : lines) {
 
-      String line = spaceOutSymbols(originalLine);
+//      String line = spaceOutSymbols(originalLine);
 
-      String[] elements = line.replaceAll("\t", "").trim().split(" ");
+      String[] elements = originalLine.replaceAll("\t", "").trim().split(" ");
       for (int i = 0; i < elements.length; i++) {
         try {
 
@@ -666,7 +700,7 @@ public class GL2VKShaderConverter {
 
 		for (String line : lines) {
 
-			line = spaceOutSymbols(line);
+//			line = spaceOutSymbols(line);
 
 			String[] elements = line.replaceAll("\t", "").trim().split(" ");
 			String reconstructedLine = "";
@@ -696,7 +730,7 @@ public class GL2VKShaderConverter {
 
     for (String line : lines) {
 
-      line = spaceOutSymbols(line);
+//      line = spaceOutSymbols(line);
 
       String[] elements = line.replaceAll("\t", "").trim().split(" ");
       String reconstructedLine = "";

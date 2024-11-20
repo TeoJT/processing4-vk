@@ -446,8 +446,6 @@ public class ThreadNode {
 	        			  println("CMD_BIND_PIPELINE (index "+index+")");
 
 	        			  long pipeline = cmdLongArgs[0].get(index);
-	        			  long pipelineLayout = cmdLongArgs[1].get(index);
-	        			  long descriptorSet = cmdLongArgs[2].get(index);
 
       	          vkCmdBindPipeline(cmdbuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	        			  break;

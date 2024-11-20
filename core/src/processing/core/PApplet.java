@@ -1765,8 +1765,26 @@ public class PApplet implements PConstants {
 
   public void selectNode(int node) {
     if (g instanceof PGraphicsVulkan) {
-      ((PGraphicsVulkan)g).selectNode(node);
+      if (node == AUTO) {
+        ((PGraphicsVulkan)g).enableAutoMode();
+      }
+      else if (node == TOP) {
+        ((PGraphicsVulkan)g).selectNode(maxNodes()-1);
+      }
+      else if (node < 0 || node > maxNodes()) {
+        throw new IllegalArgumentException("Node must be in range of 0 to "+maxNodes()+" or set to AUTO or MAX.");
+      }
+      else {
+        ((PGraphicsVulkan)g).selectNode(node);
+      }
     }
+  }
+
+  public int maxNodes() {
+    if (g instanceof PGraphicsVulkan) {
+      return ((PGraphicsVulkan)g).getNodesCount();
+    }
+    return 0;
   }
 
   public void bufferMultithreaded(boolean onoff) {

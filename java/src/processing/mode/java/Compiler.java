@@ -60,7 +60,6 @@ public class Compiler {
     String classpath = build.getClassPath();
     String classpathEmptyRemoved = classpath.replace("::", ":");
     
-    System.out.println(classpathEmptyRemoved);
     
 
     String[] baseCommand = new String[] {

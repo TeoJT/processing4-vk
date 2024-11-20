@@ -83,6 +83,7 @@ public class PSurfaceVK implements PSurface {
 //      Util.beginTmr();
         pvk.beginRecord();
         pvk.selectNode(0);
+        pvk.enableAutoMode();
         sketch.handleDraw();
         pvk.endRecord();
 

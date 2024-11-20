@@ -65,6 +65,8 @@ public interface PConstants {
   String PV2D = "processing.vulkan.PVKGraphics2D";
   String PV3D = "processing.vulkan.PVKGraphics3D";
 
+  int AUTO = -101;
+
   // When will it be time to remove this?
   @Deprecated
   String OPENGL = P3D;

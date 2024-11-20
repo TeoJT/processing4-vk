@@ -251,6 +251,8 @@ public class GL2VK {
 	private int boundTexture = 0;
 
 	private boolean changeProgram = true;
+	private boolean autoMode = true;
+	private int autoNodeIndex = 0;
 	private boolean bufferMultithreaded = true;
 	private int frameCount = 0;
 
@@ -501,6 +503,18 @@ public class GL2VK {
 	  return programs[boundProgram].initiated;
 	}
 
+	int drawCounts = 0;
+
+	private void selectNodeAuto() {
+    if (autoMode) {
+      if (drawCounts >= 4) {
+        selectNode(autoNodeIndex++);
+        if (autoNodeIndex >= getNodesCount()) autoNodeIndex = 0;
+        drawCounts = 0;
+      }
+    }
+	}
+
 	private boolean checkAndPrepareProgram() {
 		if (boundProgram <= 0) {
 			warn("checkAndPrepareProgram: No program bound.");
@@ -528,6 +542,8 @@ public class GL2VK {
 		else {
 		  system.updateNodePipeline(programs[boundProgram].graphicsPipeline);
 		}
+
+
 		// Remember, this function we're in right now gets called with every draw command.
 		// First we need to make sure our texture is prepared in our pipeline.
 		if (boundTexture != 0) {
@@ -553,6 +569,7 @@ public class GL2VK {
 //			System.out.println(val);
 //		}
 		system.nodeDrawArrays(programs[boundProgram].getVKBuffers(), count, first);
+		selectNodeAuto();
 	}
 
 
@@ -560,12 +577,14 @@ public class GL2VK {
 	// in jogl it's the bound buffer??
 	// Either way, it's java and Processing we're writing this for, so it is what it is.
 	public void glDrawElements(int mode, int count, int type, int offset) {
+	  drawCounts++;
 //	  System.out.println("DRAWINDEXED");
 		// Mode not used
 		if (checkAndPrepareProgram() == false) return;
 
 //		System.out.println("glDrawElements "+boundBuffer+" count "+count+" type "+type+" offset "+offset+"  buffer "+buffers[boundBuffer].bufferID);
 		system.nodeDrawIndexed(count, buffers[boundBuffer].getCurrBuffer(), programs[boundProgram].getVKBuffers(), offset, type);
+		selectNodeAuto();
 	}
 
 
@@ -832,6 +851,9 @@ public class GL2VK {
 	}
 
 
+
+
+
 	public void glUniform1f(int location, float value0) {
 		GLUniform uniform = programs[boundProgram].getUniform(location);
 
@@ -1038,6 +1060,9 @@ public class GL2VK {
                          int height, int border, int format, int type,
                          Buffer data) {
 
+    // Ignore this
+    if (width == 0 || height == 0) return;
+
     textures[boundTexture].createBuffer(width, height);
 
     if (data == null) {
@@ -1150,6 +1175,14 @@ public class GL2VK {
 	public void selectNode(int node) {
 		system.selectNode(node);
 	}
+
+  public void enableAutoMode() {
+    autoMode = true;
+  }
+
+  public void disableAutoMode() {
+    autoMode = false;
+  }
 
 	public int getNodesCount() {
 		return system.getNodesCount();

@@ -26,6 +26,15 @@ public class PGraphicsVulkan extends PGraphicsOpenGL {
     ((PVK)pgl).selectNode(node);
   }
 
+  public void enableAutoMode() {
+    ((PVK)pgl).enableAutoMode();
+  }
+
+  public int getNodesCount() {
+    return ((PVK)pgl).getNodesCount();
+  }
+
+
   public void bufferMultithreaded(boolean onoff) {
     ((PVK)pgl).bufferMultithreaded(onoff);
   }

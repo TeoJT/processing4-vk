@@ -40,7 +40,7 @@ public class PShapeTest extends PApplet {
         particle.stroke(255);
         particle.strokeWeight(3f);
 //        particle.noStroke();
-        particle.fill(50, 50, 150);
+        particle.fill(50f, 50f, 255f);
         particle.vertex(0f, 0f);
         particle.vertex(50f, 0f);
         particle.vertex(50f, 50f);
@@ -58,19 +58,20 @@ public class PShapeTest extends PApplet {
     @Override
     public void draw() {
       try {
-        background(0);
+        background(255);
 
 //        Util.beginTmr();
         for (int i = 0; i < 10000; i++) {
+//          selectNode(i%8);
 //          Util.beginTmr();
-          selectNode((i/4)%8);
 //          println("--------------\n \n\n\n\n");
           pushMatrix();
-          translate(random(-50, width), random(-50, height));
+          translate(random(0, width), random(0, height));
           shape(particle);
 //          for (int j = 0; j < 100000; j++) {}
           popMatrix();
 
+//
 //          Util.endTmr("One cycle");
         }
 //        Util.endTmr("One frame");

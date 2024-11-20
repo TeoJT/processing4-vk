@@ -395,7 +395,16 @@ public class PVK extends PGL implements PJOGLInterface {
   }
 
   public void selectNode(int node) {
+    gl2vk.disableAutoMode();
     gl2vk.selectNode(node);
+  }
+
+  public void enableAutoMode() {
+    gl2vk.enableAutoMode();
+  }
+
+  public int getNodesCount() {
+    return gl2vk.getNodesCount();
   }
 
 
