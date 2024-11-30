@@ -48,6 +48,13 @@ public class GL2VK {
 	public static final int STATIC_DRAW = 3;
 	public static final int DYNAMIC_DRAW = 4;
 
+	public static final int DEPTH_TEST = 1;
+	public static final int BLEND = 2;
+	public static final int MULTISAMPLE = 3;
+	public static final int POLYGON_SMOOTH = 4;
+	public static final int CULL_FACE = 5;
+
+
 	public static final boolean RETAINED_MODE = true;
   public static final boolean IMMEDIATE_MODE = false;
 
@@ -254,6 +261,8 @@ public class GL2VK {
 	private boolean autoMode = true;
 	private int autoNodeIndex = 0;
 	private boolean bufferMultithreaded = true;
+  private boolean depthWriteEnable = true;
+  private boolean depthTestEnable = true;
 	private int frameCount = 0;
 
 	// Used to convert shaders
@@ -500,7 +509,7 @@ public class GL2VK {
 
 
 	private boolean pipelineInitiated() {
-	  return programs[boundProgram].initiated;
+	  return programs[boundProgram].initiated();
 	}
 
 	int drawCounts = 0;
@@ -525,13 +534,18 @@ public class GL2VK {
 			return false;
 		}
 
-		if (!pipelineInitiated()) {
-			programs[boundProgram].createGraphicsPipeline();
-      system.updateNodePipeline(programs[boundProgram].graphicsPipeline);
+		// Update states
+    programs[boundProgram].depthWriteEnable = depthWriteEnable;
+    programs[boundProgram].depthTestEnable  = depthTestEnable;
 
+		// Switch pipeline if the pipeline's state changed (e.g. depth testing)
+		if (programs[boundProgram].updatedState()) {
 
-//      programs[boundProgram].pipelineLayout,
-//      programs[boundProgram].getCurrentTextureDescriptor(boundTexture)
+		  // Pipeline may not exist. Let's create it if it doesn't exist.
+		  if (programs[boundProgram].needsNewStateCreation()) {
+  			programs[boundProgram].createGraphicsPipeline();
+		  }
+      system.updateNodePipeline(programs[boundProgram].getPipeline());
 
 			// Call our pending uniforms
 			for (TempUniformState u : tempUniformStates) {
@@ -539,8 +553,9 @@ public class GL2VK {
 			}
 			tempUniformStates.clear();
 		}
+		// Bad coding here but I think we still need to call it because reasons.
 		else {
-		  system.updateNodePipeline(programs[boundProgram].graphicsPipeline);
+		  system.updateNodePipeline(programs[boundProgram].getPipeline());
 		}
 
 
@@ -551,7 +566,7 @@ public class GL2VK {
 
 	    // Next call the bind descriptor command
 	    system.nodeBindDescriptorSet(
-	                             programs[boundProgram].pipelineLayout,
+	                             programs[boundProgram].getLayout(),
 	                             programs[boundProgram].getCurrentTextureDescriptor(boundTexture)
 	                           );
 		}
@@ -764,7 +779,7 @@ public class GL2VK {
 			warn("glAttachShader: program "+program+" doesn't exist.");
 			return;
 		}
-    if (programs[program].initiated) {
+    if (programs[program].initiated()) {
       warn("glAttachShader: program "+program+" is already up and running! You can't change programs once they're created.");
       return;
     }
@@ -852,8 +867,7 @@ public class GL2VK {
 
 
 
-
-
+	// TODO: each pipeline will need its uniforms re-pushed when it switches.
 	public void glUniform1f(int location, float value0) {
 		GLUniform uniform = programs[boundProgram].getUniform(location);
 
@@ -861,7 +875,7 @@ public class GL2VK {
 		if (uniform.isSampler) return;
 
 		if (pipelineInitiated()) {
-		  system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0);
+		  system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, value0);
 		}
 		else {
 		  tempUniformStates.add(new TempUniformState(location, value0));
@@ -876,7 +890,7 @@ public class GL2VK {
     if (uniform.isSampler) return;
 
 		if (pipelineInitiated()) {
-	    system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1);
+	    system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, value0, value1);
     }
     else {
       tempUniformStates.add(new TempUniformState(location, value0, value1));
@@ -890,7 +904,7 @@ public class GL2VK {
     if (uniform.isSampler) return;
 
 		if (pipelineInitiated()) {
-	    system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2);
+	    system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, value0, value1, value2);
     }
     else {
       tempUniformStates.add(new TempUniformState(location, value0, value1, value2));
@@ -906,7 +920,7 @@ public class GL2VK {
 
 
     if (pipelineInitiated()) {
-      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2, value3);
+      system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, value0, value1, value2, value3);
     }
     else {
       tempUniformStates.add(new TempUniformState(location, value0, value1, value2, value3));
@@ -927,7 +941,7 @@ public class GL2VK {
 
 		// Not actually used by processing so ok to comment this out
 //    if (pipelineInitiated()) {
-      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, mat);
+      system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, mat);
 //    }
 //    else {
 //      tempUniformStates.add(new TempUniformState(location, 99, mat));
@@ -942,7 +956,7 @@ public class GL2VK {
     if (uniform.isSampler) return;
 
     if (pipelineInitiated()) {
-      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0);
+      system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, value0);
     }
     else {
       tempUniformStates.add(new TempUniformState(location, value0));
@@ -956,7 +970,7 @@ public class GL2VK {
     if (uniform.isSampler) return;
 
     if (pipelineInitiated()) {
-      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1);
+      system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, value0, value1);
     }
     else {
       tempUniformStates.add(new TempUniformState(location, value0, value1));
@@ -970,7 +984,7 @@ public class GL2VK {
     if (uniform.isSampler) return;
 
     if (pipelineInitiated()) {
-      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2);
+      system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, value0, value1, value2);
     }
     else {
       tempUniformStates.add(new TempUniformState(location, value0, value1, value2));
@@ -984,7 +998,7 @@ public class GL2VK {
     if (uniform.isSampler) return;
 
     if (pipelineInitiated()) {
-      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, value0, value1, value2, vulue3);
+      system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, value0, value1, value2, vulue3);
     }
     else {
       tempUniformStates.add(new TempUniformState(location, value0, value1, value2, vulue3));
@@ -1014,7 +1028,7 @@ public class GL2VK {
     if (uniform.isSampler) return;
 
     if (pipelineInitiated()) {
-      system.nodePushConstants(programs[boundProgram].pipelineLayout, uniform.vertexFragment, uniform.offset, mat);
+      system.nodePushConstants(programs[boundProgram].getLayout(), uniform.vertexFragment, uniform.offset, mat);
     }
     else {
       tempUniformStates.add(new TempUniformState(location, 99, mat));
@@ -1094,13 +1108,44 @@ public class GL2VK {
   }
 
   public void glEnable(int value) {
+    if (value == DEPTH_TEST) {
+      depthTestEnable = true;
+    }
+    else if (value == BLEND) {
 
+    }
+    else if (value == MULTISAMPLE) {
+
+    }
+    else if (value == POLYGON_SMOOTH) {
+
+    }
+    else if (value == CULL_FACE) {
+
+    }
   }
 
 
   public void glDisable(int value) {
+    if (value == DEPTH_TEST) {
+      depthTestEnable = false;
+    }
+    else if (value == BLEND) {
 
+    }
+    else if (value == MULTISAMPLE) {
 
+    }
+    else if (value == POLYGON_SMOOTH) {
+
+    }
+    else if (value == CULL_FACE) {
+
+    }
+  }
+
+  public void glDepthMask(boolean value) {
+    depthWriteEnable = value;
   }
 
 

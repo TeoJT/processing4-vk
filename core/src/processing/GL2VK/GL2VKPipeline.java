@@ -145,20 +145,9 @@ public class GL2VKPipeline {
     private long[] descriptorSets = null;
 
 
-    // Pipeline's state
-    public boolean depthTestEnable = false;
-    public boolean depthWriteEnable = false;
-
-    public long getHash() {
-      return
-          pow(depthTestEnable ? 1 : 0, 2) *
-          pow(depthWriteEnable ? 1 : 0, 3);
-    }
-
-
     public TextureDescriptor(TextureBuffer img) {
       // Must only be called when the pipeline is initiated
-      if (!initiated) {
+      if (currentState == -1) {
         throw new RuntimeException("TextureDescriptor must be called after pipeline has been initiated");
       }
       initDescritpors(samplerBindings.size());
@@ -254,17 +243,34 @@ public class GL2VKPipeline {
     }
   }
 
+  private class PipelineState {
+    public PipelineState(long g, long l) {
+      this.graphicsPipeline = g;
+      this.pipelineLayout = l;
+    }
+
+    public long graphicsPipeline = -1;
+
+    // Public for use with push constants.
+    public long pipelineLayout = -1;
+  }
+
 	private VulkanSystem system;
 	private VKSetup vkbase;
 
 	public SPIRV vertShaderSPIRV = null;
 	public SPIRV fragShaderSPIRV = null;
 
-	// Public for use with push constants.
-  public long pipelineLayout = -1;
-  public long graphicsPipeline = -1;
+	private long currentState = -1;
+	private HashMap<Long, PipelineState> states = new HashMap<>();
+
+
 
   private long descriptorSetLayout = -1;
+
+  // Pipeline's state
+  public boolean depthTestEnable = false;
+  public boolean depthWriteEnable = false;
 
 
   // We assign the offsets when we add the uniforms to the pipeline,
@@ -286,8 +292,6 @@ public class GL2VKPipeline {
 	private int boundBinding = 0;
 	private int totalVertexAttribsBindings = 0;
 
-	// TODO: replace with checking the hashState instead
-	public boolean initiated = false;
 
 
 
@@ -299,6 +303,25 @@ public class GL2VKPipeline {
 	// Only use this constructor for testing purposes
 	public GL2VKPipeline() {
 	}
+
+
+  private long pow(int input, int exp) {
+    return (long)Math.pow(input, exp);
+  }
+
+  public long getHash() {
+    return
+        pow(2, depthTestEnable ? 1 : 0) *
+        pow(3, depthWriteEnable ? 1 : 0);
+  }
+
+	public long getPipeline() {
+	  return states.get(currentState).graphicsPipeline;
+	}
+
+  public long getLayout() {
+    return states.get(currentState).pipelineLayout;
+  }
 
 	// Same from the tutorial
     private long createShaderModule(ByteBuffer spirvCode) {
@@ -319,10 +342,24 @@ public class GL2VKPipeline {
         }
     }
 
-    private long pow(int input, int exp) {
-      return (long)Math.pow(input, exp);
+
+    public boolean needsNewStateCreation() {
+      return !states.containsKey(currentState);
     }
 
+    public boolean initiated() {
+      return currentState != -1;
+    }
+
+    // Checks if the state needs to be changed (because i.e. depth test enabled/disabled)
+    // and if so sets currentState and returns true.
+    public boolean updatedState() {
+      if (currentState != getHash()) {
+        currentState = getHash();
+        return true;
+      }
+      else return false;
+    }
 
 
     public void createGraphicsPipeline() {
@@ -420,8 +457,8 @@ public class GL2VKPipeline {
 
             VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack);
             depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
-            depthStencil.depthTestEnable(true);
-            depthStencil.depthWriteEnable(true);
+            depthStencil.depthTestEnable(depthTestEnable);
+            depthStencil.depthWriteEnable(depthWriteEnable);
             depthStencil.depthCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
             depthStencil.depthBoundsTestEnable(false);
             depthStencil.minDepthBounds(0.0f); // Optional
@@ -536,7 +573,6 @@ public class GL2VKPipeline {
                 throw new RuntimeException("Failed to create pipeline layout");
             }
 
-            pipelineLayout = pPipelineLayout.get(0);
 
             /////////////////////////////////////////////////////////////////////////////////
             /////////////////////////////////////////////////////////////////////////////////
@@ -553,7 +589,7 @@ public class GL2VKPipeline {
             pipelineInfo.pMultisampleState(multisampling);
             pipelineInfo.pDepthStencilState(depthStencil);
             pipelineInfo.pColorBlendState(colorBlending);
-            pipelineInfo.layout(pipelineLayout);
+            pipelineInfo.layout(pPipelineLayout.get(0));
             pipelineInfo.renderPass(system.renderPass);
             pipelineInfo.subpass(0);
             pipelineInfo.basePipelineHandle(VK_NULL_HANDLE);
@@ -565,8 +601,14 @@ public class GL2VKPipeline {
                 throw new RuntimeException("Failed to create graphics pipeline");
             }
 
-            graphicsPipeline = pGraphicsPipeline.get(0);
+            // Create new state
+            if (states.containsKey(getHash())) {
+              System.out.println("WARNING  Pipelines state "+getHash()+" already exists");
+            }
 
+            PipelineState state = new PipelineState(pGraphicsPipeline.get(0), pPipelineLayout.get(0));
+
+            states.put(getHash(), state);
 
             // ===> RELEASE RESOURCES <===
             vertShaderSPIRV.free();
@@ -577,8 +619,6 @@ public class GL2VKPipeline {
 
             vertShaderModule = -1;
             fragShaderModule = -1;
-
-            initiated = true;
         }
     }
 
@@ -624,7 +664,7 @@ public class GL2VKPipeline {
 
     // Remember, everytime you create a new pipeline, you should add the currently bound texture.
     public void addTextureIfAbsent(int binding, TextureBuffer img) {
-      if (!initiated) return;
+      if (currentState == -1) return;
 
       // Don't add if it already exists
       if (textures[binding] == null) {
@@ -792,9 +832,12 @@ public class GL2VKPipeline {
 	}
 
 
-    public void clean() {
-        vkDestroyPipeline(system.device, graphicsPipeline, null);
-        vkDestroyPipelineLayout(system.device, pipelineLayout, null);
-        vkDestroyDescriptorSetLayout(system.device, descriptorSetLayout, null);
+  public void clean() {
+    for (PipelineState state: states.values()) {
+      vkDestroyPipeline(system.device, state.graphicsPipeline, null);
+      vkDestroyPipelineLayout(system.device, state.pipelineLayout, null);
+      vkDestroyDescriptorSetLayout(system.device, descriptorSetLayout, null);
+
     }
+  }
 }
