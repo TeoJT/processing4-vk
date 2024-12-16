@@ -39,5 +39,9 @@ public class PGraphicsVulkan extends PGraphicsOpenGL {
     ((PVK)pgl).bufferMultithreaded(onoff);
   }
 
-
+  @Override
+  public void beginDraw() {
+    super.beginDraw();
+    enableMultipleBuffers();
+  }
 }

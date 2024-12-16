@@ -1439,6 +1439,12 @@ public class PGraphicsOpenGL extends PGraphics {
 
   }
 
+  protected void enableMultipleBuffers() {
+    if (tessGeo != null) {
+      tessGeo.enableMultipleBuffers();
+    }
+  }
+
 
   @Override
   public void endDraw() {
@@ -5595,7 +5601,7 @@ public class PGraphicsOpenGL extends PGraphics {
   }
 
 
-  protected class AsyncPixelReader {
+  public class AsyncPixelReader {
 
     // PImage formats used internally to offload
     // color format conversion to save threads
@@ -9093,7 +9099,7 @@ public class PGraphicsOpenGL extends PGraphics {
     int firstPolyVertex;
     int lastPolyVertex;
 
-    final static int MAX_BUFFERS = 256;
+    int MAX_BUFFERS = 256;
 
     int verticesIndex = 0;
     int colorsIndex = 0;
@@ -9192,6 +9198,7 @@ public class PGraphicsOpenGL extends PGraphics {
       renderMode = mode;
       bufObjStreaming = stream;
       allocate();
+      disableMultipleBuffers();
     }
 
 
@@ -9220,28 +9227,29 @@ public class PGraphicsOpenGL extends PGraphics {
       pointOffsets = new float[2 * PGL.DEFAULT_TESS_VERTICES];
       pointIndices = new short[PGL.DEFAULT_TESS_VERTICES];
 
-      if (!bufObjStreaming) {
 
-        polyVerticesBuffer = new FloatBuffer[MAX_BUFFERS];
+      polyVerticesBuffer = new FloatBuffer[MAX_BUFFERS];
 
-        polyColorsBuffer = new IntBuffer[MAX_BUFFERS];
-        polyNormalsBuffer = new FloatBuffer[MAX_BUFFERS];
-        polyTexCoordsBuffer = new FloatBuffer[MAX_BUFFERS];
-        polyAmbientBuffer = new IntBuffer[MAX_BUFFERS];
-        polySpecularBuffer = new IntBuffer[MAX_BUFFERS];
-        polyEmissiveBuffer = new IntBuffer[MAX_BUFFERS];
-        polyShininessBuffer = new FloatBuffer[MAX_BUFFERS];
-        polyIndicesBuffer = new ShortBuffer[MAX_BUFFERS];
+      polyColorsBuffer = new IntBuffer[MAX_BUFFERS];
+      polyNormalsBuffer = new FloatBuffer[MAX_BUFFERS];
+      polyTexCoordsBuffer = new FloatBuffer[MAX_BUFFERS];
+      polyAmbientBuffer = new IntBuffer[MAX_BUFFERS];
+      polySpecularBuffer = new IntBuffer[MAX_BUFFERS];
+      polyEmissiveBuffer = new IntBuffer[MAX_BUFFERS];
+      polyShininessBuffer = new FloatBuffer[MAX_BUFFERS];
+      polyIndicesBuffer = new ShortBuffer[MAX_BUFFERS];
 
-//        lineVerticesBuffer = new FloatBuffer[MAX_BUFFERS];
-//        lineColorsBuffer = new IntBuffer[MAX_BUFFERS];
-//        lineDirectionsBuffer = new FloatBuffer[MAX_BUFFERS];
-//        lineIndicesBuffer = new ShortBuffer[MAX_BUFFERS];
+//    lineVerticesBuffer = new FloatBuffer[MAX_BUFFERS];
+//    lineColorsBuffer = new IntBuffer[MAX_BUFFERS];
+//    lineDirectionsBuffer = new FloatBuffer[MAX_BUFFERS];
+//    lineIndicesBuffer = new ShortBuffer[MAX_BUFFERS];
 //
-//        pointVerticesBuffer = new FloatBuffer[MAX_BUFFERS];
-//        pointColorsBuffer = new IntBuffer[MAX_BUFFERS];
-//        pointOffsetsBuffer = new FloatBuffer[MAX_BUFFERS];
-//        pointIndicesBuffer = new ShortBuffer[MAX_BUFFERS];
+//    pointVerticesBuffer = new FloatBuffer[MAX_BUFFERS];
+//    pointColorsBuffer = new IntBuffer[MAX_BUFFERS];
+//    pointOffsetsBuffer = new FloatBuffer[MAX_BUFFERS];
+//    pointIndicesBuffer = new ShortBuffer[MAX_BUFFERS];
+
+      if (!bufObjStreaming) {
 
 
         for (int i = 0; i < MAX_BUFFERS; i++) {
@@ -9300,6 +9308,14 @@ public class PGraphicsOpenGL extends PGraphics {
       pointColorsIndex = 0;
       pointDirectionsIndex = 0;
       pointIndiciesIndex = 0;
+    }
+
+    public void enableMultipleBuffers() {
+      MAX_BUFFERS = 256;
+    }
+
+    public void disableMultipleBuffers() {
+      MAX_BUFFERS = 1;
     }
 
 
@@ -9606,6 +9622,7 @@ public class PGraphicsOpenGL extends PGraphics {
         updatePolyVerticesBuffer();
         pgl.bufferData(PGL.ARRAY_BUFFER, 4 * polyVertexCount * PGL.SIZEOF_FLOAT, polyVerticesBuffer[(verticesIndex++)%MAX_BUFFERS], usage);
       }
+//      System.out.println("copyPolyVertices "+((verticesIndex)%MAX_BUFFERS));
     }
 
     protected void copyPolyVertices(int offset, int size) {

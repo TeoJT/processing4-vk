@@ -48,7 +48,7 @@ import java.util.HashMap;
  * over several textures.
  * @author Andres Colubri
  */
-class FontTexture implements PConstants {
+public class FontTexture implements PConstants {
   protected PGL pgl;
   protected boolean is3D;
 
