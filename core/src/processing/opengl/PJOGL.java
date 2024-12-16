@@ -1521,6 +1521,8 @@ public class PJOGL extends PGL {
   @Override
   public void drawElementsImpl(int mode, int count, int type, int offset) {
         report("drawElementsImpl");
+
+
     gl.glDrawElements(mode, count, type, offset);
   }
 

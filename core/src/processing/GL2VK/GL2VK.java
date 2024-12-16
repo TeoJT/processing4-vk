@@ -338,13 +338,13 @@ public class GL2VK {
 
 
 	private void recordInuseBuffer(Buffer buff) {
-	  if (inuseBuffers.contains(buff)) {
-	    warn("glBufferData: buffer "+boundBuffer+" in use.");
-	    Thread.dumpStack();
-	  }
-	  else {
-	    inuseBuffers.add(buff);
-	  }
+//	  if (inuseBuffers.contains(buff)) {
+////	    warn("glBufferData: buffer "+boundBuffer+" in use.");
+////	    Thread.dumpStack();
+//	  }
+//	  else {
+//	    inuseBuffers.add(buff);
+//	  }
 	}
 
 
@@ -449,6 +449,17 @@ public class GL2VK {
       warn("glBufferData: buffer "+boundBuffer+" doesn't exist.");
       return;
     }
+
+//    System.out.println("FLOAT BUFFER "+boundBuffer+":");
+//    int max = data.capacity();
+//    if (32 < max) max = 64;
+//
+//    for (int i = 0; i < max; i+=4) {
+//      float f = data.get();
+//      System.out.print(f+" ");
+//    }
+//    data.rewind();
+//    System.out.println();
 
     if (usage == STATIC_DRAW) {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);

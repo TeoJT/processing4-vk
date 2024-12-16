@@ -1158,7 +1158,6 @@ public class ThreadNode {
 
 
     public void bufferData(GraphicsBuffer graphicsBuffer, int size, FloatBuffer buffer, int instance) {
-      System.out.println("FLOATBUFFER INSTANCE "+instance);
 
         int index = getNextCMDIndex();
         setIntArg(0, index, size);

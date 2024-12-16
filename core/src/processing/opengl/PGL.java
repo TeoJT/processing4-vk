@@ -2745,9 +2745,11 @@ public abstract class PGL {
     }
     catch (BufferOverflowException e) {
       // Ignore and continue.
+      System.err.println("BufferOverflowException "+buf.capacity()+" "+size);
     }
     catch (BufferUnderflowException e) {
       // Ignore and continue.
+      System.err.println("BufferUnderflowException "+buf.capacity()+" "+size);
     }
   }
 
