@@ -79,19 +79,22 @@ public class GraphicsBuffer {
 
 
     protected int globalInstance = 0;
+
+    // Is 0 or 1
+    private static int frame = 0;
     protected final static int MAX_INSTANCES = 128;
 
-    public long[] buffers = new long[MAX_INSTANCES];
-    protected volatile long[] bufferMemory = new long[MAX_INSTANCES];
+    public long[] buffers = new long[MAX_INSTANCES*2];
+    protected volatile long[] bufferMemory = new long[MAX_INSTANCES*2];
     // the bufferMemory list is at risk; if we createBufferAuto while a bufferData process is happening,
     // this could cause bad things.
     // So let's have a buncha booleans to specify if it's safe to use
-    protected AtomicBoolean[] safeToUpdateBuffer = new AtomicBoolean[MAX_INSTANCES];
+    protected AtomicBoolean[] safeToUpdateBuffer = new AtomicBoolean[MAX_INSTANCES*2];
 
-    public long[] stagingBuffers = new long[MAX_INSTANCES];
-    protected long[] stagingBufferMemory = new long[MAX_INSTANCES];
+    public long[] stagingBuffers = new long[MAX_INSTANCES*2];
+    protected long[] stagingBufferMemory = new long[MAX_INSTANCES*2];
 
-    protected int[] bufferSize = new int[128];
+    protected int[] bufferSize = new int[MAX_INSTANCES*2];
 
     // Buffers may be in use by GPU mid-frame.
     // queue for deletion next frame.
@@ -120,6 +123,10 @@ public class GraphicsBuffer {
       }
     }
 
+    public static void setFrame(int f) {
+      frame = f;
+    }
+
 
     // Releases any previous buffers and creates a buffer IF
     // - There's no previous buffer
@@ -136,7 +143,7 @@ public class GraphicsBuffer {
       // While this looks bad, this is only used in very very rare cases, and
       // even when it does happen, it should only happen once per vkbuffer.
       int count = 0;
-      while (safeToUpdateBuffer[globalInstance].get() == false) {
+      while (safeToUpdateBuffer[getInstance(globalInstance)].get() == false) {
         // busy wait
         if (count > 9999999) {
           System.err.println("BUG WARNING  createBufferAuto: looplock'd waiting for buffer instance "+globalInstance+" to be safe.");
@@ -149,19 +156,27 @@ public class GraphicsBuffer {
       }
 
 
-    	if (buffers[globalInstance] == -1 || size > bufferSize[globalInstance]) {
+    	if (buffers[globalInstance] == -1 || size > bufferSize[globalInstance]
+    	    || buffers[globalInstance+MAX_INSTANCES] == -1 || size > bufferSize[globalInstance+MAX_INSTANCES]) {
     		// Delete old buffers
 //    		destroy(globalInstance);
     	  scheduleDestroy(globalInstance);
 
     		// Create new one
     		if (retainedMode) {
+    		  // One for each frame
           createBufferRetainedMode(size, vertexIndexUsage, globalInstance);
+          createBufferRetainedMode(size, vertexIndexUsage, globalInstance+MAX_INSTANCES);
     		}
     		else {
           createBufferImmediateMode(size, vertexIndexUsage, globalInstance);
+          createBufferImmediateMode(size, vertexIndexUsage, globalInstance+MAX_INSTANCES);
     		}
     	}
+    }
+
+    private int getInstance(int instance) {
+      return instance + (frame*MAX_INSTANCES);
     }
 
     private void destroyScheduledBuffers() {
@@ -225,13 +240,13 @@ public class GraphicsBuffer {
 
       // Problem: we need to know whether we're doing retained or immediate.
       // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
-      if (stagingBuffers[globalInstance-1] != -1) {
+      if (stagingBuffers[getInstance(globalInstance-1)] != -1) {
         // Retained
-        return stagingBuffers[globalInstance-1];
+        return stagingBuffers[getInstance(globalInstance-1)];
       }
       else {
         // Immediate
-        return buffers[globalInstance-1];
+        return buffers[getInstance(globalInstance-1)];
       }
     }
 
@@ -267,9 +282,9 @@ public class GraphicsBuffer {
             // Pointer variables now populated
 
             // GraphicsBuffedr object, set with our new pointer variables.
-            buffers[instance] = pBuffer.get(0);
-            bufferMemory[instance] = pBufferMemory.get(0);
-            bufferSize[instance] = size;
+            buffers[(instance)] = pBuffer.get(0);
+            bufferMemory[(instance)] = pBufferMemory.get(0);
+            bufferSize[(instance)] = size;
       }
 
 
@@ -283,8 +298,8 @@ public class GraphicsBuffer {
                 pBuffer,
                 pBufferMemory);
 
-        this.stagingBuffers[instance] = pBuffer.get(0);
-        this.stagingBufferMemory[instance] = pBufferMemory.get(0);
+        this.stagingBuffers[(instance)] = pBuffer.get(0);
+        this.stagingBufferMemory[(instance)] = pBufferMemory.get(0);
       }
       bufferCount++;
     }
@@ -298,9 +313,9 @@ public class GraphicsBuffer {
     	// If debug mode enabled
     	if (system == null) return;
 
-    	if (buffers[instance] != -1 && bufferMemory[instance] != -1) {
-	        vkDestroyBuffer(system.device, buffers[instance], null);
-	        vkFreeMemory(system.device, bufferMemory[instance], null);
+    	if (buffers[(instance)] != -1 && bufferMemory[(instance)] != -1) {
+	        vkDestroyBuffer(system.device, buffers[(instance)], null);
+	        vkFreeMemory(system.device, bufferMemory[(instance)], null);
     	}
 //    	bufferCount--;
     }
@@ -315,21 +330,23 @@ public class GraphicsBuffer {
     }
 
     public void scheduleDestroy(int instance) {
-      deleteBufferQueue.add(buffers[instance]);
-      deleteMemQueue.add(bufferMemory[instance]);
+      deleteBufferQueue.add(buffers[(instance)]);
+      deleteMemQueue.add(bufferMemory[(instance)]);
+      deleteBufferQueue.add(buffers[(instance+MAX_INSTANCES)]);
+      deleteMemQueue.add(bufferMemory[(instance+MAX_INSTANCES)]);
     }
 
 
     public ByteBuffer map(int instance) {
       // Problem: we need to know whether we're doing retained or immediate.
       // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
-      if (stagingBufferMemory[instance] != -1) {
+      if (stagingBufferMemory[getInstance(instance)] != -1) {
         // Retained
-        return mapByte(bufferSize[instance], stagingBufferMemory[instance]);
+        return mapByte(bufferSize[getInstance(instance)], stagingBufferMemory[getInstance(instance)]);
       }
       else {
         // Immediate
-        return mapByte(bufferSize[instance], bufferMemory[instance]);
+        return mapByte(bufferSize[getInstance(instance)], bufferMemory[getInstance(instance)]);
       }
     }
 
@@ -421,13 +438,13 @@ public class GraphicsBuffer {
     public void unmap(int instance) {
       // Problem: we need to know whether we're doing retained or immediate.
       // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
-      if (stagingBufferMemory[instance] != -1) {
+      if (stagingBufferMemory[getInstance(instance)] != -1) {
         // Retained
-        unmap(stagingBufferMemory[instance]);
+        unmap(stagingBufferMemory[getInstance(instance)]);
       }
       else {
         // Immediate
-        unmap(bufferMemory[instance]);
+        unmap(bufferMemory[getInstance(instance)]);
       }
     }
 
@@ -444,9 +461,9 @@ public class GraphicsBuffer {
       	// If debug mode enabled
       	if (system == null) return;
 
-      	safeToUpdateBuffer[instance].set(false);
+      	safeToUpdateBuffer[getInstance(instance)].set(false);
 
-      	long mem = bufferMemory[instance];
+      	long mem = bufferMemory[getInstance(instance)];
 
   	    ByteBuffer datato = mapByte(size, mem);
 
@@ -466,16 +483,16 @@ public class GraphicsBuffer {
         }
 
     		unmap(mem);
-        safeToUpdateBuffer[instance].set(true);
+        safeToUpdateBuffer[getInstance(instance)].set(true);
     }
 
     public void bufferDataImmediate(FloatBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        safeToUpdateBuffer[instance].set(false);
+        safeToUpdateBuffer[getInstance(instance)].set(false);
 
-        long mem = bufferMemory[instance];
+        long mem = bufferMemory[getInstance(instance)];
 
         FloatBuffer datato = mapFloat(size, mem);
 
@@ -495,16 +512,16 @@ public class GraphicsBuffer {
         }
 
         unmap(mem);
-        safeToUpdateBuffer[instance].set(true);
+        safeToUpdateBuffer[getInstance(instance)].set(true);
     }
 
     public void bufferDataImmediate(ShortBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        safeToUpdateBuffer[instance].set(false);
+        safeToUpdateBuffer[getInstance(instance)].set(false);
 
-        long mem = bufferMemory[instance];
+        long mem = bufferMemory[getInstance(instance)];
 
         ShortBuffer datato = mapShort(size, mem);
 
@@ -525,16 +542,16 @@ public class GraphicsBuffer {
 
 
         unmap(mem);
-        safeToUpdateBuffer[instance].set(true);
+        safeToUpdateBuffer[getInstance(instance)].set(true);
     }
 
     public void bufferDataImmediate(IntBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        safeToUpdateBuffer[instance].set(false);
+        safeToUpdateBuffer[getInstance(instance)].set(false);
 
-        long mem = bufferMemory[instance];
+        long mem = bufferMemory[getInstance(instance)];
 
         IntBuffer datato = mapInt(size, mem);
 
@@ -554,16 +571,16 @@ public class GraphicsBuffer {
         }
 
         unmap(mem);
-        safeToUpdateBuffer[instance].set(true);
+        safeToUpdateBuffer[getInstance(instance)].set(true);
     }
 
     public void bufferDataImmediate(LongBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        safeToUpdateBuffer[instance].set(false);
+        safeToUpdateBuffer[getInstance(instance)].set(false);
 
-        long mem = bufferMemory[instance];
+        long mem = bufferMemory[getInstance(instance)];
 
         LongBuffer datato = mapLong(size, mem);
 
@@ -584,7 +601,7 @@ public class GraphicsBuffer {
 
 
         unmap(mem);
-        safeToUpdateBuffer[instance].set(true);
+        safeToUpdateBuffer[getInstance(instance)].set(true);
     }
 
 
@@ -603,23 +620,23 @@ public class GraphicsBuffer {
         // If debug mode enabled
         if (system == null) return;
 
-        ByteBuffer datato = mapByte(size, stagingBuffers[instance]);
+        ByteBuffer datato = mapByte(size, stagingBuffers[getInstance(instance)]);
         datato.rewind();
         data.rewind();
         while (datato.hasRemaining()) {
           datato.put(data.get());
         }
         datato.rewind();
-        unmap(stagingBuffers[instance]);
+        unmap(stagingBuffers[getInstance(instance)]);
 
-        vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
+        vkbase.copyBufferAndWait(stagingBuffers[getInstance(instance)], buffers[getInstance(instance)], size);
     }
 
     public void bufferDataRetained(FloatBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        FloatBuffer datato = mapFloat(size, stagingBuffers[instance]);
+        FloatBuffer datato = mapFloat(size, stagingBuffers[getInstance(instance)]);
 
         datato.rewind();
         data.rewind();
@@ -628,40 +645,40 @@ public class GraphicsBuffer {
         }
         datato.rewind();
 
-        unmap(stagingBuffers[instance]);
+        unmap(stagingBuffers[getInstance(instance)]);
 
-        vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
+        vkbase.copyBufferAndWait(stagingBuffers[getInstance(instance)], buffers[getInstance(instance)], size);
     }
 
     public void bufferDataRetained(ShortBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        ShortBuffer datato = mapShort(size, stagingBuffers[instance]);
+        ShortBuffer datato = mapShort(size, stagingBuffers[getInstance(instance)]);
         datato.rewind();
         data.rewind();
         while (datato.hasRemaining()) {
           datato.put(data.get());
         }
         datato.rewind();
-        unmap(stagingBuffers[instance]);
+        unmap(stagingBuffers[getInstance(instance)]);
 
-        vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
+        vkbase.copyBufferAndWait(stagingBuffers[getInstance(instance)], buffers[getInstance(instance)], size);
     }
 
     public void bufferDataRetained(IntBuffer data, int size, int instance) {
         // If debug mode enabled
         if (system == null) return;
 
-        IntBuffer datato = mapInt(size, stagingBuffers[instance]);
+        IntBuffer datato = mapInt(size, stagingBuffers[getInstance(instance)]);
         datato.rewind();
         data.rewind();
         while (datato.hasRemaining()) {
           datato.put(data.get());
         }
         datato.rewind();
-        unmap(stagingBuffers[instance]);
+        unmap(stagingBuffers[getInstance(instance)]);
 
-        vkbase.copyBufferAndWait(stagingBuffers[instance], buffers[instance], size);
+        vkbase.copyBufferAndWait(stagingBuffers[getInstance(instance)], buffers[getInstance(instance)], size);
     }
 }

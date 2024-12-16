@@ -119,7 +119,7 @@ public class ThreadNode {
 	// To avoid clashing from the main thread accessing the front of the queue while the
 	// other thread is accessing the end of the queue, best solution is to make this big
 	// enough lol.
-	protected final static int MAX_QUEUE_LENGTH = 10000;
+	protected final static int MAX_QUEUE_LENGTH = 20000;
 
 	// In order to avoid expensive interrupt calls waking a thread up from sleep, we can
 	// busy loop for a little while after we have no more tasks to do. If we get another task
@@ -910,6 +910,7 @@ public class ThreadNode {
         setLongArg(0, index, indiciesBuffer);
         setIntArg(1, index, vertexBuffers.size());
 
+
         // Replace last 2 bits with type
         switch (type) {
         case GL2VK.GL_UNSIGNED_BYTE:
@@ -1157,6 +1158,8 @@ public class ThreadNode {
 
 
     public void bufferData(GraphicsBuffer graphicsBuffer, int size, FloatBuffer buffer, int instance) {
+      System.out.println("FLOATBUFFER INSTANCE "+instance);
+
         int index = getNextCMDIndex();
         setIntArg(0, index, size);
         floatBuffers[floatBuffersIndex] = buffer;

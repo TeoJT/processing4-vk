@@ -40,11 +40,12 @@ public class PShapeTest extends PApplet {
         particle.stroke(255);
         particle.strokeWeight(3f);
 //        particle.noStroke();
-        particle.fill(50f, 50f, 255f, 50f);
+        float wi = 50f;
+        particle.fill(50f, 50f, 255f);
         particle.vertex(0f, 0f);
-        particle.vertex(50f, 0f);
-        particle.vertex(50f, 50f);
-        particle.vertex(0f, 50f);
+        particle.vertex(wi, 0f);
+        particle.vertex(wi, wi);
+        particle.vertex(0f, wi);
         particle.endShape();
       }
       catch (RuntimeException e) {

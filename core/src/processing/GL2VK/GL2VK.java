@@ -3,6 +3,7 @@ package processing.GL2VK;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
@@ -230,6 +231,9 @@ public class GL2VK {
 
 	private VulkanSystem system = null;
 
+	// This is mostly used for debug.
+  private HashSet<Buffer> inuseBuffers = new HashSet<>();
+
 	private GraphicsBuffer[] buffers = new GraphicsBuffer[4096];
 	private GL2VKPipeline[] programs = new GL2VKPipeline[1024];
 	private GLShader[] shaders = new GLShader[1024];
@@ -332,8 +336,22 @@ public class GL2VK {
     return vkusage;
 	}
 
+
+	private void recordInuseBuffer(Buffer buff) {
+	  if (inuseBuffers.contains(buff)) {
+	    warn("glBufferData: buffer "+boundBuffer+" in use.");
+	    Thread.dumpStack();
+	  }
+	  else {
+	    inuseBuffers.add(buff);
+	  }
+	}
+
+
 	// Method for null buffers to only buffer the data.
 	public void glBufferData(int target, int size, int usage) {
+
+
 	  if (boundBuffer <= 0) {
       warn("glBufferData: no bound buffer.");
       return;
@@ -357,6 +375,7 @@ public class GL2VK {
 	}
 
 	public void glBufferData(int target, int size, ByteBuffer data, int usage) {
+
 		if (boundBuffer <= 0) {
 			warn("glBufferData: no bound buffer.");
 			return;
@@ -375,6 +394,7 @@ public class GL2VK {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
       if (data != null) {
         if (bufferMultithreaded) {
+          recordInuseBuffer(data);
           system.nodeBufferData(buffers[boundBuffer], size, data, buffers[boundBuffer].getInstance());
         }
         else {
@@ -434,6 +454,7 @@ public class GL2VK {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
       if (data != null) {
         if (bufferMultithreaded) {
+          recordInuseBuffer(data);
           system.nodeBufferData(buffers[boundBuffer], size, data, buffers[boundBuffer].getInstance());
         }
         else {
@@ -463,6 +484,7 @@ public class GL2VK {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
       if (data != null) {
         if (bufferMultithreaded) {
+          recordInuseBuffer(data);
           system.nodeBufferData(buffers[boundBuffer], size, data, buffers[boundBuffer].getInstance());
         }
         else {
@@ -492,6 +514,7 @@ public class GL2VK {
       buffers[boundBuffer].createBufferAuto(size, getBufferUsage(target), IMMEDIATE_MODE);
       if (data != null) {
         if (bufferMultithreaded) {
+          recordInuseBuffer(data);
           system.nodeBufferData(buffers[boundBuffer], size, data, buffers[boundBuffer].getInstance());
         }
         else {
@@ -1207,6 +1230,8 @@ public class GL2VK {
 
 
 	public void beginRecord() {
+	  GraphicsBuffer.setFrame(system.getFrame());
+	  inuseBuffers.clear();
 	  for (int i = 1; i < bufferIndex; i++) {
 	    buffers[i].reset();
 	  }
