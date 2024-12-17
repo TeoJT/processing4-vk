@@ -487,6 +487,7 @@ public class ThreadNode {
 
 	        			  int type   = cmdIntArgs[2].get(index);
                   int offset = cmdIntArgs[3].get(index);
+                  int vertexOffset =cmdIntArgs[4].get(index);
 
 
 
@@ -498,6 +499,7 @@ public class ThreadNode {
 	        			      LongBuffer vertexBuffers = stack.callocLong(numBuffers);
 	        			      LongBuffer offsets = stack.callocLong(numBuffers);
 
+
 	        			      // Longargs 1-x are buffers.
 	        			      for (int i = 0; i < numBuffers; i++) {
 	        			    	  vertexBuffers.put(i, cmdLongArgs[i+1].get(index));
@@ -508,8 +510,10 @@ public class ThreadNode {
 
 	        			      vkCmdBindVertexBuffers(cmdbuffer, 0, vertexBuffers, offsets);
 
+//                      vkCmdBindIndexBuffer(cmdbuffer, indicesBuffer, offset, type);
+//                      vkCmdDrawIndexed(cmdbuffer, indiciesSize, 1, 0, 0, 0);
 	        			      vkCmdBindIndexBuffer(cmdbuffer, indicesBuffer, offset, type);
-	        			      vkCmdDrawIndexed(cmdbuffer, indiciesSize, 1, 0, 0, 0);
+	        			      vkCmdDrawIndexed(cmdbuffer, indiciesSize, 1, 0, vertexOffset, 0);
 	        			  }
 
 	        			  break;
@@ -895,7 +899,7 @@ public class ThreadNode {
     }
 
 
-    public void drawIndexed(int indiciesSize, long indiciesBuffer, ArrayList<Long> vertexBuffers, int offset, int type) {;
+    public void drawIndexed(int indiciesSize, long indiciesBuffer, ArrayList<Long> vertexBuffers, int offset, int vertexOffset, int type) {;
         int index = getNextCMDIndex();
         println("call CMD_DRAW_INDEXED (index "+index+")");
 
@@ -929,6 +933,7 @@ public class ThreadNode {
 
 
         setIntArg(3, index, offset);
+        setIntArg(4, index, vertexOffset);
         for (int i = 0; i < vertexBuffers.size(); i++) {
         	setLongArg(i+1, index, vertexBuffers.get(i));
         }

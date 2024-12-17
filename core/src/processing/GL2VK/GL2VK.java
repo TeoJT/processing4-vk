@@ -269,6 +269,9 @@ public class GL2VK {
   private boolean depthTestEnable = true;
 	private int frameCount = 0;
 
+	// For special thing in drawElements().
+	private int indicesOverflowDetectionCount = 0;
+
 	// Used to convert shaders
 	// Is an instance because it keeps the state from the
 	// fragment shader.
@@ -627,12 +630,77 @@ public class GL2VK {
 	// Either way, it's java and Processing we're writing this for, so it is what it is.
 	public void glDrawElements(int mode, int count, int type, int offset) {
 	  drawCounts++;
-//	  System.out.println("DRAWINDEXED");
+
 		// Mode not used
 		if (checkAndPrepareProgram() == false) return;
 
-//		System.out.println("glDrawElements "+boundBuffer+" count "+count+" type "+type+" offset "+offset+"  buffer "+buffers[boundBuffer].bufferID);
-		system.nodeDrawIndexed(count, buffers[boundBuffer].getCurrBuffer(), programs[boundProgram].getVKBuffers(), offset, type);
+		// Here's a patch to a bug that took me forever to solve:
+		// Processing uses 16-bit indices buffers, but it means that when rendering large
+		// geometry we are most likely gonna encounter a short overflow which means the bits
+		// rolls back to 0.
+		// It seems the processing devs were very aware of this, even more so aware of a quirk in
+		// openGL: the offset for some reason affects the overflow so that it still accesses the correct
+		// indicies and doesn't start at 0 again.
+		// Super weird, super bad and niche design, but super convenient, because that's what openGL is. Convenient.
+		// How do we emulate this convenient behaviour in vulkan?
+		// Simple: check to see if our indices buffer has overflowed and give a vertex index offset so we don't start at 0.
+		int vertexOffset = 0;
+
+		// TODO: Proper check that indicies buffer actually uses short instead of just assuming it.
+
+		int ioffset = offset/2;
+
+		// if offset > 30000 there's a pretty good chance that indices have overflowed.
+		if (ioffset > 30000) {
+		  // Now for the unhinged part: we need to check the contents of the index buffer.
+		  // We can only do that by mapping the buffer.
+		  if (buffers[boundBuffer].indexBuffer) {
+		    if (buffers[boundBuffer].indexInstantAccessBuffer != null) {
+
+		      ShortBuffer buff = buffers[boundBuffer].indexInstantAccessBuffer;
+
+    		  try {
+      		  if (ioffset < buff.capacity()) {
+      //		    for (int i = -5; i < 8; i++) {
+      //		      System.out.print(buff.get(ioffset+i)+" ");
+      //		    }
+
+      		    // Now approx compare numbers.
+      		    // We want the point where we're overflowing
+      		    // (so really big number and then really small number like 0)
+      		    if (buff.get(ioffset-2) > 32700 && buff.get(ioffset-1) > 32700 && buff.get(ioffset) == 0) {
+      		      // HIT
+      		      indicesOverflowDetectionCount++;
+
+                // Now we can set our magical number.
+    //          // for some reason works better when it's 32764.
+                // Whatever let's stay consistent
+                vertexOffset = indicesOverflowDetectionCount*32768;
+                System.out.println("HIT "+vertexOffset);
+      		    }
+      		    else {
+      		      System.out.println("no hit (unmatching overflow vals)");
+      		    }
+      		  }
+            else {
+              System.out.println("no hit (offset out of bounds)");
+            }
+    		  }
+    		  catch (RuntimeException e) {
+    		    // Continue on.
+    		    System.out.println("no hit (exception)");
+    		  }
+    		}
+		    else {
+		      System.out.println("no hit (null indexInstantAccessBuffer)");
+		    }
+      }
+		  else {
+		    System.out.println("no hit (not index buffer, this shouldnt happen)");
+		  }
+    }
+
+		system.nodeDrawIndexed(count, buffers[boundBuffer].getCurrBuffer(), programs[boundProgram].getVKBuffers(), offset, vertexOffset, type);
 		selectNodeAuto();
 	}
 
@@ -641,10 +709,6 @@ public class GL2VK {
 	// because chances are, when we use glVertexAttribPointer, we're being pretty clear that we do,
 	// indeed, want to use the vertexAttrib. And it's not like glDisableVertexAttribArray is going to
 	// have any effect, you can't disable vertex attribs in a pipeline that's already been created.
-
-	// BUG FOUND TODO:
-	// Size should be the number of components in the vector, not the total size!
-	// e.g. for a vec4, it should be 4, not 4*4
 	public void glVertexAttribPointer(int glindex, int size, int type, boolean normalized, int stride, int offset) {
 		if (boundBuffer <= 0) {
 			warn("glVertexAttribPointer: don't forget to bind a buffer!");
@@ -665,9 +729,19 @@ public class GL2VK {
 
 
 //		System.out.println("ATTRIB BUFFER "+glindex+" "+buffers[boundBuffer].bufferID);
+//		System.out.println("glVertexAttribPointer bind "+boundBuffer);
 		program.bind(boundBuffer, buffers[boundBuffer]);
 		program.vertexAttribPointer(vkLocation, size, type, normalized, stride, offset);
 	}
+
+
+  public void glEnableVertexAttribArray(int index) {
+//    System.out.println("glEnableVertexAttribArray  binding "+boundBuffer+"  index "+index);
+  }
+
+  public void glDisableVertexAttribArray(int index) {
+//    System.out.println("glDisableVertexAttribArray  binding "+boundBuffer+"  index "+index);
+  }
 
 	public int glCreateProgram() {
 		int ret = programIndex;
@@ -1243,6 +1317,7 @@ public class GL2VK {
 	public void beginRecord() {
 	  GraphicsBuffer.setFrame(system.getFrame());
 	  inuseBuffers.clear();
+	  indicesOverflowDetectionCount = 0;
 	  for (int i = 1; i < bufferIndex; i++) {
 	    buffers[i].reset();
 	  }

@@ -937,11 +937,13 @@ public class PVK extends PGL implements PJOGLInterface {
   public void enableVertexAttribArray(int index) {
     // Unneeded and unused in gl2vk
 
+    gl2vk.glEnableVertexAttribArray(index);
   }
 
   @Override
   public void disableVertexAttribArray(int index) {
     // Unneeded and unused in gl2vk
+    gl2vk.glDisableVertexAttribArray(index);
   }
 
   @Override

@@ -1,6 +1,7 @@
 package processing.GL2VK;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
@@ -97,11 +98,15 @@ public class GraphicsBuffer {
     private int[] bufferSize = new int[MAX_INSTANCES*2];
 
     private boolean retainedMode = false;
+    private boolean mapped = false;
+    public boolean indexBuffer = false;
 
     // Buffers may be in use by GPU mid-frame.
     // queue for deletion next frame.
     private ArrayList<Long> deleteBufferQueue = new ArrayList<>();
     private ArrayList<Long> deleteMemQueue = new ArrayList<>();
+
+    public ShortBuffer indexInstantAccessBuffer = null;
 
     private static VulkanSystem system;
     private static VKSetup vkbase;
@@ -157,6 +162,9 @@ public class GraphicsBuffer {
         System.out.println("createBufferAuto: Stall for "+count);
       }
 
+      if (vertexIndexUsage == VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
+        indexBuffer = true;
+      }
 
   		// Delete old buffers
 //    		destroy(globalInstance);
@@ -248,8 +256,6 @@ public class GraphicsBuffer {
     // Needs to be called when it
     public long getCurrBuffer() {
       if (globalInstance == 0) globalInstance = 1;
-
-      System.out.println(actualInst(globalInstance-1));
 
       // Problem: we need to know whether we're doing retained or immediate.
       // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
@@ -349,17 +355,46 @@ public class GraphicsBuffer {
       deleteMemQueue.add(bufferMemory[(instance+MAX_INSTANCES)]);
     }
 
+    public boolean mapped() {
+      return mapped;
+    }
 
     public ByteBuffer map(int instance) {
+      mapped = true;
+
+
+
       // Problem: we need to know whether we're doing retained or immediate.
       // We can quickly check stagingBuffer == -1 for immediate, != -1 for retained
       if (stagingBufferMemory[actualInst(instance)] != -1) {
         // Retained
+        if (indexBuffer) {
+          indexInstantAccessBuffer = mapShort(bufferSize[actualInst(instance)], stagingBufferMemory[actualInst(instance)]);
+          unmap(stagingBufferMemory[actualInst(instance)]);
+        }
         return mapByte(bufferSize[actualInst(instance)], stagingBufferMemory[actualInst(instance)]);
       }
       else {
         // Immediate
+        if (indexBuffer) {
+          indexInstantAccessBuffer = mapShort(bufferSize[actualInst(instance)], bufferMemory[actualInst(instance)]);
+          unmap(bufferMemory[actualInst(instance)]);
+        }
         return mapByte(bufferSize[actualInst(instance)], bufferMemory[actualInst(instance)]);
+      }
+    }
+
+    // For a very specific purpose
+    // Just alt+shift+h it, i cant be bothered explaining.
+    public ShortBuffer mapShort(int instance) {
+      mapped = true;
+      if (stagingBufferMemory[actualInst(instance)] != -1) {
+        // Retained
+        return mapShort(bufferSize[actualInst(instance)], stagingBufferMemory[actualInst(instance)]);
+      }
+      else {
+        // Immediate
+        return mapShort(bufferSize[actualInst(instance)], bufferMemory[actualInst(instance)]);
       }
     }
 
@@ -454,19 +489,16 @@ public class GraphicsBuffer {
       if (stagingBufferMemory[actualInst(instance)] != -1) {
         // Retained
         unmap(stagingBufferMemory[actualInst(instance)]);
+        mapped = false;
       }
       else {
         // Immediate
         unmap(bufferMemory[actualInst(instance)]);
+        mapped = false;
       }
     }
 
     /////////////////////////////////////////////////////
-    // TODO: These take a lot of time, move them to threadNodes.
-    // Don't worry, the problem of all this copy+paste code will be solved
-    // by moving the problem somewhere else.
-
-    // Sends data straight to the gpu
     // TODO: version where memory is constantly unmapped
 
     // IMMEDIATE MODE METHODS TO BE USED IN MULTITHREADING
@@ -538,6 +570,7 @@ public class GraphicsBuffer {
 
         ShortBuffer datato = mapShort(size, mem);
 
+
         try {
           datato.rewind();
           data.rewind();
@@ -551,6 +584,10 @@ public class GraphicsBuffer {
         }
         catch (BufferUnderflowException e) {
           // Ignore and continue.
+        }
+
+        if (indexBuffer) {
+          indexInstantAccessBuffer = datato;
         }
 
 
@@ -674,6 +711,11 @@ public class GraphicsBuffer {
           datato.put(data.get());
         }
         datato.rewind();
+
+        if (indexBuffer) {
+          indexInstantAccessBuffer = datato;
+        }
+
         unmap(stagingBuffers[actualInst(instance)]);
 
         vkbase.copyBufferAndWait(stagingBuffers[actualInst(instance)], buffers[actualInst(instance)], size);
