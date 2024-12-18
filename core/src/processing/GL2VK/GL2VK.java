@@ -676,27 +676,27 @@ public class GL2VK {
     //          // for some reason works better when it's 32764.
                 // Whatever let's stay consistent
                 vertexOffset = indicesOverflowDetectionCount*32768;
-                System.out.println("HIT "+vertexOffset);
+//                System.out.println("HIT "+vertexOffset);
       		    }
       		    else {
-      		      System.out.println("no hit (unmatching overflow vals)");
+//      		      System.out.println("no hit (unmatching overflow vals)");
       		    }
       		  }
             else {
-              System.out.println("no hit (offset out of bounds)");
+//              System.out.println("no hit (offset out of bounds)");
             }
     		  }
     		  catch (RuntimeException e) {
     		    // Continue on.
-    		    System.out.println("no hit (exception)");
+//    		    System.out.println("no hit (exception)");
     		  }
     		}
 		    else {
-		      System.out.println("no hit (null indexInstantAccessBuffer)");
+//		      System.out.println("no hit (null indexInstantAccessBuffer)");
 		    }
       }
 		  else {
-		    System.out.println("no hit (not index buffer, this shouldnt happen)");
+//		    System.out.println("no hit (not index buffer, this shouldnt happen)");
 		  }
     }
 

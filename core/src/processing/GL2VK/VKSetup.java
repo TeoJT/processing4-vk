@@ -90,7 +90,7 @@ import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
 
 public class VKSetup {
 
-    public static final boolean ENABLE_VALIDATION_LAYERS = true; //DEBUG.get(true);
+    public static final boolean ENABLE_VALIDATION_LAYERS = false; //DEBUG.get(true);
 
     private static final Set<String> VALIDATION_LAYERS;
     static {

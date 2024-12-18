@@ -1315,7 +1315,6 @@ public class PJOGL extends PGL {
   @Override
   public void bindBuffer(int target, int buffer) {
         report("bindBuffer");
-        System.out.println("bindBuffer: "+buffer);
 
     gl.glBindBuffer(target, buffer);
   }
@@ -1323,7 +1322,6 @@ public class PJOGL extends PGL {
   @Override
   public void bufferData(int target, int size, Buffer data, int usage) {
         report("bufferData");
-//        printBuffer("bufferData ", data);
     gl.glBufferData(target, size, data, usage);
   }
 
@@ -1348,7 +1346,6 @@ public class PJOGL extends PGL {
   @Override
   public ByteBuffer mapBuffer(int target, int access) {
         report("mapBuffer");
-        System.out.println("MAP");
     return gl2.glMapBuffer(target, access);
   }
 
@@ -1367,7 +1364,6 @@ public class PJOGL extends PGL {
   @Override
   public void unmapBuffer(int target) {
         report("unmapBuffer");
-        System.out.println("UNMAP");
     gl2.glUnmapBuffer(target);
   }
 
@@ -1413,7 +1409,6 @@ public class PJOGL extends PGL {
   public void depthRangef(float n, float f) {
         report("depthRangef");
     gl.glDepthRangef(n, f);
-    System.out.println("depthRange "+n+" "+f);
   }
 
   @Override
@@ -1524,8 +1519,6 @@ public class PJOGL extends PGL {
   @Override
   public void drawElementsImpl(int mode, int count, int type, int offset) {
         report("drawElementsImpl");
-
-        System.out.println("DRAW ELEMENTS  count: "+count+"  offset: "+offset);
 
     gl.glDrawElements(mode, count, type, offset);
   }

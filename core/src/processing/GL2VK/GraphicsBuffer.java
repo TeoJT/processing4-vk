@@ -101,10 +101,21 @@ public class GraphicsBuffer {
     private boolean mapped = false;
     public boolean indexBuffer = false;
 
+    private class DeleteEntry {
+      public long buffer = 0L;
+      public long mem = 0L;
+      public int tmr = -1;
+
+      public DeleteEntry(long b, long m) {
+        buffer = b;
+        mem = m;
+        tmr = 6;
+      }
+    }
+
     // Buffers may be in use by GPU mid-frame.
     // queue for deletion next frame.
-    private ArrayList<Long> deleteBufferQueue = new ArrayList<>();
-    private ArrayList<Long> deleteMemQueue = new ArrayList<>();
+    private ArrayList<DeleteEntry> deleteQueue = new ArrayList<>();
 
     public ShortBuffer indexInstantAccessBuffer = null;
 
@@ -140,8 +151,6 @@ public class GraphicsBuffer {
     // - Buffer size != new size.
     // NOT THREAD SAFE HERE
     public void createBufferAuto(int size, int vertexIndexUsage, boolean retainedMode) {
-      // Clear scheduled-for-deletion buffers first.
-      destroyScheduledBuffers();
 
       // TO BE SAFE:
       // bufferData is done in separate threads (for immediate mode).
@@ -199,20 +208,21 @@ public class GraphicsBuffer {
     }
 
     private void destroyScheduledBuffers() {
-      for (long buf : deleteBufferQueue) {
-        if (buf != -1) {
-          vkDestroyBuffer(system.device, buf, null);
+      for (DeleteEntry e : deleteQueue) {
+        e.tmr--;
+        if (e.tmr == 0) {
+          if (e.buffer != -1) {
+            System.out.println("Buffer deleted");
+            vkDestroyBuffer(system.device, e.buffer, null);
+            e.buffer = -1;
+          }
+          if (e.mem != -1) {
+            vkFreeMemory(system.device, e.mem, null);
+            e.mem = -1;
+          }
         }
       }
-      deleteBufferQueue.clear();
-      for (long mem : deleteMemQueue) {
-        if (mem != -1) {
-          vkFreeMemory(system.device, mem, null);
-        }
-      }
-      deleteMemQueue.clear();
     }
-
 
     public static int bufferCount = 0;
 
@@ -272,6 +282,9 @@ public class GraphicsBuffer {
 
     public void reset() {
       globalInstance = 0;
+
+      // Clear scheduled-for-deletion buffers.
+      destroyScheduledBuffers();
     }
 
     // NOT THREAD SAFE
@@ -349,10 +362,8 @@ public class GraphicsBuffer {
     }
 
     public void scheduleDestroy(int instance) {
-      deleteBufferQueue.add(buffers[(instance)]);
-      deleteMemQueue.add(bufferMemory[(instance)]);
-      deleteBufferQueue.add(buffers[(instance+MAX_INSTANCES)]);
-      deleteMemQueue.add(bufferMemory[(instance+MAX_INSTANCES)]);
+      deleteQueue.add(new DeleteEntry(buffers[(instance)], bufferMemory[(instance)]));
+      deleteQueue.add(new DeleteEntry(buffers[(instance+MAX_INSTANCES)], bufferMemory[(instance+MAX_INSTANCES)]));
     }
 
     public boolean mapped() {
