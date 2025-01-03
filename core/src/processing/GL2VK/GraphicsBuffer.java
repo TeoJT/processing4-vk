@@ -212,7 +212,6 @@ public class GraphicsBuffer {
         e.tmr--;
         if (e.tmr == 0) {
           if (e.buffer != -1) {
-            System.out.println("Buffer deleted");
             vkDestroyBuffer(system.device, e.buffer, null);
             e.buffer = -1;
           }
