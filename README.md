@@ -42,4 +42,18 @@ This framework works by keeping most of the PGraphicsOpenGL code intact and simp
 - Resizing the window
 
 ## Performance
-TODO
+Some of Processing's performance example sketches. Lower is better.
+
+__LineRendering__
+
+![image](https://github.com/user-attachments/assets/8985c14a-bf5b-479c-8989-c82ee5cb55d3)
+
+__TextRendering__
+
+![image](https://github.com/user-attachments/assets/dbe77ecc-3711-4869-a866-a00ed254bab8)
+
+__DynamicParticlesImmediate__
+
+![image](https://github.com/user-attachments/assets/47c78c6f-5fd9-45cf-b77f-12571c5afc91)
+
+
